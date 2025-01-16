@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime, timedelta
 from stock_llm_predictor import StockLLMPredictor
+import yfinance as yf
 
 class StockPredictorApp:
     def __init__(self):
@@ -169,21 +170,72 @@ class StockDetailWindow:
         self.create_prediction_section(right_frame)
         
     def create_market_info(self, parent):
-        """Create the market information section"""
+        """Create the market information section with real-time data"""
+        # Remove old market frame if it exists
+        for widget in parent.winfo_children():
+            if isinstance(widget, tk.Frame):
+                widget.destroy()
+                
         market_frame = tk.Frame(parent, bg="#e9ecef")
         market_frame.pack(fill=tk.X, pady=10)
         
-        # Sample data - in a real app, this would be fetched from an API
-        info_pairs = [
-            ("Market Cap", "$2.5T"),
-            ("Stock Price", "$150.00"),
-            ("24h Change", "+2.5%"),
-            ("Volume", "12.5M")
-        ]
+        try:
+            # Fetch real-time stock data
+            stock = yf.Ticker(self.stock_symbol)
+            info = stock.info
+            
+            # Format market cap
+            market_cap = info.get('marketCap', 0)
+            if market_cap >= 1e12:
+                market_cap_str = f"${market_cap/1e12:.1f}T"
+            elif market_cap >= 1e9:
+                market_cap_str = f"${market_cap/1e9:.1f}B"
+            elif market_cap >= 1e6:
+                market_cap_str = f"${market_cap/1e6:.1f}M"
+            else:
+                market_cap_str = f"${market_cap:,.0f}"
+            
+            # Get current price and calculate change
+            current_price = info.get('currentPrice', 0)
+            previous_close = info.get('previousClose', 0)
+            if previous_close:
+                change = current_price - previous_close
+                change_percent = (change / previous_close) * 100
+                change_str = f"{change_percent:+.2f}%"
+                price_color = "#2ecc71" if change >= 0 else "#e74c3c"
+            else:
+                change_str = "N/A"
+                price_color = "#2c3e50"
+            
+            # Format volume
+            volume = info.get('volume', 0)
+            if volume >= 1e9:
+                volume_str = f"{volume/1e9:.1f}B"
+            elif volume >= 1e6:
+                volume_str = f"{volume/1e6:.1f}M"
+            else:
+                volume_str = f"{volume:,}"
+            
+            info_pairs = [
+                ("Market Cap", market_cap_str, "#2c3e50"),
+                ("Stock Price", f"${current_price:.2f}", "#2c3e50"),
+                ("24h Change", change_str, price_color),
+                ("Volume", volume_str, "#2c3e50")
+            ]
+            
+        except Exception as e:
+            print(f"Error fetching data: {e}")
+            info_pairs = [
+                ("Market Cap", "N/A", "#2c3e50"),
+                ("Stock Price", "N/A", "#2c3e50"),
+                ("24h Change", "N/A", "#2c3e50"),
+                ("Volume", "N/A", "#2c3e50")
+            ]
         
-        for label, value in info_pairs:
+        # Create info containers
+        for label, value, color in info_pairs:
             container = tk.Frame(market_frame, bg="#e9ecef")
-            container.pack(side=tk.LEFT, padx=10)
+            container.pack(side=tk.LEFT, padx=10, expand=True)
             
             tk.Label(container,
                     text=label,
@@ -195,8 +247,8 @@ class StockDetailWindow:
                     text=value,
                     font=("Helvetica", 12, "bold"),
                     bg="#e9ecef",
-                    fg="#2c3e50").pack()
-            
+                    fg=color).pack()
+        
     def create_prediction_section(self, parent):
         """Create the prediction graph section"""
         prediction_frame = tk.LabelFrame(parent,
@@ -294,6 +346,11 @@ class StockDetailWindow:
         """Handle cleanup when window is closed"""
         plt.close(self.fig)  # Close the matplotlib figure
         self.window.destroy()  # Destroy the window
+
+    def refresh_market_data(self):
+        """Refresh market data every 60 seconds"""
+        self.create_market_info(self.right_frame)
+        self.window.after(60000, self.refresh_market_data)  # Schedule next update in 60 seconds
 
 if __name__ == "__main__":
     app = StockPredictorApp()
