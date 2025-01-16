@@ -1,6 +1,7 @@
 import ollama
 import numpy as np
 from datetime import datetime, timedelta
+import json
 
 class StockLLMPredictor:
     def __init__(self, model="llama2"):
@@ -28,7 +29,6 @@ class StockLLMPredictor:
 
         try:
             # Try to extract JSON from the response
-            import json
             content = response['message']['content']
             # Clean the content string to ensure it's valid JSON
             content = content.strip()
@@ -60,17 +60,23 @@ class StockLLMPredictor:
         """
         prediction = self.predict_stock_movement(stock_symbol, days)
         
-        # Generate time series data points
-        dates = [datetime.now() + timedelta(days=x) for x in range(days)]
+        # Generate time series data points with proper time intervals
+        if days == 1:
+            # For 1-day prediction, use hourly intervals
+            dates = [datetime.now() + timedelta(hours=x) for x in range(24)]
+            days = 1
+        else:
+            # For multiple days, use daily intervals
+            dates = [datetime.now() + timedelta(days=x) for x in range(days)]
         
         # Use the LLM's prediction to influence the trend
-        trend = prediction['movement'] / days
+        trend = prediction['movement'] / (24 if days == 1 else days)  # Adjust trend for hourly vs daily
         confidence = prediction['confidence']
         volatility = 0.02 * (1 - confidence)  # Lower confidence = higher volatility
         
         prices = []
         current = current_price
-        for _ in range(days):
+        for _ in range(len(dates)):  # Use len(dates) instead of days to match the number of intervals
             noise = np.random.normal(0, volatility)
             current *= (1 + trend + noise)
             prices.append(current)
