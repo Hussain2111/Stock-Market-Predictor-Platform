@@ -113,6 +113,8 @@ class StockDetailWindow:
         self.window.geometry("1000x700")
         self.window.configure(bg="#e9ecef")
         
+        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         self.stock_symbol = stock_symbol
         self.llm_predictor = StockLLMPredictor()
         self.create_layout()
@@ -287,6 +289,11 @@ class StockDetailWindow:
         self.chat_area.insert(tk.END, "\nBot: " + message + "\n")
         self.chat_area.see(tk.END)
         self.chat_area.config(state=tk.DISABLED)
+        
+    def on_closing(self):
+        """Handle cleanup when window is closed"""
+        plt.close(self.fig)  # Close the matplotlib figure
+        self.window.destroy()  # Destroy the window
 
 if __name__ == "__main__":
     app = StockPredictorApp()
