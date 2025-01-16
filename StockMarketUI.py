@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime, timedelta
+from stock_llm_predictor import StockLLMPredictor
 
 class StockPredictorApp:
     def __init__(self):
@@ -113,6 +114,7 @@ class StockDetailWindow:
         self.window.configure(bg="#e9ecef")
         
         self.stock_symbol = stock_symbol
+        self.llm_predictor = StockLLMPredictor()
         self.create_layout()
         
     def create_layout(self):
@@ -222,19 +224,25 @@ class StockDetailWindow:
         """Update the prediction graph"""
         self.ax.clear()
         
-        # Generate sample prediction data - replace with real prediction logic
-        x = np.linspace(0, days, 100)
-        current_price = 150  # Sample current price
-        volatility = 0.02
-        trend = 0.001
+        current_price = 150  # Replace with actual current price
+        dates, predictions, reasoning = self.llm_predictor.get_price_predictions(
+            self.stock_symbol, 
+            current_price, 
+            days
+        )
         
-        # Generate more realistic looking prediction with randomness
-        noise = np.random.normal(0, volatility, 100)
-        y = current_price * (1 + trend * x + noise.cumsum())
+        # Update the graph with predictions
+        self.ax.plot(dates, predictions, 'b-', label='Predicted Price')
         
-        # Plot the data
-        self.ax.plot(x, y, 'b-', label='Predicted Price')
-        self.ax.fill_between(x, y * 0.95, y * 1.05, color='blue', alpha=0.1)
+        # Add confidence interval
+        self.ax.fill_between(dates, 
+                            [p * 0.95 for p in predictions], 
+                            [p * 1.05 for p in predictions], 
+                            color='blue', 
+                            alpha=0.1)
+        
+        # Update the chat area with reasoning
+        self.add_bot_message(f"Analysis: {reasoning}")
         
         # Add labels and styling
         self.ax.set_title(f"{self.stock_symbol} Price Prediction - Next {days} Days",
