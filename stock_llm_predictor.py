@@ -32,3 +32,25 @@ class StockLLMPredictor:
             'reasoning': response['message']['content']
         }
 
+    def get_price_predictions(self, stock_symbol, current_price, days):
+        """
+        Generate price predictions using LLM insights
+        """
+        prediction = self.predict_stock_movement(stock_symbol, days)
+        
+        # Generate time series data points
+        dates = [datetime.now() + timedelta(days=x) for x in range(days)]
+        
+        # Use the LLM's prediction to influence the trend
+        trend = prediction['movement'] / days
+        confidence = prediction['confidence']
+        volatility = 0.02 * (1 - confidence)  # Lower confidence = higher volatility
+        
+        prices = []
+        current = current_price
+        for _ in range(days):
+            noise = np.random.normal(0, volatility)
+            current *= (1 + trend + noise)
+            prices.append(current)
+            
+        return dates, prices, prediction['reasoning']
