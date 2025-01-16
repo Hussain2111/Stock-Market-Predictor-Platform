@@ -13,45 +13,62 @@ class StockLLMPredictor:
         """
         prompt = f"""
         As a stock market expert, analyze the future movement of {stock_symbol} stock for the next {days} days.
-        Provide your response in this exact JSON format:
+        You must respond with ONLY a JSON object in this exact format, with no additional text:
         {{
-            "predicted_price_movement": "(number with % sign)",
-            "confidence_level": (number between 0-1),
+            "predicted_price_movement": "X%",
+            "confidence_level": 0.Y,
             "reasoning": "your brief analysis"
         }}
-        Only respond with valid JSON, no other text.
+        
+        Rules:
+        1. predicted_price_movement must be a single number with % sign (e.g. "5%" or "-3%")
+        2. confidence_level must be a number between 0 and 1
+        3. Do not include ranges or multiple numbers
+        4. Do not include any text outside the JSON object
         """
 
-        response = ollama.chat(
-            model=self.model,
-            messages=[{'role': 'user', 'content': prompt}]
-        )
-
         try:
-            # Try to extract JSON from the response
+            response = ollama.chat(
+                model=self.model,
+                messages=[{'role': 'user', 'content': prompt}]
+            )
+
             content = response['message']['content']
             # Clean the content string to ensure it's valid JSON
             content = content.strip()
             if content.startswith("```json"):
                 content = content[7:-3]  # Remove ```json and ``` if present
+            
+            # Remove any text before or after the JSON object
+            content = content[content.find("{"):content.rfind("}")+1]
+            
             prediction_data = json.loads(content)
             
-            # Convert percentage string to float
+            # Validate the prediction format
             movement_str = prediction_data['predicted_price_movement']
-            movement = float(movement_str.strip('%')) / 100  # Convert "5%" to 0.05
+            if not movement_str.endswith('%'):
+                raise ValueError("Price movement must end with %")
             
+            # Convert percentage string to float, handling negative numbers
+            movement = float(movement_str.rstrip('%')) / 100
+            
+            confidence = prediction_data['confidence_level']
+            if not (0 <= confidence <= 1):
+                raise ValueError("Confidence must be between 0 and 1")
+
             return {
                 'movement': movement,
-                'confidence': prediction_data['confidence_level'],
+                'confidence': confidence,
                 'reasoning': prediction_data['reasoning']
             }
         except (json.JSONDecodeError, KeyError, ValueError) as e:
             print(f"Error parsing LLM response: {e}")
-            # Return default values if parsing fails
+            print(f"Raw response: {content}")
+            # Return conservative default values if parsing fails
             return {
                 'movement': 0,
                 'confidence': 0.5,
-                'reasoning': response['message']['content']
+                'reasoning': "Unable to generate precise prediction at this time."
             }
 
     def get_price_predictions(self, stock_symbol, current_price, days):
