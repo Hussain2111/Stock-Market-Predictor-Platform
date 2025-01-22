@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Search, ArrowRight} from 'lucide-react';
-
+import { Search,  BarChart2, Target, ArrowRight} from 'lucide-react';
+import { Card, CardContent,} from '../components/ui/card';
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +55,49 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+      {/* How It Works Section */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12">How Our Predictor Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">1. Enter Stock Symbol</h3>
+              <p className="text-gray-600">
+                Simply enter any stock symbol to start. Our system supports all major exchanges worldwide.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart2 className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">2. AI Analysis</h3>
+              <p className="text-gray-600">
+                Our AI analyzes historical data, market sentiment, and global factors in real-time.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Target className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">3. Get Predictions</h3>
+              <p className="text-gray-600">
+                Receive detailed predictions, trends, and confidence scores for informed decisions.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      
     </div>
+    
   );
 };
 
