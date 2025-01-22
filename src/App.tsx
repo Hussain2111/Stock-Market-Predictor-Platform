@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search,  BarChart2, Target, ArrowRight} from 'lucide-react';
+import { Search,  BarChart2, Target, ArrowRight, TrendingUp, ChevronRight, Award} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle} from '../components/ui/card';
 
 const HomePage = () => {
@@ -194,6 +194,50 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+      {/* Trending & Recent Section */}
+      <div className="bg-gray-50 py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Most Analyzed Stocks Today
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {['AAPL', 'MSFT', 'GOOGL', 'AMZN'].map((symbol) => (
+                    <div key={symbol} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <span className="font-medium">{symbol}</span>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Most Accurate Predictions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {['TSLA', 'NVDA', 'META', 'AMD'].map((symbol) => (
+                    <div key={symbol} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <span className="font-medium">{symbol}</span>
+                      <span className="text-green-600">94% accurate</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
