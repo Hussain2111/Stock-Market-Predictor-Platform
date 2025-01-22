@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search,  BarChart2, Target, ArrowRight, TrendingUp, ChevronRight, Award} from 'lucide-react';
+import { Search, ArrowRight, BarChart2, Target, TrendingUp, ChevronRight, Award, ChevronDown} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle} from '../components/ui/card';
 
 const HomePage = () => {
@@ -237,7 +237,36 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
+      {/* FAQ Section */}
+      <div className="max-w-3xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="p-4">
+              <button className="flex items-center justify-between w-full">
+                <span className="font-medium text-white">How accurate are the predictions?</span>
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <button className="flex items-center justify-between w-full">
+                <span className="font-medium text-white">What data sources do you use?</span>
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <button className="flex items-center justify-between w-full">
+                <span className="font-medium text-white">How often are predictions updated?</span>
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
