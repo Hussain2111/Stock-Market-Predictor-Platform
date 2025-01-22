@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search,  BarChart2, Target, ArrowRight} from 'lucide-react';
-import { Card, CardContent,} from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle} from '../components/ui/card';
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,11 +155,46 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
-
-      
+      {/* Results Preview */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12">Preview the Analysis Dashboard</h2>
+        <div className="bg-white rounded-xl shadow-xl p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Price Prediction</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">$189.42</div>
+                <div className="text-sm text-gray-500">Expected in 30 days</div>
+                <div className="text-sm text-green-600">+12.3%</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Confidence Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">87%</div>
+                <div className="text-sm text-gray-500">Based on historical accuracy</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Market Sentiment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">Bullish</div>
+                <div className="text-sm text-gray-500">Strong buy signals</div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="bg-gray-50 h-64 rounded-lg flex items-center justify-center text-gray-400">
+            Interactive Chart Preview
+          </div>
+        </div>
+      </div>
     </div>
-    
   );
 };
 
