@@ -285,7 +285,7 @@ class StockDetailWindow:
             days
         )
         
-        # Update the graph with predictions
+        # Plot predictions
         self.ax.plot(dates, predictions, 'b-', label='Predicted Price')
         
         # Add confidence interval
@@ -298,10 +298,15 @@ class StockDetailWindow:
         # Update the chat area with reasoning
         self.add_bot_message(f"Analysis: {reasoning}")
         
+        # Improve x-axis readability
+        plt.xticks(rotation=45, ha='right')
+        self.ax.xaxis.set_major_locator(plt.MaxNLocator(10))  # Limit number of x ticks
+        self.fig.autofmt_xdate()  # Automatically format dates
+        
         # Add labels and styling
         self.ax.set_title(f"{self.stock_symbol} Price Prediction - Next {days} Days",
-                         fontsize=12,
-                         pad=15)
+                        fontsize=12,
+                        pad=15)
         self.ax.set_xlabel("Days")
         self.ax.set_ylabel("Price ($)")
         self.ax.grid(True, linestyle='--', alpha=0.7)
@@ -309,6 +314,9 @@ class StockDetailWindow:
         
         # Format y-axis as currency
         self.ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.2f}'))
+        
+        # Adjust layout to prevent label cutoff
+        self.fig.tight_layout()
         
         self.canvas.draw()
         
