@@ -7,3 +7,7 @@ pandas>=2.0.0
 yfinance>=0.2.36  # Optional: for real stock data
 requests>=2.31.0
 python-dotenv>=1.0.0
+fastapi>=0.68.0
+uvicorn>=0.15.0
+sqlalchemy>=1.4.23
+pydantic>=1.8.2
