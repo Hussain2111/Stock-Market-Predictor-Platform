@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle} from '../components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
+import analysis from './analysis';
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,7 +16,7 @@ const HomePage = () => {
   const Redirect_Search = () => {
 
     // This will navigate to second component
-    navigate('/search');
+    navigate('/analysis');
   };
 
   const Redirect_Settings = () => {
@@ -148,21 +149,6 @@ const HomePage = () => {
                   Analyze Stock <ArrowRight className="h-5 w-5" 
                   />
                 </button>
-                <Popup
-    trigger={<button className="button"> Open Modal </button>}
-    modal
-    nested
-  >
-    {close => (
-      
-      <div className="modal">
-        <button className="close" onClick={close}>
-          &times;
-        </button>
-        </div>  
-
-    )}
-  </Popup>
               </form>
             </div>
             <div className="relative">
