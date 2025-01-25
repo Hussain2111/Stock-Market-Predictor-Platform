@@ -1,9 +1,8 @@
-import React from "react";
 
 import { BrowserRouter as Router, Routes, Route }
     from "react-router-dom";
 import Home from "./Home";
-import Search from "./Search";
+import Analysis from "./analysis";
 
 function App() {
     return (
@@ -11,8 +10,8 @@ function App() {
             <Routes>
                 <Route path="/home"
                     element={<Home />} />
-                <Route path="/search"
-                    element={<Search />} />
+                <Route path="/analysis"
+                    element={<Analysis />} />
             </Routes>
         </Router>
     );
