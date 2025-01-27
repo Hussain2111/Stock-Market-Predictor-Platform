@@ -24,3 +24,14 @@ df = yf.download(ticker,
                  multi_level_index = False)
 
 info = yf.Ticker(ticker)
+
+# Plotting the single feature lstm
+plt.figure(figsize=(15, 6))
+df['Open'].plot()
+df['Close'].plot()
+plt.ylabel(None)
+plt.xlabel(None)
+plt.title("Opening & Closing Price of {ticker}".format(ticker = ticker))
+plt.legend(['Open Price', 'Close Price'])
+plt.tight_layout()
+plt.show()
