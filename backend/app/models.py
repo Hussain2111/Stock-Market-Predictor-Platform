@@ -3,7 +3,7 @@ from .database import Base
 from datetime import datetime
 
 class StockPrediction(Base):
-    tablename = "predictions"
+    __tablename__ = "predictions"
 
     id = Column(Integer, primary_key=True, index=True)
     symbol = Column(String, index=True)
