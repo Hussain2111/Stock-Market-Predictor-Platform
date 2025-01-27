@@ -86,3 +86,6 @@ model = Sequential([
 model.compile(optimizer= 'adam', loss= 'mse')
 
 model.summary()
+
+# Fitting the LSTM to the Training set
+callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
