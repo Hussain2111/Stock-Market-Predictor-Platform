@@ -124,4 +124,15 @@ y_test = scaler.inverse_transform([y_test])
 RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
 RMSE
 
+train = dataset.iloc[:train_size , 0:1]
+test = dataset.iloc[train_size: , 0:1]
+test['Predictions'] = predictions
 
+plt.figure(figsize= (30, 15))
+plt.title('Tesla Close Stock Price Prediction', fontsize= 18)
+plt.xlabel('Date', fontsize= 18)
+plt.ylabel('Close Price', fontsize= 18)
+plt.plot(train['Close'], linewidth= 3)
+plt.plot(test['Close'], linewidth= 3)
+plt.plot(test["Predictions"], linewidth= 3)
+plt.legend(['Train', 'Test', 'Predictions'])
