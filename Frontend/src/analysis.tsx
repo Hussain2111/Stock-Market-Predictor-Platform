@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -81,6 +81,22 @@ const AnalysisPage = () => {
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
   const [timeframe, setTimeframe] = useState('1M');
+  const [stockPrice, setStockPrice] = useState(null);
+
+  // Add useEffect to fetch stock price
+  useEffect(() => {
+    const fetchStockPrice = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/stock-price');
+        const data = await response.json();
+        setStockPrice(data.stock_price);
+      } catch (error) {
+        console.error('Error fetching stock price:', error);
+      }
+    };
+
+    fetchStockPrice();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,7 +148,7 @@ const AnalysisPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">$182.63</span>
+                  <span className="text-2xl font-bold">${stockPrice ?? 'Loading...'}</span>
                   <span className="flex items-center text-green-500">
                     <ArrowUpRight className="h-4 w-4" />
                     +2.45%
