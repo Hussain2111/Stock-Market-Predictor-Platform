@@ -117,3 +117,11 @@ predictions = model.predict(x_test)
 #inverse predictions scaling
 predictions = scaler.inverse_transform(predictions)
 predictions.shape
+
+#inverse y_test scaling
+y_test = scaler.inverse_transform([y_test])
+
+RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
+RMSE
+
+
