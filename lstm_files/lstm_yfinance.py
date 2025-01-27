@@ -47,3 +47,7 @@ data.shape
 # MinMax scalar to normalise the values
 scaler = MinMaxScaler(feature_range= (0, 1))
 scaled_data = scaler.fit_transform(np.array(data).reshape(-1, 1))
+
+# 75% to Train , 25% to Test
+train_size = int(len(data)*.75)
+test_size = len(data) - train_size
