@@ -56,3 +56,13 @@ print("Train Size :",train_size,"Test Size :",test_size)
 
 train_data = scaled_data[ :train_size , 0:1 ]
 test_data = scaled_data[ train_size-14: , 0:1 ]
+
+train_data.shape, test_data.shape
+
+# Creating a Training set with 14 time-steps and 1 output
+x_train = []
+y_train = []
+
+for i in range(14, len(train_data)):
+    x_train.append(train_data[i-14:i, 0])
+    y_train.append(train_data[i, 0])
