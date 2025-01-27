@@ -108,3 +108,12 @@ for i in range(14, len(test_data)):
     y_test.append(test_data[i, 0])
 x_test, y_test = np.array(x_test), np.array(y_test)
 x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+
+x_test.shape , y_test.shape
+
+#inverse y_test scaling
+predictions = model.predict(x_test)
+
+#inverse predictions scaling
+predictions = scaler.inverse_transform(predictions)
+predictions.shape
