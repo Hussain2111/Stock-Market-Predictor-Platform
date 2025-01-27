@@ -35,3 +35,11 @@ plt.title("Opening & Closing Price of {ticker}".format(ticker = ticker))
 plt.legend(['Open Price', 'Close Price'])
 plt.tight_layout()
 plt.show()
+
+# Preprocessing of the dataset
+dataset = df["Close"]
+dataset = pd.DataFrame(dataset)
+
+data = dataset.values
+
+data.shape
