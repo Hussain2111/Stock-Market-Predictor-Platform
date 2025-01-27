@@ -1,14 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
+         ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
+         Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+         BarChart, Bar, Legend } from 'recharts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for the chart
 const historicalData = Array.from({ length: 30 }, (_, i) => ({
   date: `2024-${String(i + 1).padStart(2, '0')}-01`,
   price: Math.random() * 50 + 150,
-  prediction: Math.random() * 50 + 160
+  prediction: Math.random() * 50 + 160,
+  volume: Math.floor(Math.random() * 1000000)
 }));
+
+// New mock data for sentiment analysis
+const sentimentData = Array.from({ length: 7 }, (_, i) => ({
+  date: `2024-${String(i + 1).padStart(2, '0')}-01`,
+  positive: Math.random() * 100,
+  negative: Math.random() * 50,
+  neutral: Math.random() * 30
+}));
+
+// New mock news data
+const newsData = [
+  {
+    title: "Apple's AI Strategy Revealed",
+    source: "Tech Analysis Daily",
+    sentiment: "positive",
+    time: "2 hours ago"
+  },
+  {
+    title: "Supply Chain Concerns Impact Production",
+    source: "Market Watch",
+    sentiment: "negative",
+    time: "4 hours ago"
+  },
+  {
+    title: "Q4 Earnings Preview",
+    source: "Financial Times",
+    sentiment: "neutral",
+    time: "6 hours ago"
+  }
+];
 
 const StockSidebar = () => {
   return (
@@ -76,6 +113,9 @@ const StockSidebar = () => {
   );
 };
 
+
+
+
 const AnalysisPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
@@ -118,16 +158,19 @@ const AnalysisPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-blue-900 text-white p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center flex-1 max-w-xl">
             <Search className="h-5 w-5 text-gray-400 absolute ml-3" />
             <input
               type="text"
               placeholder="Search for another stock..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400"
+              className="w-9/12 pl-10 pr-4 mr-2 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <button onClick={Redirect_Search} className="max-w-50 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center gap-2 transition-colors">
+                  Search 
+                </button>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => setIsLoginPopupOpen(true)} 
@@ -144,6 +187,16 @@ const AnalysisPage = () => {
 
       <main className="max-w-7xl mx-auto py-8 px-4 flex gap-8">
         <div className="flex-1">
+          {/* Price Alert Banner */}
+          {isAlertSet && (
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
+              <AlertTriangle className="h-4 w-4 text-blue-500" />
+              <AlertDescription>
+                Price alerts set: Above ${priceAlertThresholds.upper} or below ${priceAlertThresholds.lower}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Stock Overview */}
           <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
             <div className="flex justify-between items-start mb-6">
@@ -152,13 +205,13 @@ const AnalysisPage = () => {
                   <h1 className="text-3xl font-bold">AAPL</h1>
                   <span className="text-gray-500">Apple Inc.</span>
                   <div className="flex gap-2">
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
                       <Heart className="h-5 w-5" />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
                       <Bell className="h-5 w-5" />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
                       <Share2 className="h-5 w-5" />
                     </button>
                   </div>
@@ -204,99 +257,201 @@ const AnalysisPage = () => {
             </div>
           </div>
 
-          {/* Prediction Analysis */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Price Target</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">$195.50</div>
-                <div className="text-sm text-gray-500">30-day forecast</div>
-                <div className="text-sm text-green-600">+7.2%</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Confidence Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">85%</div>
-                <div className="text-sm text-gray-500">Based on model accuracy</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Level</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">Moderate</div>
-                <div className="text-sm text-gray-500">Volatility: Medium</div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Enhanced Analysis Tabs */}
+          <Tabs defaultValue="prediction" className="mb-8">
+            <TabsList className="w-full flex gap-4 rounded-s-lg">
+              <TabsTrigger value="prediction" className=" bg-blue-500 flex-1">
+                <TrendingUp className="w-4 h-4 mr-2" /> Prediction
+              </TabsTrigger>
+              <TabsTrigger value="technical" className="bg-blue-500 flex-1">
+                <Activity className="w-4 h-4 mr-2" /> Technical
+              </TabsTrigger>
+              <TabsTrigger value="fundamental" className="bg-blue-500 flex-1">
+                <DollarSign className="w-4 h-4 mr-2" /> Fundamental
+              </TabsTrigger>
+              <TabsTrigger value="sentiment" className="bg-blue-500 flex-1">
+                <MessageSquare className="w-4 h-4 mr-2" /> Sentiment
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Technical Analysis */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Technical Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <TabsContent value="prediction" className="mt-4">
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Moving Averages</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>MA(20)</span>
-                      <span className="font-medium">180.45</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>MA(50)</span>
-                      <span className="font-medium">178.32</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>MA(200)</span>
-                      <span className="font-medium">175.89</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Oscillators</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>RSI(14)</span>
-                      <span className="font-medium">56.78</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>MACD</span>
-                      <span className="text-green-600">Bullish</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Stochastic</span>
-                      <span className="text-yellow-600">Neutral</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Support/Resistance</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Support 1</span>
-                      <span className="font-medium">178.50</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Support 2</span>
-                      <span className="font-medium">175.20</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Resistance 1</span>
-                      <span className="font-medium">185.30</span>
-                    </div>
-                  </div>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Price Target</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">$195.50</div>
+                    <div className="text-sm text-gray-500">30-day forecast</div>
+                    <div className="text-sm text-green-600">+7.2%</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Confidence Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">85%</div>
+                    <div className="text-sm text-gray-500">Based on model accuracy</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Risk Level</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600">Moderate</div>
+                    <div className="text-sm text-gray-500">Volatility: Medium</div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+
+            <TabsContent value="technical" className="mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Volume Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={historicalData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="volume" fill="#3b82f6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Price Momentum</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span>Momentum Score</span>
+                        <span className="text-green-600 font-bold">Strong Buy</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Trend Strength</span>
+                        <span className="text-blue-600 font-bold">85%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Volatility Index</span>
+                        <span className="font-bold">Medium</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="fundamental" className="mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Financial Ratios</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>P/E Ratio</span>
+                        <span className="font-bold">28.5</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>PEG Ratio</span>
+                        <span className="font-bold">1.8</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Price/Book</span>
+                        <span className="font-bold">15.2</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Debt/Equity</span>
+                        <span className="font-bold">1.2</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Growth Metrics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>Revenue Growth (YoY)</span>
+                        <span className="text-green-600 font-bold">+12.4%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>EPS Growth (YoY)</span>
+                        <span className="text-green-600 font-bold">+15.2%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Profit Margin</span>
+                        <span className="font-bold">25.3%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sentiment" className="mt-4">
+              <div className="space-y-4">
+                {/* Sentiment Analysis Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Market Sentiment Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={sentimentData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="positive" fill="#22c55e" stackId="sentiment" />
+                        <Bar dataKey="negative" fill="#ef4444" stackId="sentiment" />
+                        <Bar dataKey="neutral" fill="#94a3b8" stackId="sentiment" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* News Feed */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Latest News & Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {newsData.map((news, index) => (
+                        <div key={index} className="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-lg">
+                          <div className={`w-2 h-2 mt-2 rounded-full ${
+                            news.sentiment === 'positive' ? 'bg-green-500' :
+                            news.sentiment === 'negative' ? 'bg-red-500' : 'bg-gray-500'
+                          }`} />
+                          <div className="flex-1">
+                            <h4 className="font-medium">{news.title}</h4>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <span>{news.source}</span>
+                              <span>•</span>
+                              <span>{news.time}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Sidebar */}
