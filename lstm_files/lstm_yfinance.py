@@ -43,3 +43,7 @@ dataset = pd.DataFrame(dataset)
 data = dataset.values
 
 data.shape
+
+# MinMax scalar to normalise the values
+scaler = MinMaxScaler(feature_range= (0, 1))
+scaled_data = scaler.fit_transform(np.array(data).reshape(-1, 1))
