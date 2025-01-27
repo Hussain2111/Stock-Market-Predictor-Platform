@@ -86,12 +86,28 @@ const AnalysisPage = () => {
   // Add useEffect to fetch stock price
   useEffect(() => {
     const fetchStockPrice = async () => {
+      console.log('Starting fetch request...');
       try {
-        const response = await fetch('http://localhost:5000/stock-price');
+        const response = await fetch('http://127.0.0.1:5001/stock-price', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log('Response received:', response);
         const data = await response.json();
-        setStockPrice(data.stock_price);
+        console.log('Data parsed:', data);
+        
+        if (data.success) {
+          console.log('Setting stock price to:', data.stock_price);
+          setStockPrice(data.stock_price);
+        } else {
+          console.error('API returned error:', data.error);
+        }
       } catch (error) {
-        console.error('Error fetching stock price:', error);
+        console.error('Fetch failed:', error);
       }
     };
 

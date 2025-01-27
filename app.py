@@ -1,18 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-import yfinance as yf
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for development
 
 @app.route('/stock-price', methods=['GET'])
 def get_stock_price():
     try:
-        # Get AAPL stock info
-        ticker = yf.Ticker("AAPL")
-        
-        # Get the current price (last closing price)
-        current_price = ticker.info['regularMarketPrice']
+        # Placeholder value for testing
+        current_price = 150.25
         
         return jsonify({
             'stock_price': round(current_price, 2),
@@ -25,4 +21,4 @@ def get_stock_price():
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5001)  # Changed port to 5001
