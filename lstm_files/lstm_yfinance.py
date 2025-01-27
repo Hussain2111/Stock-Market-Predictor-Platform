@@ -66,3 +66,11 @@ y_train = []
 for i in range(14, len(train_data)):
     x_train.append(train_data[i-14:i, 0])
     y_train.append(train_data[i, 0])
+
+# Convert to numpy array
+x_train, y_train = np.array(x_train), np.array(y_train)
+
+# Reshaping the input
+x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+
+x_train.shape , y_train.shape
