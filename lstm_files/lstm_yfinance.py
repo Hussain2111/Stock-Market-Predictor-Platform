@@ -74,3 +74,15 @@ x_train, y_train = np.array(x_train), np.array(y_train)
 x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
 x_train.shape , y_train.shape
+
+model = Sequential([
+    LSTM(150, return_sequences= True, input_shape= (x_train.shape[1], 1)),
+    LSTM(64, return_sequences= False),
+    Dense(32),
+    Dense(16),
+    Dense(1)
+])
+
+model.compile(optimizer= 'adam', loss= 'mse')
+
+model.summary()
