@@ -35,7 +35,6 @@ def test_create_prediction(db_session):
     assert db_prediction.prediction_horizon == "1day"
 
 def test_get_predictions(db_session):
-    # Create multiple predictions
     predictions = [
         PredictionCreate(symbol="AAPL", predicted_price=150.0, confidence=0.85, prediction_horizon="1day"),
         PredictionCreate(symbol="AAPL", predicted_price=155.0, confidence=0.80, prediction_horizon="7day"),
@@ -45,13 +44,11 @@ def test_get_predictions(db_session):
     for pred in predictions:
         create_prediction(db_session, pred)
     
-    # Test getting predictions for AAPL
     aapl_predictions = get_predictions(db_session, "AAPL")
     assert len(aapl_predictions) == 2
     assert all(p.symbol == "AAPL" for p in aapl_predictions)
 
 def test_get_latest_prediction(db_session):
-    # Create predictions with different timestamps
     predictions = [
         PredictionCreate(symbol="MSFT", predicted_price=300.0, confidence=0.85, prediction_horizon="1day"),
         PredictionCreate(symbol="MSFT", predicted_price=310.0, confidence=0.82, prediction_horizon="1day")
@@ -61,4 +58,4 @@ def test_get_latest_prediction(db_session):
         create_prediction(db_session, pred)
     
     latest = get_latest_prediction(db_session, "MSFT", "1day")
-    assert latest.predicted_price == 310.0 
+    assert latest.predicted_price == 310.0
