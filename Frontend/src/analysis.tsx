@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
          ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
          Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
          BarChart, Bar, Legend } from 'recharts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
 // Mock data for the chart
@@ -121,38 +121,21 @@ const AnalysisPage = () => {
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
   const [timeframe, setTimeframe] = useState('1M');
-  const [stockPrice, setStockPrice] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('overview');
+  const [isAlertSet, setIsAlertSet] = useState(false);
 
-  // Add useEffect to fetch stock price
-  useEffect(() => {
-    const fetchStockPrice = async () => {
-      console.log('Starting fetch request...');
-      try {
-        const response = await fetch('http://127.0.0.1:5001/stock-price', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('Response received:', response);
-        const data = await response.json();
-        console.log('Data parsed:', data);
-        
-        if (data.success) {
-          console.log('Setting stock price to:', data.stock_price);
-          setStockPrice(data.stock_price);
-        } else {
-          console.error('API returned error:', data.error);
-        }
-      } catch (error) {
-        console.error('Fetch failed:', error);
-      }
-    };
+  const navigate = useNavigate();
 
-    fetchStockPrice();
-  }, []);
+  const Redirect_Search = () => {
+
+    // This will navigate to second component
+    navigate('/analysis');
+  };
+
+  const priceAlertThresholds = {
+    upper: 190,
+    lower: 175
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -217,7 +200,7 @@ const AnalysisPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">${stockPrice ?? 'Loading...'}</span>
+                  <span className="text-2xl font-bold">$182.63</span>
                   <span className="flex items-center text-green-500">
                     <ArrowUpRight className="h-4 w-4" />
                     +2.45%
