@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
          ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
          Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
@@ -113,9 +113,6 @@ const StockSidebar = () => {
   );
 };
 
-
-
-
 const AnalysisPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
@@ -123,11 +120,12 @@ const AnalysisPage = () => {
   const [timeframe, setTimeframe] = useState('1M');
   const [selectedTab, setSelectedTab] = useState('overview');
   const [isAlertSet, setIsAlertSet] = useState(false);
+  const [stockPrice, setStockPrice] = useState(null);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
   const Redirect_Search = () => {
-
     // This will navigate to second component
     navigate('/analysis');
   };
@@ -136,6 +134,33 @@ const AnalysisPage = () => {
     upper: 190,
     lower: 175
   };
+
+  useEffect(() => {
+    const fetchStockPrice = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5001/stock-price');
+        const data = await response.json();
+        
+        if (data.success) {
+          setStockPrice(data.stock_price);
+        } else {
+          setError(data.error);
+          console.error('API Error:', data.error);
+        }
+      } catch (error) {
+        console.error('Fetch Error:', error);
+        setError('Failed to fetch stock price');
+      }
+    };
+
+    fetchStockPrice();
+    
+    // Fetch price every 10 seconds
+    const interval = setInterval(fetchStockPrice, 10000);
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,7 +225,13 @@ const AnalysisPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">$182.63</span>
+                  {error ? (
+                    <span className="text-red-500">Error: {error}</span>
+                  ) : (
+                    <span className="text-2xl font-bold">
+                      ${stockPrice !== null ? stockPrice.toFixed(2) : 'Loading...'}
+                    </span>
+                  )}
                   <span className="flex items-center text-green-500">
                     <ArrowUpRight className="h-4 w-4" />
                     +2.45%
