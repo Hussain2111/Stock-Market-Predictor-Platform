@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
          ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
          Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
          BarChart, Bar, Legend } from 'recharts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { useNavigate } from 'react-router-dom';
 
 // Mock data for the chart

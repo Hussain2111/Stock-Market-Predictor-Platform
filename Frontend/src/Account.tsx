@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../components/ui/dialog';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
+} from './dialog';
+import { Input } from './input';
+import { Button } from './button';
 
 const SignInPopup = () => {
   const [showPassword, setShowPassword] = useState(false);

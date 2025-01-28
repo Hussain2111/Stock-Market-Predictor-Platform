@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, ArrowRight, BarChart2, Target, TrendingUp, ChevronRight, Award, ChevronDown, Settings, User, LogIn} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle} from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle} from './card';
 import { useNavigate } from 'react-router-dom';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
