@@ -13,10 +13,42 @@ const HomePage = () => {
 
   const navigate = useNavigate();
 
-  const Redirect_Search = () => {
+  const analyzeStock = async (symbol: string) => {
+    try {
+      console.log('Analyzing stock:', symbol);
+      
+      // Store the ticker and navigate immediately
+      localStorage.setItem('currentTicker', symbol.toUpperCase().trim());
+      navigate('/analysis');
+      
+      // Send the analysis request in the background
+      fetch('http://localhost:5001/analyze-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ticker: symbol.toUpperCase().trim() 
+        })
+      }).then(response => response.json())
+        .then(data => {
+          console.log('Server response:', data);
+        })
+        .catch(error => {
+          console.error('Analysis error:', error);
+        });
+        
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
-    // This will navigate to second component
-    navigate('/analysis');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery) {
+      console.log('Submitting search for:', searchQuery);
+      analyzeStock(searchQuery);
+    }
   };
 
   const Redirect_Settings = () => {
@@ -134,20 +166,26 @@ const HomePage = () => {
               <p className="text-xl text-blue-100">
                 Make informed investment decisions with our advanced AI-powered stock prediction platform
               </p>
-              <form className="relative mt-8">
+              <form 
+                onSubmit={handleSubmit} 
+                className="relative mt-8"
+              >
                 <div className="relative">
                   <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Enter any stock symbol (e.g., AAPL)"
-                    className="w-full pl-12 pr-4 py-3 rounded-lg text-white"
+                    className="w-full pl-12 pr-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-400"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    required
                   />
                 </div>
-                <button onClick={Redirect_Search} className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                  Analyze Stock <ArrowRight className="h-5 w-5" 
-                  />
+                <button 
+                  type="submit"
+                  className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  Analyze Stock <ArrowRight className="h-5 w-5" />
                 </button>
               </form>
             </div>
