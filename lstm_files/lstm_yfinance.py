@@ -7,6 +7,7 @@ import yfinance as yf
 sns.set_style('whitegrid')
 import matplotlib.pyplot as plt
 plt.style.use("fivethirtyeight")
+import os
 
 import keras
 from keras.models import Sequential
@@ -45,7 +46,10 @@ plt.xlabel(None)
 plt.title(f"Opening & Closing Price of {ticker}")
 plt.legend(['Open Price', 'Close Price'])
 plt.tight_layout()
-plt.show()
+# Save the first plot
+first_plot_path = os.path.join(os.path.dirname(__file__), 'price_history.png')
+plt.savefig(first_plot_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 # Preprocessing of the dataset
 dataset = df["Close"]
@@ -80,15 +84,14 @@ x_train, y_train = np.array(x_train), np.array(y_train)
 # Reshaping the input
 x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
-model = Sequential([
-    LSTM(150, return_sequences= True, input_shape= (x_train.shape[1], 1)),
-    LSTM(64, return_sequences= False),
-    Dense(32),
-    Dense(16),
-    Dense(1)
-])
+model = Sequential()
+model.add(LSTM(150, return_sequences=True, input_shape=(14, 1)))
+model.add(LSTM(64, return_sequences=False))
+model.add(Dense(32))
+model.add(Dense(16))
+model.add(Dense(1))
 
-model.compile(optimizer= 'adam', loss= 'mse')
+model.compile(optimizer='adam', loss='mse')
 
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
@@ -100,7 +103,9 @@ plt.legend(['Mean Squared Error','Mean Absolute Error'])
 plt.title("Losses")
 plt.xlabel("epochs")
 plt.ylabel("loss")
-plt.show()
+loss_plot_path = os.path.join(os.path.dirname(__file__), 'training_loss.png')
+plt.savefig(loss_plot_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 # Creating a testing set with 14 time-steps and 1 output
 x_test = []
@@ -128,12 +133,18 @@ train = dataset.iloc[:train_size , 0:1]
 test = dataset.iloc[train_size: , 0:1]
 test['Predictions'] = predictions
 
-plt.figure(figsize= (30, 15))
-plt.title(f'{ticker} Close Stock Price Prediction', fontsize= 18)
-plt.xlabel('Date', fontsize= 18)
-plt.ylabel('Close Price', fontsize= 18)
-plt.plot(train['Close'], linewidth= 3)
-plt.plot(test['Close'], linewidth= 3)
-plt.plot(test["Predictions"], linewidth= 3)
+plt.figure(figsize=(30, 15))
+plt.title(f'{ticker} Close Stock Price Prediction', fontsize=18)
+plt.xlabel('Date', fontsize=18)
+plt.ylabel('Close Price', fontsize=18)
+plt.plot(train['Close'], linewidth=3)
+plt.plot(test['Close'], linewidth=3)
+plt.plot(test["Predictions"], linewidth=3)
 plt.legend(['Train', 'Test', 'Predictions'])
-plt.show()
+
+# Save the plot to a file
+save_path = os.path.join(os.path.dirname(__file__), 'prediction_plot.png')
+plt.savefig(save_path, bbox_inches='tight', dpi=300)
+plt.close()  # Close the figure to free memory
+
+print(f"Prediction plot saved to: {save_path}")
