@@ -90,3 +90,13 @@ df['EFFR'] = df['EFFR'].fillna(0)
 # plt.tight_layout()
 # plt.show()
 
+dataset = df[['Open', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
+close_predictions = df[['Close']]
+
+dataset = pd.DataFrame(dataset)
+close_predictions = pd.DataFrame(close_predictions)
+
+data = dataset.values
+close = close_predictions.values
+
+data.shape
