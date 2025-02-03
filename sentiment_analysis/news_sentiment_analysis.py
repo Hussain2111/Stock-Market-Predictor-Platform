@@ -29,3 +29,15 @@ news = ticker.get_news()
 for i in range(10):
     news_data += news[i].get('content').get('summary')
 
+def give_sentiment(prompt_text, model_name):
+    """
+    Function to pass the prompt and news to the model and get a response.
+    """
+    stream = ollama.chat(
+        model=model_name,
+        messages=[{'role': 'user', 'content': prompt_text}],
+        stream=True,
+    )
+    for chunk in stream:
+        print(chunk['message']['content'], end='')
+    print()
