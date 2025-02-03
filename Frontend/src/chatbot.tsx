@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Send, MessageSquare } from "lucide-react";
+import { Send, MessageSquare, Loader } from "lucide-react";
 
-// Define interfaces for type safety
 interface StockData {
   priceTarget: number;
   confidenceScore: number;
@@ -36,6 +35,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -46,9 +46,10 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       isBot: false,
     };
     setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsLoading(true);
 
     try {
-      console.log("Sending request to chat endpoint...");
       const response = await fetch("http://localhost:5001/chat", {
         method: "POST",
         headers: {
@@ -61,37 +62,23 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
         }),
       });
 
-      console.log("Received response:", response);
       const data = await response.json();
-      console.log("Parsed data:", data);
 
-      if (data.success) {
-        const botResponse: Message = {
-          id: messages.length + 2,
-          text: data.response,
-          isBot: true,
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      } else {
-        const errorMessage: Message = {
-          id: messages.length + 2,
-          text: "Sorry, I encountered an error. Please try again.",
-          isBot: true,
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-        console.error("Error:", data.error);
-      }
-    } catch (error) {
-      const errorMessage: Message = {
+      const botResponse: Message = {
         id: messages.length + 2,
-        text: "Sorry, I couldn't connect to the server. Please try again.",
+        text: data.success ? data.response : "Sorry, I encountered an error.",
         isBot: true,
       };
-      setMessages((prev) => [...prev, errorMessage]);
-      console.error("Error:", error);
+
+      setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { id: messages.length + 2, text: "Couldn't connect to server.", isBot: true },
+      ]);
     }
 
-    setInputMessage("");
+    setIsLoading(false);
   };
 
   return (
@@ -114,6 +101,11 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
             {msg.text}
           </div>
         ))}
+        {isLoading && (
+          <div className="p-3 rounded-lg bg-blue-50 text-blue-800 flex items-center">
+            <Loader className="h-4 w-4 animate-spin mr-2" /> Thinking...
+          </div>
+        )}
       </div>
 
       <div className="flex items-center">
@@ -124,10 +116,12 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Ask about the stock analysis..."
           className="flex-1 p-2 border rounded-l-lg"
+          disabled={isLoading}
         />
         <button
           onClick={handleSendMessage}
           className="bg-blue-500 text-white p-2 rounded-r-lg"
+          disabled={isLoading}
         >
           <Send className="h-5 w-5" />
         </button>
