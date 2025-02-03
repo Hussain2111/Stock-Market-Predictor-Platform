@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader, AlertTriangle } from "lucide-react";
+import { Send, MessageSquare, Loader, AlertTriangle, Type } from "lucide-react";
 
 interface StockData {
   priceTarget: number;
@@ -25,6 +25,7 @@ interface Message {
   text: string;
   isBot: boolean;
   isError?: boolean;
+  isTyping?: boolean;
 }
 
 const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
@@ -50,6 +51,15 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
     setInputMessage("");
     setIsLoading(true);
 
+    // Simulating "typing..." effect
+    const typingIndicator: Message = {
+      id: messages.length + 2,
+      text: "Typing...",
+      isBot: true,
+      isTyping: true,
+    };
+    setMessages((prev) => [...prev, typingIndicator]);
+
     try {
       const response = await fetch("http://localhost:5001/chat", {
         method: "POST",
@@ -67,26 +77,33 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
 
       const data = await response.json();
 
-      const botResponse: Message = {
-        id: messages.length + 2,
-        text: data.success ? data.response : "Sorry, I encountered an error.",
-        isBot: true,
-      };
-
-      setMessages((prev) => [...prev, botResponse]);
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev
+            .filter((msg) => !msg.isTyping) // Remove typing indicator
+            .concat({
+              id: messages.length + 2,
+              text: data.success ? data.response : "Sorry, I encountered an error.",
+              isBot: true,
+            })
+        );
+        setIsLoading(false);
+      }, 1500); // Delay bot response for 1.5 seconds for a natural feel
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 2,
-          text: "⚠️ Error: Couldn't connect to server. Please try again.",
-          isBot: true,
-          isError: true,
-        },
-      ]);
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev
+            .filter((msg) => !msg.isTyping) // Remove typing indicator
+            .concat({
+              id: messages.length + 2,
+              text: "⚠️ Error: Couldn't connect to server. Please try again.",
+              isBot: true,
+              isError: true,
+            })
+        );
+        setIsLoading(false);
+      }, 1500);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -108,15 +125,11 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
                 : "bg-gray-100 text-gray-800 self-end"
             } flex items-center`}
           >
+            {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
             {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
             {msg.text}
           </div>
         ))}
-        {isLoading && (
-          <div className="p-3 rounded-lg bg-blue-50 text-blue-800 flex items-center">
-            <Loader className="h-4 w-4 animate-spin mr-2" /> Thinking...
-          </div>
-        )}
       </div>
 
       <div className="flex items-center">
