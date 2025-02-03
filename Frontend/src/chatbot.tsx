@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock } from "lucide-react";
+import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock, RefreshCcw } from "lucide-react";
 
 interface StockData {
   priceTarget: number;
@@ -27,12 +27,15 @@ interface Message {
   timestamp: string;
   isError?: boolean;
   isTyping?: boolean;
+  isRetry?: boolean;
 }
 
 const formatTimestamp = (): string => {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
 };
+
+const MAX_RETRIES = 2;
 
 const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -45,6 +48,62 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchBotResponse = async (message: string, attempt = 0) => {
+    try {
+      const response = await fetch("http://localhost:5001/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          symbol: "AAPL",
+          userId: "user123",
+        }),
+      });
+
+      if (!response.ok) throw new Error("API request failed");
+
+      const data = await response.json();
+
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
+          {
+            id: messages.length + 2,
+            text: data.success ? data.response : "Sorry, I encountered an error.",
+            isBot: true,
+            timestamp: formatTimestamp(),
+          },
+        ]);
+        setIsLoading(false);
+        setRetryCount(0);
+      }, 2000);
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => {
+          fetchBotResponse(message, attempt + 1);
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
+            {
+              id: messages.length + 2,
+              text: "⚠️ Error: Couldn't connect to server. Tap to retry.",
+              isBot: true,
+              isError: true,
+              isRetry: true,
+              timestamp: formatTimestamp(),
+            },
+          ]);
+          setIsLoading(false);
+        }, 2000);
+      }
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -69,49 +128,14 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
     };
     setMessages((prev) => [...prev, typingIndicator]);
 
-    try {
-      const response = await fetch("http://localhost:5001/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: inputMessage,
-          symbol: "AAPL",
-          userId: "user123",
-        }),
-      });
+    fetchBotResponse(inputMessage);
+  };
 
-      if (!response.ok) throw new Error("API request failed");
-
-      const data = await response.json();
-
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator only before adding bot response
-          {
-            id: messages.length + 2,
-            text: data.success ? data.response : "Sorry, I encountered an error.",
-            isBot: true,
-            timestamp: formatTimestamp(),
-          },
-        ]);
-        setIsLoading(false);
-      }, 2000); // Increased delay for more natural flow
-    } catch (error) {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
-          {
-            id: messages.length + 2,
-            text: "⚠️ Error: Couldn't connect to server. Please try again.",
-            isBot: true,
-            isError: true,
-            timestamp: formatTimestamp(),
-          },
-        ]);
-        setIsLoading(false);
-      }, 2000);
+  const handleRetry = () => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.isError) {
+      setMessages((prev) => prev.slice(0, -1)); // Remove last error message
+      fetchBotResponse(lastMessage.text, 0);
     }
   };
 
@@ -128,15 +152,17 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
             key={msg.id}
             className={`p-3 rounded-lg ${
               msg.isError
-                ? "bg-red-50 text-red-800 border border-red-400"
+                ? "bg-red-50 text-red-800 border border-red-400 cursor-pointer hover:bg-red-100"
                 : msg.isBot
                 ? "bg-blue-50 text-blue-800"
                 : "bg-gray-100 text-gray-800 self-end"
             } flex flex-col`}
+            onClick={msg.isRetry ? handleRetry : undefined}
           >
             <div className="flex items-center">
               {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
               {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
+              {msg.isRetry && <RefreshCcw className="h-4 w-4 mr-2 text-red-600 animate-spin" />}
               {msg.text}
             </div>
             <div className="text-xs text-gray-500 flex items-center mt-1">
