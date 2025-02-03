@@ -223,3 +223,17 @@ plt.ylabel('Close Price', fontsize= 18)
 plt.plot(df['Close'], linewidth= 3)
 plt.plot(test["Predicted Close"], linewidth= 3)
 plt.legend(['Test Close', 'Predicted Close'])
+
+# CALCULATING THE AVERAGE DIFFERENCE BETWEEN CLOSING PRICE
+# AND PREDICTED CLOSING PRICE
+averages = np.array([])
+
+for i in range(test.shape[0]):
+    row = test.iloc[i]
+    avg = abs(row.iloc[0] - row.iloc[1])
+    averages = np.append(averages, avg)
+
+average_var = np.average(averages)
+
+print("The average value that the price deviates by is: {average_var}"
+      .format(average_var = average_var))
