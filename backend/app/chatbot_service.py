@@ -61,3 +61,47 @@ class ChatbotService:
         except Exception as e:
             return f"I apologize, but I encountered an error: {str(e)}"
 
+    def process_message(self, user_id: str, message: str, stock_symbol: str) -> Dict:
+        """Process a message and return a response with stock data and news"""
+        try:
+            # Get stock data
+            stock = yf.Ticker(stock_symbol)
+            stock_data = {
+                'price': stock.info.get('currentPrice'),
+                'marketCap': stock.info.get('marketCap'),
+                'volume': stock.info.get('volume'),
+                'change': stock.info.get('regularMarketChangePercent')
+            }
+            
+            # Get response
+            response = self.generate_response(message, stock_symbol, stock_data)
+            
+            # Get news
+            news = self.get_stock_news(stock_symbol)
+            
+            # Update context
+            if user_id not in self.context:
+                self.context[user_id] = []
+            
+            self.context[user_id].append({
+                'message': message,
+                'response': response,
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            return {
+                'response': response,
+                'news': news,
+                'stock_data': stock_data,
+                'success': True
+            }
+            
+        except Exception as e:
+            return {
+                'error': str(e),
+                'success': False
+            }
+
+    def get_conversation_history(self, user_id: str) -> List[Dict]:
+        """Get conversation history for a user"""
+        return self.context.get(user_id, []) 
