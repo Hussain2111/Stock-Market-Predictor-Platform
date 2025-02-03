@@ -74,3 +74,19 @@ df = df.set_index('Date')
 
 df['EFFR'] = df['EFFR'].fillna(0)
 
+# NOTE: OPTIONAL PLOT TO CHECK ALL THE DATA IS PULLED ACCURATELY
+#
+# plt.figure(figsize=(15, 6))
+# df['Open'].plot()
+# df['Close'].plot()
+# df['vix'].plot()
+# df['usdx'].plot()
+# df['UNRATE'].plot()
+# df['UMCSENT'].plot()
+# df['EFFR'].plot()
+# plt.ylabel(None)
+# plt.xlabel(None)
+# plt.legend(['Open', 'Close Price', 'VIX', 'USDX', 'UNRATE', 'UMCSENT', 'EFFR'])
+# plt.tight_layout()
+# plt.show()
+
