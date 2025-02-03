@@ -55,3 +55,6 @@ vix_temp = vix_temp['Close']
 usdx_temp = pd.read_csv('data/usdx_dataset.csv')
 usdx_temp = usdx_temp['Close']
 
+umcsent_temp = pd.read_csv('data/UMCSENT.csv')
+umcsent_temp = umcsent_temp['UMCSENT']
+
