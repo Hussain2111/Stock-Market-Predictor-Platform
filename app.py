@@ -160,6 +160,19 @@ def chat():
             'success': False
         }), 500
 
+@app.route('/chat/history/<user_id>', methods=['GET'])
+def get_chat_history(user_id):
+    try:
+        history = chatbot_service.get_conversation_history(user_id)
+        return jsonify({
+            'history': history,
+            'success': True
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
 
 
 if __name__ == '__main__':
