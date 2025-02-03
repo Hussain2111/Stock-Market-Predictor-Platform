@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader, AlertTriangle, Type } from "lucide-react";
+import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock } from "lucide-react";
 
 interface StockData {
   priceTarget: number;
@@ -24,9 +24,15 @@ interface Message {
   id: number;
   text: string;
   isBot: boolean;
+  timestamp: string;
   isError?: boolean;
   isTyping?: boolean;
 }
+
+const formatTimestamp = (): string => {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+};
 
 const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -34,6 +40,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       id: 1,
       text: "Hi! I'm your AI stock assistant. Ask me anything about Apple's stock performance.",
       isBot: true,
+      timestamp: formatTimestamp(),
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
@@ -46,6 +53,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       id: messages.length + 1,
       text: inputMessage,
       isBot: false,
+      timestamp: formatTimestamp(),
     };
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
@@ -56,6 +64,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       id: messages.length + 2,
       text: "Typing...",
       isBot: true,
+      timestamp: formatTimestamp(),
       isTyping: true,
     };
     setMessages((prev) => [...prev, typingIndicator]);
@@ -85,10 +94,11 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
               id: messages.length + 2,
               text: data.success ? data.response : "Sorry, I encountered an error.",
               isBot: true,
+              timestamp: formatTimestamp(),
             })
         );
         setIsLoading(false);
-      }, 1500); // Delay bot response for 1.5 seconds for a natural feel
+      }, 1500); // Delay bot response for 1.5 seconds
     } catch (error) {
       setTimeout(() => {
         setMessages((prev) =>
@@ -99,6 +109,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
               text: "⚠️ Error: Couldn't connect to server. Please try again.",
               isBot: true,
               isError: true,
+              timestamp: formatTimestamp(),
             })
         );
         setIsLoading(false);
@@ -123,11 +134,17 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
                 : msg.isBot
                 ? "bg-blue-50 text-blue-800"
                 : "bg-gray-100 text-gray-800 self-end"
-            } flex items-center`}
+            } flex flex-col`}
           >
-            {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
-            {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
-            {msg.text}
+            <div className="flex items-center">
+              {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
+              {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
+              {msg.text}
+            </div>
+            <div className="text-xs text-gray-500 flex items-center mt-1">
+              <Clock className="h-3 w-3 mr-1" />
+              {msg.timestamp}
+            </div>
           </div>
         ))}
       </div>
