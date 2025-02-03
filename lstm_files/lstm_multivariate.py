@@ -116,3 +116,18 @@ train_y = scaled_close[ :train_size, : ]
 
 test_data = scaled_data[ train_size-TIMESTEPS: , : ]
 test_y = scaled_close[ train_size-TIMESTEPS: , : ]
+
+# Creating a Training set with n time-steps and 1 output
+x_train = []
+y_train = []
+
+for i in range(TIMESTEPS, len(train_data)):
+    x_train.append(train_data[i-TIMESTEPS:i, :])
+    y_train.append(train_y[i, 0])
+
+# Convert to numpy array
+x_train, y_train = np.array(x_train), np.array(y_train)
+
+# Reshaping the input to LSTM format of (ROWS X TIMESTEPS X FEATURES)
+x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], FEATURES))
+
