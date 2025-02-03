@@ -129,5 +129,17 @@ for i in range(TIMESTEPS, len(train_data)):
 x_train, y_train = np.array(x_train), np.array(y_train)
 
 # Reshaping the input to LSTM format of (ROWS X TIMESTEPS X FEATURES)
-x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], FEATURES))
+x_train = np.reshape(x_train, (x_train.shape[0], TIMESTEPS, FEATURES))
+
+# Creating a Testing set with n time-steps and 1 output
+x_test = []
+y_test = []
+
+for i in range(TIMESTEPS, len(test_data)):
+    x_test.append(test_data[i-TIMESTEPS:i, :])
+    y_test.append(test_y[i, 0])
+    
+x_test, y_test = np.array(x_test), np.array(y_test)
+
+x_test = np.reshape(x_test, (x_test.shape[0], TIMESTEPS, FEATURES))
 
