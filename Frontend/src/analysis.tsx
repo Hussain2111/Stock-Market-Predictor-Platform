@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
          ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
          Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
          BarChart, Bar, Legend } from 'recharts';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Alert, AlertDescription } from './components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { useNavigate } from 'react-router-dom';
+import StockChatbot from './chatbot';
 
 // Mock data for the chart
 const historicalData = Array.from({ length: 30 }, (_, i) => ({
@@ -46,75 +47,6 @@ const newsData = [
     time: "6 hours ago"
   }
 ];
-
-const StockSidebar = () => {
-  return (
-    <aside className="w-1/4 p-4 border-l bg-gray-50">
-      {/* Company Logo and Info */}
-      <div className="flex items-center mb-4">
-        <img
-          src="https://via.placeholder.com/50"
-          alt="Company Logo"
-          className="w-12 h-12 rounded-full"
-        />
-        <div className="ml-2">
-          <h2 className="text-xl font-bold">AAPL / US0378331005</h2>
-          <p className="text-sm text-gray-500">Apple Inc.</p>
-        </div>
-      </div>
-
-      {/* Market Overview */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Market Overview</h3>
-        <ul className="mt-2 text-sm">
-          <li>Market Cap: <span className="font-bold">$3350.14B</span></li>
-          <li>Short Interest: <span className="font-bold">1.04%</span></li>
-          <li>Volume: <span className="font-bold">53,846,082</span></li>
-          <li>Dividend %: <span className="font-bold">0.46%</span></li>
-        </ul>
-      </div>
-
-      {/* Performance Metrics */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Performance</h3>
-        <ul className="mt-2 text-sm">
-          <li>Perf Week: <span className="text-red-500">-2.40%</span></li>
-          <li>Perf Quarter: <span className="text-red-500">-5.55%</span></li>
-          <li>Perf Year: <span className="text-red-500">-14.14%</span></li>
-          <li>Perf YTD: <span className="text-red-500">-11.04%</span></li>
-        </ul>
-      </div>
-
-      {/* Technical Indicators */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Technical Indicators</h3>
-        <ul className="mt-2 text-sm">
-          <li>52W Range: <span className="font-bold">164.07 - 260.10</span></li>
-          <li>52W High: <span className="text-red-500">-14.35%</span></li>
-          <li>52W Low: <span className="text-green-500">35.78%</span></li>
-          <li>Avg Volume: <span className="font-bold">47.46M</span></li>
-          <li>Beta: <span className="font-bold">1.18</span></li>
-          <li>ATR: <span className="font-bold">5.26</span></li>
-          <li>Volatility: <span className="font-bold">1.99% / 1.90%</span></li>
-        </ul>
-      </div>
-
-      {/* Profile Summary */}
-      <div>
-        <h3 className="font-bold text-lg">Apple Company Profile Summary</h3>
-        <p className="mt-2 text-sm text-gray-700">
-          Apple Inc. designs and markets tech products like iPhones, Macs, iPads, wearables, and accessories. It offers services via the App Store, AppleCare, and cloud platforms.
-        </p>
-        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
-          Full Company Profile
-        </button>
-      </div>
-    </aside>
-  );
-};
-
-
-
 
 const AnalysisPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -438,7 +370,7 @@ const AnalysisPage = () => {
         </div>
 
         {/* Sidebar */}
-        <StockSidebar />
+       <StockChatbot/>
       </main>
     </div>
   );
