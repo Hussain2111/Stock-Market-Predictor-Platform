@@ -58,3 +58,6 @@ usdx_temp = usdx_temp['Close']
 umcsent_temp = pd.read_csv('data/UMCSENT.csv')
 umcsent_temp = umcsent_temp['UMCSENT']
 
+unrate_temp = pd.read_csv('data/UNRATE.csv')
+unrate_temp = unrate_temp['UNRATE']
+
