@@ -105,3 +105,14 @@ scaler = MinMaxScaler()
 scaled_data = scaler.fit_transform(data)
 scaled_close = scaler.fit_transform(close)
 
+# 80% to Train , 20% to Test
+train_size = int(len(data)*.80)
+test_size = len(data) - train_size
+
+print("Train Size :",train_size,"Test Size :",test_size)
+
+train_data = scaled_data[ :train_size , : ]
+train_y = scaled_close[ :train_size, : ]
+
+test_data = scaled_data[ train_size-TIMESTEPS: , : ]
+test_y = scaled_close[ train_size-TIMESTEPS: , : ]
