@@ -163,3 +163,15 @@ history = model.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= c
 # Saving the model weights and passsing to another model
 saved_weights = model.get_weights()
 
+# MODEL 2 DEFINITION AND TRAINING
+model_learned = Sequential([
+    LSTM(150, return_sequences= True, input_shape= (TIMESTEPS, FEATURES)),
+    LSTM(64, return_sequences= False),
+    Dense(32),
+    Dense(16),
+    Dense(1)
+])
+
+model_learned.set_weights(saved_weights)
+
+model_learned.compile(optimizer= 'adam', loss= 'mse')
