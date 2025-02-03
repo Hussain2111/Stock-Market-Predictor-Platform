@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock, RefreshCcw } from "lucide-react";
+import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock, RefreshCcw, Smile, Meh, Frown } from "lucide-react";
 
 interface StockData {
   priceTarget: number;
@@ -28,6 +28,7 @@ interface Message {
   isError?: boolean;
   isTyping?: boolean;
   isRetry?: boolean;
+  sentiment?: "positive" | "neutral" | "negative";
 }
 
 const formatTimestamp = (): string => {
@@ -48,7 +49,6 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
 
   const fetchBotResponse = async (message: string, attempt = 0) => {
     try {
@@ -76,10 +76,10 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
             text: data.success ? data.response : "Sorry, I encountered an error.",
             isBot: true,
             timestamp: formatTimestamp(),
+            sentiment: data.sentiment || "neutral",
           },
         ]);
         setIsLoading(false);
-        setRetryCount(0);
       }, 2000);
     } catch (error) {
       if (attempt < MAX_RETRIES) {
@@ -89,7 +89,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       } else {
         setTimeout(() => {
           setMessages((prev) => [
-            ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
+            ...prev.filter((msg) => !msg.isTyping),
             {
               id: messages.length + 2,
               text: "⚠️ Error: Couldn't connect to server. Tap to retry.",
@@ -163,6 +163,9 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
               {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
               {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
               {msg.isRetry && <RefreshCcw className="h-4 w-4 mr-2 text-red-600 animate-spin" />}
+              {msg.sentiment === "positive" && <Smile className="h-4 w-4 mr-2 text-green-600" />}
+              {msg.sentiment === "neutral" && <Meh className="h-4 w-4 mr-2 text-gray-600" />}
+              {msg.sentiment === "negative" && <Frown className="h-4 w-4 mr-2 text-red-600" />}
               {msg.text}
             </div>
             <div className="text-xs text-gray-500 flex items-center mt-1">
