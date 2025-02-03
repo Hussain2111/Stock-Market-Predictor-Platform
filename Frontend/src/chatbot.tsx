@@ -59,7 +59,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulating "typing..." effect
+    // Show Typing Indicator
     const typingIndicator: Message = {
       id: messages.length + 2,
       text: "Typing...",
@@ -87,33 +87,31 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
       const data = await response.json();
 
       setTimeout(() => {
-        setMessages((prev) =>
-          prev
-            .filter((msg) => !msg.isTyping) // Remove typing indicator
-            .concat({
-              id: messages.length + 2,
-              text: data.success ? data.response : "Sorry, I encountered an error.",
-              isBot: true,
-              timestamp: formatTimestamp(),
-            })
-        );
+        setMessages((prev) => [
+          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator only before adding bot response
+          {
+            id: messages.length + 2,
+            text: data.success ? data.response : "Sorry, I encountered an error.",
+            isBot: true,
+            timestamp: formatTimestamp(),
+          },
+        ]);
         setIsLoading(false);
-      }, 1500); // Delay bot response for 1.5 seconds
+      }, 2000); // Increased delay for more natural flow
     } catch (error) {
       setTimeout(() => {
-        setMessages((prev) =>
-          prev
-            .filter((msg) => !msg.isTyping) // Remove typing indicator
-            .concat({
-              id: messages.length + 2,
-              text: "⚠️ Error: Couldn't connect to server. Please try again.",
-              isBot: true,
-              isError: true,
-              timestamp: formatTimestamp(),
-            })
-        );
+        setMessages((prev) => [
+          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
+          {
+            id: messages.length + 2,
+            text: "⚠️ Error: Couldn't connect to server. Please try again.",
+            isBot: true,
+            isError: true,
+            timestamp: formatTimestamp(),
+          },
+        ]);
         setIsLoading(false);
-      }, 1500);
+      }, 2000);
     }
   };
 
