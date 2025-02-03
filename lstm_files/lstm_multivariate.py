@@ -159,3 +159,7 @@ model.summary()
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
 history = model.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= callbacks )
+
+# Saving the model weights and passsing to another model
+saved_weights = model.get_weights()
+
