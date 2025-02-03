@@ -28,4 +28,36 @@ class ChatbotService:
             print(f"Error fetching news for {symbol}: {e}")
             return []
 
-    
+    def generate_response(self, message: str, stock_symbol: str, stock_data: Dict) -> str:
+        """Generate a response using the LLM model with stock context and news"""
+        
+        # Get recent news
+        news = self.get_stock_news(stock_symbol)
+        news_context = "\n".join([f"- {item['title']} ({item['published']})" for item in news])
+        
+        # Create a comprehensive prompt
+        prompt = f"""
+        As a stock market expert assistant analyzing {stock_symbol}, with the following data:
+        - Current Price: ${stock_data.get('price', 'N/A')}
+        - Market Cap: ${stock_data.get('marketCap', 'N/A')}
+        - Volume: {stock_data.get('volume', 'N/A')}
+        - Daily Change: {stock_data.get('change', 'N/A')}%
+
+        Recent News:
+        {news_context}
+
+        User question: {message}
+
+        Provide a concise, professional response focusing on the stock analysis and relevant news.
+        """
+        
+        try:
+            response = ollama.chat(
+                model=self.model,
+                messages=[{'role': 'user', 'content': prompt}],
+                stream=False
+            )
+            return response['message']['content']
+        except Exception as e:
+            return f"I apologize, but I encountered an error: {str(e)}"
+
