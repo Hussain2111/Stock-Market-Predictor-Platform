@@ -182,3 +182,11 @@ model.summary()
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
 history2 = model_learned.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= callbacks )
 
+# Plotting the loss of MODEL 1
+plt.plot(history.history["loss"])
+plt.legend(['Mean Squared Error','Mean Absolute Error'])
+plt.title("Losses")
+plt.xlabel("epochs")
+plt.ylabel("loss")
+plt.show()
+
