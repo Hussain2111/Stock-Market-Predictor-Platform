@@ -49,3 +49,6 @@ df = yf.download(STOCK,
 
 df.to_csv('data/test_dataset.csv')
 
+vix_temp = pd.read_csv('data/vix_dataset.csv')
+vix_temp = vix_temp['Close']
+
