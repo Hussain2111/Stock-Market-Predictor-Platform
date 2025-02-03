@@ -52,3 +52,6 @@ df.to_csv('data/test_dataset.csv')
 vix_temp = pd.read_csv('data/vix_dataset.csv')
 vix_temp = vix_temp['Close']
 
+usdx_temp = pd.read_csv('data/usdx_dataset.csv')
+usdx_temp = usdx_temp['Close']
+
