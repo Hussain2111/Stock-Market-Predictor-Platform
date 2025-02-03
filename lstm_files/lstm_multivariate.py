@@ -71,3 +71,6 @@ df['UNRATE'] = unrate_temp
 df['UMCSENT'] = umcsent_temp
 df['EFFR'] = effr_temp
 df = df.set_index('Date')
+
+df['EFFR'] = df['EFFR'].fillna(0)
+
