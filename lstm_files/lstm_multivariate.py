@@ -210,3 +210,6 @@ y_test = scaler.inverse_transform(np.concatenate([y_test.reshape(-1, 1),
                                                   np.zeros((y_test.shape[0], features-1))], 
                                                   axis=1))[:, 0]
 
+RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
+RMSE
+
