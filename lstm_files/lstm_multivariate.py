@@ -190,3 +190,10 @@ plt.xlabel("epochs")
 plt.ylabel("loss")
 plt.show()
 
+# Plotting the loss of MODEL 2
+plt.plot(history2.history["loss"])
+plt.legend(['Mean Squared Error','Mean Absolute Error'])
+plt.title("Losses")
+plt.xlabel("epochs")
+plt.ylabel("loss")
+plt.show()
