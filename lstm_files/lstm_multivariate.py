@@ -64,3 +64,10 @@ unrate_temp = unrate_temp['UNRATE']
 effr_temp = pd.read_csv('data/EFFR.csv')
 effr_temp = effr_temp['EFFR']
 
+df = pd.read_csv('data/test_dataset.csv')
+df['vix'] = vix_temp
+df['usdx'] = usdx_temp
+df['UNRATE'] = unrate_temp
+df['UMCSENT'] = umcsent_temp
+df['EFFR'] = effr_temp
+df = df.set_index('Date')
