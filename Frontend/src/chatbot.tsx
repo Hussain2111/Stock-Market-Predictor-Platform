@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader, AlertTriangle, Type, Clock, RefreshCcw, Smile, Meh, Frown } from "lucide-react";
+import { Send, MessageSquare } from "lucide-react";
 
+// Define interfaces for type safety
 interface StockData {
   priceTarget: number;
   confidenceScore: number;
@@ -24,119 +25,115 @@ interface Message {
   id: number;
   text: string;
   isBot: boolean;
-  timestamp: string;
-  isError?: boolean;
-  isTyping?: boolean;
-  isRetry?: boolean;
-  sentiment?: "positive" | "neutral" | "negative";
 }
-
-const formatTimestamp = (): string => {
-  const now = new Date();
-  return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
-};
-
-const MAX_RETRIES = 2;
 
 const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI stock assistant. Ask me anything about Apple's stock performance.",
+      text: "Hi! I'm your AI stock analysis assistant. Ask me anything about Apple's stock performance.",
       isBot: true,
-      timestamp: formatTimestamp(),
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchBotResponse = async (message: string, attempt = 0) => {
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage: Message = {
+      id: messages.length + 1,
+      text: inputMessage,
+      isBot: false,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Add loading message
+    const loadingMessage: Message = {
+      id: messages.length + 2,
+      text: "Thinking...",
+      isBot: true,
+    };
+    setMessages((prev) => [...prev, loadingMessage]);
+
     try {
+      console.log("Sending request to chat endpoint..."); // Debug log
       const response = await fetch("http://localhost:5001/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message,
+          message: inputMessage,
           symbol: "AAPL",
           userId: "user123",
         }),
       });
 
-      if (!response.ok) throw new Error("API request failed");
-
+      console.log("Received response:", response); // Debug log
       const data = await response.json();
+      console.log("Parsed data:", data); // Debug log
 
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev.filter((msg) => !msg.isTyping), // Remove typing indicator
-          {
-            id: messages.length + 2,
-            text: data.success ? data.response : "Sorry, I encountered an error.",
-            isBot: true,
-            timestamp: formatTimestamp(),
-            sentiment: data.sentiment || "neutral",
-          },
-        ]);
-        setIsLoading(false);
-      }, 2000);
-    } catch (error) {
-      if (attempt < MAX_RETRIES) {
-        setTimeout(() => {
-          fetchBotResponse(message, attempt + 1);
-        }, 2000);
+      // Remove loading message
+      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id));
+
+      if (data.success) {
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: data.response,
+          isBot: true,
+        };
+        setMessages((prev) => [...prev, botResponse]);
       } else {
-        setTimeout(() => {
-          setMessages((prev) => [
-            ...prev.filter((msg) => !msg.isTyping),
-            {
-              id: messages.length + 2,
-              text: "⚠️ Error: Couldn't connect to server. Tap to retry.",
-              isBot: true,
-              isError: true,
-              isRetry: true,
-              timestamp: formatTimestamp(),
-            },
-          ]);
-          setIsLoading(false);
-        }, 2000);
+        const errorMessage: Message = {
+          id: messages.length + 2,
+          text: "Sorry, I encountered an error. Please try again.",
+          isBot: true,
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        console.error("Error:", data.error);
       }
+    } catch (error) {
+      // Remove loading message
+      setMessages((prev) => prev.filter((msg) => msg.id !== loadingMessage.id));
+
+      const errorMessage: Message = {
+        id: messages.length + 2,
+        text: "Sorry, I couldn't connect to the server. Please try again.",
+        isBot: true,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      console.error("Error:", error);
     }
-  };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
-
-    const userMessage: Message = {
-      id: messages.length + 1,
-      text: inputMessage,
-      isBot: false,
-      timestamp: formatTimestamp(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
-    setIsLoading(true);
-
-    // Show Typing Indicator
-    const typingIndicator: Message = {
-      id: messages.length + 2,
-      text: "Typing...",
-      isBot: true,
-      timestamp: formatTimestamp(),
-      isTyping: true,
-    };
-    setMessages((prev) => [...prev, typingIndicator]);
-
-    fetchBotResponse(inputMessage);
   };
 
-  const handleRetry = () => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage.isError) {
-      setMessages((prev) => prev.slice(0, -1)); // Remove last error message
-      fetchBotResponse(lastMessage.text, 0);
+  const generateAIResponse = (query: string): string => {
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerQuery.includes("price target")) {
+      return `Based on the analysis, the price target is $${stockData.priceTarget} with a potential upside of 7.2%. The model shows an ${stockData.confidenceScore}% confidence in this prediction.`;
     }
+
+    if (lowerQuery.includes("sentiment") || lowerQuery.includes("news")) {
+      const newsSnippet = stockData.recentNews
+        .map((news) => `${news.title} (${news.sentiment})`)
+        .join("\n");
+      return `Current market sentiment includes:\n${newsSnippet}`;
+    }
+
+    if (lowerQuery.includes("financial") || lowerQuery.includes("ratios")) {
+      const { financialRatios: fr } = stockData;
+      return `Key financial metrics:
+      - P/E Ratio: ${fr.peRatio}
+      - PEG Ratio: ${fr.pegRatio}
+      - Price/Book: ${fr.priceToBook}
+      - Debt/Equity: ${fr.debtToEquity}
+      - Revenue Growth (YoY): +${fr.revenueGrowth}%
+      - EPS Growth (YoY): +${fr.epsGrowth}%`;
+    }
+
+    return "I can help with questions about price targets, sentiment, financial ratios, or stock analysis. What would you like to know?";
   };
 
   return (
@@ -151,27 +148,12 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
           <div
             key={msg.id}
             className={`p-3 rounded-lg ${
-              msg.isError
-                ? "bg-red-50 text-red-800 border border-red-400 cursor-pointer hover:bg-red-100"
-                : msg.isBot
+              msg.isBot
                 ? "bg-blue-50 text-blue-800"
-                : "bg-gray-100 text-gray-800 self-end"
-            } flex flex-col`}
-            onClick={msg.isRetry ? handleRetry : undefined}
+                : "bg-gray-100 text-white-800 self-end"
+            }`}
           >
-            <div className="flex items-center">
-              {msg.isTyping && <Type className="h-4 w-4 animate-pulse mr-2 text-gray-600" />}
-              {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
-              {msg.isRetry && <RefreshCcw className="h-4 w-4 mr-2 text-red-600 animate-spin" />}
-              {msg.sentiment === "positive" && <Smile className="h-4 w-4 mr-2 text-green-600" />}
-              {msg.sentiment === "neutral" && <Meh className="h-4 w-4 mr-2 text-gray-600" />}
-              {msg.sentiment === "negative" && <Frown className="h-4 w-4 mr-2 text-red-600" />}
-              {msg.text}
-            </div>
-            <div className="text-xs text-gray-500 flex items-center mt-1">
-              <Clock className="h-3 w-3 mr-1" />
-              {msg.timestamp}
-            </div>
+            {msg.text}
           </div>
         ))}
       </div>
@@ -183,13 +165,11 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Ask about the stock analysis..."
-          className="flex-1 p-2 border rounded-l-lg focus:outline-none"
-          disabled={isLoading}
+          className="flex-1 p-2 border rounded-l-lg"
         />
         <button
           onClick={handleSendMessage}
-          className="bg-blue-500 text-white p-2 rounded-r-lg disabled:bg-gray-400"
-          disabled={isLoading}
+          className="bg-blue-500 text-white p-2 rounded-r-lg"
         >
           <Send className="h-5 w-5" />
         </button>
