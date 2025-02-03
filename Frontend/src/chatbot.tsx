@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Send, MessageSquare, Loader } from "lucide-react";
+import { Send, MessageSquare, Loader, AlertTriangle } from "lucide-react";
 
 interface StockData {
   priceTarget: number;
@@ -24,13 +24,14 @@ interface Message {
   id: number;
   text: string;
   isBot: boolean;
+  isError?: boolean;
 }
 
 const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI stock analysis assistant. Ask me anything about Apple's stock performance.",
+      text: "Hi! I'm your AI stock assistant. Ask me anything about Apple's stock performance.",
       isBot: true,
     },
   ]);
@@ -38,7 +39,7 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: messages.length + 1,
@@ -62,6 +63,8 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
         }),
       });
 
+      if (!response.ok) throw new Error("API request failed");
+
       const data = await response.json();
 
       const botResponse: Message = {
@@ -74,7 +77,12 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { id: messages.length + 2, text: "Couldn't connect to server.", isBot: true },
+        {
+          id: messages.length + 2,
+          text: "⚠️ Error: Couldn't connect to server. Please try again.",
+          isBot: true,
+          isError: true,
+        },
       ]);
     }
 
@@ -93,11 +101,14 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
           <div
             key={msg.id}
             className={`p-3 rounded-lg ${
-              msg.isBot
+              msg.isError
+                ? "bg-red-50 text-red-800 border border-red-400"
+                : msg.isBot
                 ? "bg-blue-50 text-blue-800"
-                : "bg-gray-100 text-white-800 self-end"
-            }`}
+                : "bg-gray-100 text-gray-800 self-end"
+            } flex items-center`}
           >
+            {msg.isError && <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />}
             {msg.text}
           </div>
         ))}
@@ -115,12 +126,12 @@ const StockChatbot: React.FC<{ stockData: StockData }> = ({ stockData }) => {
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Ask about the stock analysis..."
-          className="flex-1 p-2 border rounded-l-lg"
+          className="flex-1 p-2 border rounded-l-lg focus:outline-none"
           disabled={isLoading}
         />
         <button
           onClick={handleSendMessage}
-          className="bg-blue-500 text-white p-2 rounded-r-lg"
+          className="bg-blue-500 text-white p-2 rounded-r-lg disabled:bg-gray-400"
           disabled={isLoading}
         >
           <Send className="h-5 w-5" />
