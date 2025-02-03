@@ -1,3 +1,4 @@
+import sys
 import math
 import numpy as np
 import pandas as pd
@@ -6,6 +7,7 @@ import yfinance as yf
 sns.set_style('whitegrid')
 import matplotlib.pyplot as plt
 plt.style.use("fivethirtyeight")
+import os
 
 import keras
 from keras.models import Sequential
@@ -16,12 +18,22 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-ticker = 'AAPL'
+# Get ticker from command line argument
+if len(sys.argv) < 2:
+    print("Error: No ticker symbol provided")
+    sys.exit(1)
+    
+ticker = sys.argv[1]
+print(f"Starting prediction for ticker: {ticker}")
 
 df = yf.download(ticker, 
                  start = '2000-01-01',
                  end = '2024-12-31',
                  multi_level_index = False)
+
+print(f"Downloaded data for {ticker}:")
+print(f"Data shape: {df.shape}")
+print(f"Date range: {df.index[0]} to {df.index[-1]}")
 
 info = yf.Ticker(ticker)
 
@@ -31,18 +43,19 @@ df['Open'].plot()
 df['Close'].plot()
 plt.ylabel(None)
 plt.xlabel(None)
-plt.title("Opening & Closing Price of {ticker}".format(ticker = ticker))
+plt.title(f"Opening & Closing Price of {ticker}")
 plt.legend(['Open Price', 'Close Price'])
 plt.tight_layout()
-plt.show()
+# Save the first plot
+first_plot_path = os.path.join(os.path.dirname(__file__), 'price_history.png')
+plt.savefig(first_plot_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 # Preprocessing of the dataset
 dataset = df["Close"]
 dataset = pd.DataFrame(dataset)
 
 data = dataset.values
-
-data.shape
 
 # MinMax scalar to normalise the values
 scaler = MinMaxScaler(feature_range= (0, 1))
@@ -52,12 +65,10 @@ scaled_data = scaler.fit_transform(np.array(data).reshape(-1, 1))
 train_size = int(len(data)*.75)
 test_size = len(data) - train_size
 
-print("Train Size :",train_size,"Test Size :",test_size)
+print(f"Train Size : {train_size} Test Size : {test_size}")
 
 train_data = scaled_data[ :train_size , 0:1 ]
 test_data = scaled_data[ train_size-14: , 0:1 ]
-
-train_data.shape, test_data.shape
 
 # Creating a Training set with 14 time-steps and 1 output
 x_train = []
@@ -73,19 +84,14 @@ x_train, y_train = np.array(x_train), np.array(y_train)
 # Reshaping the input
 x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
-x_train.shape , y_train.shape
+model = Sequential()
+model.add(LSTM(150, return_sequences=True, input_shape=(14, 1)))
+model.add(LSTM(64, return_sequences=False))
+model.add(Dense(32))
+model.add(Dense(16))
+model.add(Dense(1))
 
-model = Sequential([
-    LSTM(150, return_sequences= True, input_shape= (x_train.shape[1], 1)),
-    LSTM(64, return_sequences= False),
-    Dense(32),
-    Dense(16),
-    Dense(1)
-])
-
-model.compile(optimizer= 'adam', loss= 'mse')
-
-model.summary()
+model.compile(optimizer='adam', loss='mse')
 
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
@@ -97,7 +103,9 @@ plt.legend(['Mean Squared Error','Mean Absolute Error'])
 plt.title("Losses")
 plt.xlabel("epochs")
 plt.ylabel("loss")
-plt.show()
+loss_plot_path = os.path.join(os.path.dirname(__file__), 'training_loss.png')
+plt.savefig(loss_plot_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 # Creating a testing set with 14 time-steps and 1 output
 x_test = []
@@ -109,30 +117,34 @@ for i in range(14, len(test_data)):
 x_test, y_test = np.array(x_test), np.array(y_test)
 x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 
-x_test.shape , y_test.shape
-
 #inverse y_test scaling
 predictions = model.predict(x_test)
 
 #inverse predictions scaling
 predictions = scaler.inverse_transform(predictions)
-predictions.shape
 
 #inverse y_test scaling
 y_test = scaler.inverse_transform([y_test])
 
 RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
-RMSE
+print(f"\nRoot Mean Square Error: {RMSE}")
 
 train = dataset.iloc[:train_size , 0:1]
 test = dataset.iloc[train_size: , 0:1]
 test['Predictions'] = predictions
 
-plt.figure(figsize= (30, 15))
-plt.title('Tesla Close Stock Price Prediction', fontsize= 18)
-plt.xlabel('Date', fontsize= 18)
-plt.ylabel('Close Price', fontsize= 18)
-plt.plot(train['Close'], linewidth= 3)
-plt.plot(test['Close'], linewidth= 3)
-plt.plot(test["Predictions"], linewidth= 3)
+plt.figure(figsize=(30, 15))
+plt.title(f'{ticker} Close Stock Price Prediction', fontsize=18)
+plt.xlabel('Date', fontsize=18)
+plt.ylabel('Close Price', fontsize=18)
+plt.plot(train['Close'], linewidth=3)
+plt.plot(test['Close'], linewidth=3)
+plt.plot(test["Predictions"], linewidth=3)
 plt.legend(['Train', 'Test', 'Predictions'])
+
+# Save the plot to a file
+save_path = os.path.join(os.path.dirname(__file__), 'prediction_plot.png')
+plt.savefig(save_path, bbox_inches='tight', dpi=300)
+plt.close()  # Close the figure to free memory
+
+print(f"Prediction plot saved to: {save_path}")

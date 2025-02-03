@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
          ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
          Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
          BarChart, Bar, Legend } from 'recharts';
-import { Alert, AlertDescription } from './components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Card, CardContent, CardHeader, CardTitle } from './card';
 import StockChatbot from './chatbot';
 
 // Mock data for the chart
@@ -48,6 +48,72 @@ const newsData = [
   }
 ];
 
+const StockSidebar = () => {
+  return (
+    <aside className="w-1/4 p-4 border-l bg-gray-50">
+      {/* Company Logo and Info */}
+      <div className="flex items-center mb-4">
+        <img
+          src="https://via.placeholder.com/50"
+          alt="Company Logo"
+          className="w-12 h-12 rounded-full"
+        />
+        <div className="ml-2">
+          <h2 className="text-xl font-bold">AAPL / US0378331005</h2>
+          <p className="text-sm text-gray-500">Stock Information</p>
+        </div>
+      </div>
+
+      {/* Market Overview */}
+      <div className="mb-4">
+        <h3 className="font-bold text-lg">Market Overview</h3>
+        <ul className="mt-2 text-sm">
+          <li>Market Cap: <span className="font-bold">$3350.14B</span></li>
+          <li>Short Interest: <span className="font-bold">1.04%</span></li>
+          <li>Volume: <span className="font-bold">53,846,082</span></li>
+          <li>Dividend %: <span className="font-bold">0.46%</span></li>
+        </ul>
+      </div>
+
+      {/* Performance Metrics */}
+      <div className="mb-4">
+        <h3 className="font-bold text-lg">Performance</h3>
+        <ul className="mt-2 text-sm">
+          <li>Perf Week: <span className="text-red-500">-2.40%</span></li>
+          <li>Perf Quarter: <span className="text-red-500">-5.55%</span></li>
+          <li>Perf Year: <span className="text-red-500">-14.14%</span></li>
+          <li>Perf YTD: <span className="text-red-500">-11.04%</span></li>
+        </ul>
+      </div>
+
+      {/* Technical Indicators */}
+      <div className="mb-4">
+        <h3 className="font-bold text-lg">Technical Indicators</h3>
+        <ul className="mt-2 text-sm">
+          <li>52W Range: <span className="font-bold">164.07 - 260.10</span></li>
+          <li>52W High: <span className="text-red-500">-14.35%</span></li>
+          <li>52W Low: <span className="text-green-500">35.78%</span></li>
+          <li>Avg Volume: <span className="font-bold">47.46M</span></li>
+          <li>Beta: <span className="font-bold">1.18</span></li>
+          <li>ATR: <span className="font-bold">5.26</span></li>
+          <li>Volatility: <span className="font-bold">1.99% / 1.90%</span></li>
+        </ul>
+      </div>
+
+      {/* Profile Summary */}
+      <div>
+        <h3 className="font-bold text-lg">Apple Company Profile Summary</h3>
+        <p className="mt-2 text-sm text-gray-700">
+          Apple Inc. designs and markets tech products like iPhones, Macs, iPads, wearables, and accessories. It offers services via the App Store, AppleCare, and cloud platforms.
+        </p>
+        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
+          Full Company Profile
+        </button>
+      </div>
+    </aside>
+  );
+};
+
 const AnalysisPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
@@ -55,11 +121,15 @@ const AnalysisPage = () => {
   const [timeframe, setTimeframe] = useState('1M');
   const [selectedTab, setSelectedTab] = useState('overview');
   const [isAlertSet, setIsAlertSet] = useState(false);
+  const [stockPrice, setStockPrice] = useState(null);
+  const [error, setError] = useState(null);
+  const [ticker, setTicker] = useState('Loading...');
+  const [priceHistoryImage, setPriceHistoryImage] = useState<string | null>(null);
+  const [isLoadingGraph, setIsLoadingGraph] = useState(false);
 
   const navigate = useNavigate();
 
   const Redirect_Search = () => {
-
     // This will navigate to second component
     navigate('/analysis');
   };
@@ -68,6 +138,65 @@ const AnalysisPage = () => {
     upper: 190,
     lower: 175
   };
+
+  useEffect(() => {
+    const fetchStockPrice = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5001/stock-price');
+        const data = await response.json();
+        
+        if (data.success) {
+          setStockPrice(data.stock_price);
+          setTicker(data.ticker);
+        } else {
+          setError(data.error);
+          console.error('API Error:', data.error);
+        }
+      } catch (error) {
+        console.error('Fetch Error:', error);
+        setError('Failed to fetch stock price');
+      }
+    };
+
+    fetchStockPrice();
+    
+    // Fetch price every 10 seconds
+    const interval = setInterval(fetchStockPrice, 10000);
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchPriceHistory = async () => {
+      setIsLoadingGraph(true);
+      try {
+        const response = await fetch('http://127.0.0.1:5001/get-price-history');
+        const data = await response.json();
+        
+        if (data.success) {
+          setPriceHistoryImage(data.image);
+        } else {
+          console.error('Failed to load price history:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching price history:', error);
+      } finally {
+        setIsLoadingGraph(false);
+      }
+    };
+
+    fetchPriceHistory();
+    
+    // Poll for the image every 5 seconds if it's not available
+    const interval = setInterval(() => {
+      if (!priceHistoryImage) {
+        fetchPriceHistory();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -117,8 +246,8 @@ const AnalysisPage = () => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <div className="flex items-center gap-4 mb-2">
-                  <h1 className="text-3xl font-bold">AAPL</h1>
-                  <span className="text-gray-500">Apple Inc.</span>
+                  <h1 className="text-3xl font-bold">{ticker}</h1>
+                  <span className="text-gray-500">Stock Overview</span>
                   <div className="flex gap-2">
                     <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
                       <Heart className="h-5 w-5" />
@@ -132,7 +261,13 @@ const AnalysisPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">$182.63</span>
+                  {error ? (
+                    <span className="text-red-500">Error: {error}</span>
+                  ) : (
+                    <span className="text-2xl font-bold">
+                      ${stockPrice !== null ? stockPrice.toFixed(2) : 'Loading...'}
+                    </span>
+                  )}
                   <span className="flex items-center text-green-500">
                     <ArrowUpRight className="h-4 w-4" />
                     +2.45%
@@ -159,16 +294,31 @@ const AnalysisPage = () => {
                   </button>
                 ))}
               </div>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={historicalData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={['auto', 'auto']} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="price" stroke="#2563eb" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="prediction" stroke="#16a34a" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                </LineChart>
-              </ResponsiveContainer>
+              {isLoadingGraph ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <p className="text-gray-500">Generating price history graph...</p>
+                  </div>
+                </div>
+              ) : priceHistoryImage ? (
+                <img 
+                  src={`data:image/png;base64,${priceHistoryImage}`}
+                  alt="Price History Graph"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={historicalData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={['auto', 'auto']} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="price" stroke="#2563eb" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="prediction" stroke="#16a34a" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
