@@ -197,3 +197,16 @@ plt.title("Losses")
 plt.xlabel("epochs")
 plt.ylabel("loss")
 plt.show()
+
+#inverse y_test scaling
+predictions = model_learned.predict(x_test)
+
+predictions = scaler.inverse_transform(np.concatenate([predictions, 
+                                                       np.zeros((predictions.shape[0], features-1))], 
+                                                       axis=1))[:, 0]
+
+# Inverse scale the true values
+y_test = scaler.inverse_transform(np.concatenate([y_test.reshape(-1, 1), 
+                                                  np.zeros((y_test.shape[0], features-1))], 
+                                                  axis=1))[:, 0]
+
