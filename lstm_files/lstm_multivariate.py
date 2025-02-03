@@ -61,3 +61,6 @@ umcsent_temp = umcsent_temp['UMCSENT']
 unrate_temp = pd.read_csv('data/UNRATE.csv')
 unrate_temp = unrate_temp['UNRATE']
 
+effr_temp = pd.read_csv('data/EFFR.csv')
+effr_temp = effr_temp['EFFR']
+
