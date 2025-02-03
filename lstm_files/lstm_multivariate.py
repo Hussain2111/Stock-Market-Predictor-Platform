@@ -143,3 +143,16 @@ x_test, y_test = np.array(x_test), np.array(y_test)
 
 x_test = np.reshape(x_test, (x_test.shape[0], TIMESTEPS, FEATURES))
 
+# MODEL 1 DEFINITION AND TRAINING
+model = Sequential([
+    LSTM(150, return_sequences= True, input_shape= (TIMESTEPS, FEATURES)),
+    LSTM(64, return_sequences= False),
+    Dense(32),
+    Dense(16),
+    Dense(1)
+])
+
+model.compile(optimizer= 'adam', loss= 'mse')
+
+model.summary()
+
