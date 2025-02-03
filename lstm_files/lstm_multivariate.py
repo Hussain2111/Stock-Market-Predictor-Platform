@@ -213,3 +213,13 @@ y_test = scaler.inverse_transform(np.concatenate([y_test.reshape(-1, 1),
 RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
 RMSE
 
+test = close_predictions.iloc[train_size: , 0:1]
+test['Predicted Close'] = predictions
+
+plt.figure(figsize= (50, 15))
+plt.title('Close Stock Price Prediction', fontsize= 18)
+plt.xlabel('Date', fontsize= 10)
+plt.ylabel('Close Price', fontsize= 18)
+plt.plot(df['Close'], linewidth= 3)
+plt.plot(test["Predicted Close"], linewidth= 3)
+plt.legend(['Test Close', 'Predicted Close'])
