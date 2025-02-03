@@ -175,3 +175,10 @@ model_learned = Sequential([
 model_learned.set_weights(saved_weights)
 
 model_learned.compile(optimizer= 'adam', loss= 'mse')
+
+model.summary()
+
+# Fitting the LSTM to the Training set
+callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
+history2 = model_learned.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= callbacks )
+
