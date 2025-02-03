@@ -21,3 +21,31 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_sc
 
 FEATURES = 6
 TIMESTEPS = 14
+STOCK = 'SBUX'
+
+start = '2017-01-01'
+end = '2025-01-01'
+
+# These are commented becaused already imported and saved for easy access
+#
+# df = yf.download('^VIX', 
+#                  start = start,
+#                  end = end,
+#                  multi_level_index = False)
+
+# df.to_csv('data/vix_dataset.csv')
+
+# df = yf.download('DX-Y.NYB', 
+#                  start = start,
+#                  end = end,
+#                  multi_level_index = False)
+
+# df.to_csv('data/usdx_dataset.csv')
+
+df = yf.download(STOCK, 
+                 start = start,
+                 end = end,
+                 multi_level_index = False)
+
+df.to_csv('data/test_dataset.csv')
+
