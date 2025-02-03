@@ -100,3 +100,8 @@ data = dataset.values
 close = close_predictions.values
 
 data.shape
+
+scaler = MinMaxScaler()
+scaled_data = scaler.fit_transform(data)
+scaled_close = scaler.fit_transform(close)
+
