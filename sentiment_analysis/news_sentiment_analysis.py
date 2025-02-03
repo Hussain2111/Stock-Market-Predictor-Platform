@@ -41,3 +41,12 @@ def give_sentiment(prompt_text, model_name):
     for chunk in stream:
         print(chunk['message']['content'], end='')
     print()
+
+prompt = """Give me a sentiment analysis in percentage 
+            terms of negative and positive of {stock} based on 
+            the following news articles. Give the percentages 
+            on the last line of the output""".format(stock = STOCK)
+
+prompt_complete = prompt + news_data
+
+give_sentiment(prompt_text=prompt_complete, model_name=MODEL)
