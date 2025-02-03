@@ -137,8 +137,6 @@ def chat():
         stock_symbol = data.get('symbol')
         user_id = data.get('userId')
         
-        print(f"Received chat request: {data}")  # Debug log
-        
         if not all([message, stock_symbol, user_id]):
             return jsonify({
                 'error': 'Message, stock symbol, and user ID are required',
@@ -146,7 +144,6 @@ def chat():
             }), 400
         
         result = chatbot_service.process_message(user_id, message, stock_symbol)
-        print(f"Chat response: {result}")  # Debug log
         
         if not result['success']:
             return jsonify(result), 500
@@ -154,7 +151,6 @@ def chat():
         return jsonify(result)
         
     except Exception as e:
-        print(f"Chat error: {str(e)}")  # Debug log
         return jsonify({
             'error': str(e),
             'success': False
@@ -174,6 +170,19 @@ def get_chat_history(user_id):
             'success': False
         }), 500
 
+@app.route('/stock/news/<symbol>', methods=['GET'])
+def get_stock_news(symbol):
+    try:
+        news = chatbot_service.get_stock_news(symbol)
+        return jsonify({
+            'news': news,
+            'success': True
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5001)  # Changed port to 5001
