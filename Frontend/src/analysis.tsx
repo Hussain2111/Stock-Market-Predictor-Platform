@@ -1,529 +1,548 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Share2, Bell, Download, ArrowUpRight, ArrowRight, ArrowDownRight, 
-         ChevronDown, AlertTriangle, TrendingUp, Activity, DollarSign, 
-         Calendar, BarChart2, FileText, MessageSquare } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-         BarChart, Bar, Legend } from 'recharts';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useNavigate } from 'react-router-dom';
+import { Search, Brain, TrendingUp, LineChart, ArrowUpRight, ArrowDownRight, 
+         MessageSquare, Activity, DollarSign, Bell, Share2, Download,
+         Newspaper, TrendingDown, AlertTriangle, ExternalLink, BarChart as BarChartIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+         BarChart, Bar, Legend, AreaChart, Area, ComposedChart } from 'recharts';
+import { Card, CardHeader, CardTitle, CardContent } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
-import StockChatbot from './chatbot';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Mock data for the chart
-const historicalData = Array.from({ length: 30 }, (_, i) => ({
-  date: `2024-${String(i + 1).padStart(2, '0')}-01`,
-  price: Math.random() * 50 + 150,
-  prediction: Math.random() * 50 + 160,
-  volume: Math.floor(Math.random() * 1000000)
-}));
+const Chatbot = () => {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hello! I can help you analyze this stock. What would you like to know?' }
+  ]);
+  const [input, setInput] = useState('');
 
-// New mock data for sentiment analysis
-const sentimentData = Array.from({ length: 7 }, (_, i) => ({
-  date: `2024-${String(i + 1).padStart(2, '0')}-01`,
-  positive: Math.random() * 100,
-  negative: Math.random() * 50,
-  neutral: Math.random() * 30
-}));
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    setMessages(prev => [...prev, 
+      { role: 'user', content: input },
+      { role: 'assistant', content: 'This is a simulated response. In a real implementation, this would be connected to an AI backend.' }
+    ]);
+    setInput('');
+  };
 
-// New mock news data
-const newsData = [
-  {
-    title: "Apple's AI Strategy Revealed",
-    source: "Tech Analysis Daily",
-    sentiment: "positive",
-    time: "2 hours ago"
-  },
-  {
-    title: "Supply Chain Concerns Impact Production",
-    source: "Market Watch",
-    sentiment: "negative",
-    time: "4 hours ago"
-  },
-  {
-    title: "Q4 Earnings Preview",
-    source: "Financial Times",
-    sentiment: "neutral",
-    time: "6 hours ago"
-  }
-];
-
-const StockSidebar = () => {
   return (
-    <aside className="w-1/4 p-4 border-l bg-gray-50">
-      {/* Company Logo and Info */}
-      <div className="flex items-center mb-4">
-        <img
-          src="https://via.placeholder.com/50"
-          alt="Company Logo"
-          className="w-12 h-12 rounded-full"
-        />
-        <div className="ml-2">
-          <h2 className="text-xl font-bold">AAPL / US0378331005</h2>
-          <p className="text-sm text-gray-500">Stock Information</p>
+    <div className="w-[350px] border-l border-gray-800 bg-black/20 h-full p-4  overflow-x-visible">
+      <div className="h-full flex flex-col">
+        <h3 className="text-xl font-bold mb-4">AI Assistant</h3>
+        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`p-3 rounded-lg ${
+              msg.role === 'assistant' ? 'bg-gray-800' : 'bg-emerald-500/20'
+            }`}>
+              {msg.content}
+            </div>
+          ))}
         </div>
+        <form onSubmit={handleSend} className="flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="flex-1 bg-white/5 rounded-lg px-4 py-2 border border-gray-700"
+            placeholder="Ask about this stock..."
+          />
+          <button type="submit" className="px-4 py-2 bg-emerald-500 rounded-lg">Send</button>
+        </form>
       </div>
-
-      {/* Market Overview */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Market Overview</h3>
-        <ul className="mt-2 text-sm">
-          <li>Market Cap: <span className="font-bold">$3350.14B</span></li>
-          <li>Short Interest: <span className="font-bold">1.04%</span></li>
-          <li>Volume: <span className="font-bold">53,846,082</span></li>
-          <li>Dividend %: <span className="font-bold">0.46%</span></li>
-        </ul>
-      </div>
-
-      {/* Performance Metrics */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Performance</h3>
-        <ul className="mt-2 text-sm">
-          <li>Perf Week: <span className="text-red-500">-2.40%</span></li>
-          <li>Perf Quarter: <span className="text-red-500">-5.55%</span></li>
-          <li>Perf Year: <span className="text-red-500">-14.14%</span></li>
-          <li>Perf YTD: <span className="text-red-500">-11.04%</span></li>
-        </ul>
-      </div>
-
-      {/* Technical Indicators */}
-      <div className="mb-4">
-        <h3 className="font-bold text-lg">Technical Indicators</h3>
-        <ul className="mt-2 text-sm">
-          <li>52W Range: <span className="font-bold">164.07 - 260.10</span></li>
-          <li>52W High: <span className="text-red-500">-14.35%</span></li>
-          <li>52W Low: <span className="text-green-500">35.78%</span></li>
-          <li>Avg Volume: <span className="font-bold">47.46M</span></li>
-          <li>Beta: <span className="font-bold">1.18</span></li>
-          <li>ATR: <span className="font-bold">5.26</span></li>
-          <li>Volatility: <span className="font-bold">1.99% / 1.90%</span></li>
-        </ul>
-      </div>
-
-      {/* Profile Summary */}
-      <div>
-        <h3 className="font-bold text-lg">Apple Company Profile Summary</h3>
-        <p className="mt-2 text-sm text-gray-700">
-          Apple Inc. designs and markets tech products like iPhones, Macs, iPads, wearables, and accessories. It offers services via the App Store, AppleCare, and cloud platforms.
-        </p>
-        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
-          Full Company Profile
-        </button>
-      </div>
-    </aside>
+    </div>
   );
 };
+const AnalysisDashboard = () => {
 
-const AnalysisPage = () => {
+  const sentimentData = [
+    { 
+      period: 'Last Week', 
+      positive: 65, 
+      negative: 25, 
+      neutral: 10,
+      totalMentions: 1250,
+      averageSentiment: 0.65
+    },
+    { 
+      period: 'Last Month', 
+      positive: 58, 
+      negative: 30, 
+      neutral: 12,
+      totalMentions: 5500,
+      averageSentiment: 0.52
+    }
+  ];
+
+  const newsData = [
+    {
+      title: "Apple's AI Strategy Revealed",
+      source: "Tech Analysis Daily",
+      sentiment: "positive",
+      time: "2h ago",
+      summary: "Apple plans to integrate AI features across its product line...",
+      impact: "High",
+      url: "https://example.com/apple-ai-strategy"
+    },
+    {
+      title: "Tech Giant's Q4 Earnings Exceed Expectations",
+      source: "Financial Times",
+      sentiment: "positive",
+      time: "1d ago", 
+      summary: "Strong performance in services and wearables segment drives growth...",
+      impact: "Medium",
+      url: "https://example.com/earnings-report"
+    },
+    {
+      title: "Supply Chain Challenges Ahead",
+      source: "Wall Street Journal",
+      sentiment: "negative",
+      time: "3d ago",
+      summary: "Potential component shortages may impact Q1 production...",
+      impact: "Low",
+      url: "https://example.com/supply-chain-issues"
+    }
+  ];
+
+
+  const technicalIndicators = {
+    rsi: 65.4,
+    macd: 2.34,
+    bollinger: {
+      upper: 185.2,
+      middle: 182.63,
+      lower: 180.1
+    }
+  };
+
+  const fundamentalData = {
+    peRatio: 28.5,
+    pbRatio: 15.2,
+    debtEquity: 1.2,
+    quickRatio: 1.5,
+    currentRatio: 1.8,
+    returnOnEquity: 0.35,
+    returnOnAssets: 0.22
+  };
+
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
-  const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
-  const [timeframe, setTimeframe] = useState('1M');
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('prediction');
   const [isAlertSet, setIsAlertSet] = useState(false);
-  const [stockPrice, setStockPrice] = useState(null);
-  const [error, setError] = useState(null);
-  const [ticker, setTicker] = useState('Loading...');
-  const [priceHistoryImage, setPriceHistoryImage] = useState<string | null>(null);
-  const [isLoadingGraph, setIsLoadingGraph] = useState(false);
 
-  const navigate = useNavigate();
-
-  const Redirect_Search = () => {
-    // This will navigate to second component
-    navigate('/analysis');
-  };
-
-  const priceAlertThresholds = {
-    upper: 190,
-    lower: 175
-  };
-
-  useEffect(() => {
-    const fetchStockPrice = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:5001/stock-price');
-        const data = await response.json();
-        
-        if (data.success) {
-          setStockPrice(data.stock_price);
-          setTicker(data.ticker);
-        } else {
-          setError(data.error);
-          console.error('API Error:', data.error);
-        }
-      } catch (error) {
-        console.error('Fetch Error:', error);
-        setError('Failed to fetch stock price');
-      }
-    };
-
-    fetchStockPrice();
-    
-    // Fetch price every 10 seconds
-    const interval = setInterval(fetchStockPrice, 10000);
-    
-    // Cleanup on unmount
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const fetchPriceHistory = async () => {
-      setIsLoadingGraph(true);
-      try {
-        const response = await fetch('http://127.0.0.1:5001/get-price-history');
-        const data = await response.json();
-        
-        if (data.success) {
-          setPriceHistoryImage(data.image);
-        } else {
-          console.error('Failed to load price history:', data.error);
-        }
-      } catch (error) {
-        console.error('Error fetching price history:', error);
-      } finally {
-        setIsLoadingGraph(false);
-      }
-    };
-
-    fetchPriceHistory();
-    
-    // Poll for the image every 5 seconds if it's not available
-    const interval = setInterval(() => {
-      if (!priceHistoryImage) {
-        fetchPriceHistory();
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const mockData = Array.from({ length: 30 }, (_, i) => ({
+    date: `2024-${String(i + 1).padStart(2, '0')}-01`,
+    price: Math.random() * 50 + 150,
+    volume: Math.floor(Math.random() * 1000000)
+  }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-900 text-white p-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center flex-1 max-w-xl">
-            <Search className="h-5 w-5 text-gray-400 absolute ml-3" />
-            <input
-              type="text"
-              placeholder="Search for another stock..."
-              className="w-9/12 pl-10 pr-4 mr-2 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button onClick={Redirect_Search} className="max-w-50 h-9 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center gap-2 transition-colors">
-                  Search 
-                </button>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsLoginPopupOpen(true)} 
-              className="hover:bg-blue-800 px-4 py-2 rounded-lg">
-              Login
-            </button>
-            <button onClick={() => setIsSignupPopupOpen(true)}
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg">
-              Sign Up
-            </button>
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
+      <div className="flex-1">
+      <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="relative flex-1 max-w-xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search stocks..."
+                className="w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border border-gray-700 focus:border-emerald-500 outline-none"
+              />
+            </div>
+            <div className="flex gap-4">
+              <button className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-white/5">Login</button>
+              <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600">Sign Up</button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-8 px-4 flex gap-8">
-        <div className="flex-1">
-          {/* Price Alert Banner */}
-          {isAlertSet && (
-            <Alert className="mb-4 bg-blue-50 border-blue-200">
-              <AlertTriangle className="h-4 w-4 text-blue-500" />
-              <AlertDescription>
-                Price alerts set: Above ${priceAlertThresholds.upper} or below ${priceAlertThresholds.lower}
-              </AlertDescription>
-            </Alert>
-          )}
+      <main className="container mx-auto px-6 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-4 mb-2">
+                <h1 className="text-3xl font-bold">AAPL</h1>
+                <span className="text-gray-400">Apple Inc.</span>
+                <div className="flex gap-2">
+                  <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
+                    <Bell className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold">$182.63</span>
+                <span className="flex items-center text-emerald-400">
+                  <ArrowUpRight className="w-4 h-4" />
+                  +1.21%
+                </span>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export Data
+            </button>
+          </div>
 
-          {/* Stock Overview */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <div className="flex items-center gap-4 mb-2">
-                  <h1 className="text-3xl font-bold">{ticker}</h1>
-                  <span className="text-gray-500">Stock Overview</span>
-                  <div className="flex gap-2">
-                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
-                      <Heart className="h-5 w-5" />
-                    </button>
-                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
-                      <Bell className="h-5 w-5" />
-                    </button>
-                    <button className="p-2 bg-blue-500 hover:bg-gray-100 rounded-full">
-                      <Share2 className="h-5 w-5" />
-                    </button>
+          <div className="flex mt-8 h-[400px] bg-white/5 rounded-xl p-6">
+            <ResponsiveContainer>
+              <RechartsLineChart data={mockData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip contentStyle={{ background: '#1F2937', border: 'none' }} />
+                <Line type="monotone" dataKey="price" stroke="#10B981" strokeWidth={2} dot={false} />
+              </RechartsLineChart>
+            </ResponsiveContainer>
+            <Chatbot />
+          </div>
+        </motion.div>
+
+        <Tabs defaultValue="prediction" className="space-y-8">
+          <TabsList className="grid grid-cols-5 gap-2 bg-transparent">
+            {[
+              { value: 'prediction', icon: <Brain className="w-4 h-4" />, label: 'AI Prediction' },
+              { value: 'technical', icon: <LineChart className="w-4 h-4" />, label: 'Technical' },
+              { value: 'fundamental', icon: <DollarSign className="w-4 h-4" />, label: 'Fundamental' },
+              { value: 'sentiment', icon: <MessageSquare className="w-4 h-4" />, label: 'Sentiment' },
+              { value: 'News', icon: <Activity className="w-4 h-4" />, label: 'News' }
+            ].map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-2 p-4 bg-white/5 hover:bg-white/10 data-[state=active]:bg-emerald-500"
+              >
+                {tab.icon}
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value="prediction">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { title: 'Price Target', value: '$195.50', subtext: '+7.2% Upside' },
+                { title: 'Confidence', value: '85%', subtext: 'High Confidence' },
+                { title: 'Risk Level', value: 'Medium', subtext: 'Moderate Volatility' }
+              ].map((metric, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-gray-400">{metric.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-emerald-400">{metric.value}</div>
+                      <div className="text-sm text-gray-400">{metric.subtext}</div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+
+        <TabsContent value="technical">
+          <div className="grid grid-cols-2 gap-6">
+            <Card className="bg-white/5 border-gray-800">
+              <CardHeader>
+                <CardTitle>Technical Indicators</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>RSI (14)</span>
+                    <span className={`font-bold ${
+                      technicalIndicators.rsi > 70 ? 'text-red-500' : 
+                      technicalIndicators.rsi < 30 ? 'text-green-500' : 'text-gray-400'
+                    }`}>{technicalIndicators.rsi}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>MACD</span>
+                    <span className={`font-bold ${
+                      technicalIndicators.macd > 0 ? 'text-green-500' : 'text-red-500'
+                    }`}>{technicalIndicators.macd}</span>
+                  </div>
+                  <div>
+                    <span className="block mb-2">Bollinger Bands</span>
+                    <div className="space-y-2 pl-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Upper</span>
+                        <span className="font-bold">${technicalIndicators.bollinger.upper}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Middle</span>
+                        <span className="font-bold">${technicalIndicators.bollinger.middle}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Lower</span>
+                        <span className="font-bold">${technicalIndicators.bollinger.lower}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {error ? (
-                    <span className="text-red-500">Error: {error}</span>
-                  ) : (
-                    <span className="text-2xl font-bold">
-                      ${stockPrice !== null ? stockPrice.toFixed(2) : 'Loading...'}
-                    </span>
-                  )}
-                  <span className="flex items-center text-green-500">
-                    <ArrowUpRight className="h-4 w-4" />
-                    +2.45%
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/5 border-gray-800">
+              <CardHeader>
+                <CardTitle>Volume Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer>
+                  <BarChart data={mockData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" />
+                    <Tooltip contentStyle={{ background: '#1F2937', border: 'none' }} />
+                    <Bar dataKey="volume" fill="#10B981" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="fundamental">
+          <div className="grid grid-cols-3 gap-6">
+            <Card className="bg-white/5 border-gray-800">
+              <CardHeader>
+                <CardTitle>Valuation Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>P/E Ratio</span>
+                    <span className="font-bold">{fundamentalData.peRatio}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>P/B Ratio</span>
+                    <span className="font-bold">{fundamentalData.pbRatio}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 border-gray-800">
+              <CardHeader>
+                <CardTitle>Liquidity Ratios</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Quick Ratio</span>
+                    <span className="font-bold">{fundamentalData.quickRatio}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Current Ratio</span>
+                    <span className="font-bold">{fundamentalData.currentRatio}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 border-gray-800">
+              <CardHeader>
+                <CardTitle>Profitability</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>ROE</span>
+                    <span className="font-bold">{(fundamentalData.returnOnEquity * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>ROA</span>
+                    <span className="font-bold">{(fundamentalData.returnOnAssets * 100).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sentiment">
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="bg-white/5 border-gray-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChartIcon className="w-5 h-5" /> Sentiment Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer>
+                <ComposedChart data={sentimentData}>
+                  <XAxis dataKey="period" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      background: '#1F2937', 
+                      border: 'none', 
+                      color: 'white' 
+                    }}
+                  />
+                  <Bar dataKey="positive" fill="#10B981" stackId="sentiment" />
+                  <Bar dataKey="neutral" fill="#6B7280" stackId="sentiment" />
+                  <Bar dataKey="negative" fill="#EF4444" stackId="sentiment" />
+                  <Line 
+                    type="monotone" 
+                    dataKey="averageSentiment" 
+                    stroke="#FBBF24" 
+                    strokeWidth={2} 
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-gray-800">
+            <CardHeader>
+              <CardTitle>Sentiment Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {sentimentData.map((data, index) => (
+                  <div key={index} className="bg-white/10 p-4 rounded-lg">
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{data.period}</span>
+                      <span className="text-emerald-400">
+                        {(data.averageSentiment * 100).toFixed(1)}% Positive
+                      </span>
+                    </div>
+                    <div className="flex space-x-4">
+                      <div className="flex-1">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Positive</span>
+                          <span className="text-green-500">{data.positive}%</span>
+                        </div>
+                        <div className="h-2 bg-green-500/30 rounded-full">
+                          <div 
+                            className="h-full bg-green-500 rounded-full" 
+                            style={{ width: `${data.positive}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Negative</span>
+                          <span className="text-red-500">{data.negative}%</span>
+                        </div>
+                        <div className="h-2 bg-red-500/30 rounded-full">
+                          <div 
+                            className="h-full bg-red-500 rounded-full" 
+                            style={{ width: `${data.negative}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-400">
+                      Total Mentions: {data.totalMentions}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="News">
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
+            {newsData.map((news, i) => (
+              <Card 
+                key={i} 
+                className={`bg-white/5 border-gray-800 hover:bg-white/10 transition-colors 
+                  ${news.sentiment === 'positive' ? 'border-l-4 border-green-500' : 
+                     news.sentiment === 'negative' ? 'border-l-4 border-red-500' : 
+                     'border-l-4 border-gray-500'}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-lg mb-1 flex justify-between items-start">
+                        {news.title}
+                        <a 
+                          href={news.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-emerald-400 hover:text-emerald-300"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </h4>
+                      <p className="text-gray-400 mb-2">{news.summary}</p>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <span>{news.source}</span>
+                          <span>•</span>
+                          <span>{news.time}</span>
+                        </div>
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          news.impact === 'High' ? 'bg-red-500/20 text-red-400' :
+                          news.impact === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-green-500/20 text-green-400'
+                        }`}>
+                          {news.impact} Impact
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <Card className="bg-white/5 border-gray-800">
+            <CardHeader>
+              <CardTitle>News Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Total News Items</span>
+                  <span className="font-bold">{newsData.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Positive News</span>
+                  <span className="text-green-500 font-bold">
+                    {newsData.filter(n => n.sentiment === 'positive').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Negative News</span>
+                  <span className="text-red-500 font-bold">
+                    {newsData.filter(n => n.sentiment === 'negative').length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>High Impact News</span>
+                  <span className="text-red-400 font-bold">
+                    {newsData.filter(n => n.impact === 'High').length}
                   </span>
                 </div>
               </div>
-              <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                <Download className="h-4 w-4" /> Export Data
-              </button>
-            </div>
-
-            {/* Price Chart */}
-            <div className="h-[400px]">
-              <div className="flex gap-2 mb-4">
-                {['1D', '1W', '1M', '3M', '1Y', 'ALL'].map((period) => (
-                  <button
-                    key={period}
-                    className={`px-3 py-1 rounded-lg ${
-                      timeframe === period ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                    }`}
-                    onClick={() => setTimeframe(period)}
-                  >
-                    {period}
-                  </button>
-                ))}
-              </div>
-              {isLoadingGraph ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-                    <p className="text-gray-500">Generating price history graph...</p>
-                  </div>
-                </div>
-              ) : priceHistoryImage ? (
-                <img 
-                  src={`data:image/png;base64,${priceHistoryImage}`}
-                  alt="Price History Graph"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={historicalData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={['auto', 'auto']} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="price" stroke="#2563eb" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="prediction" stroke="#16a34a" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-
-          {/* Enhanced Analysis Tabs */}
-          <Tabs defaultValue="prediction" className="mb-8">
-            <TabsList className="w-full flex gap-4 rounded-s-lg">
-              <TabsTrigger value="prediction" className=" bg-blue-500 flex-1">
-                <TrendingUp className="w-4 h-4 mr-2" /> Prediction
-              </TabsTrigger>
-              <TabsTrigger value="technical" className="bg-blue-500 flex-1">
-                <Activity className="w-4 h-4 mr-2" /> Technical
-              </TabsTrigger>
-              <TabsTrigger value="fundamental" className="bg-blue-500 flex-1">
-                <DollarSign className="w-4 h-4 mr-2" /> Fundamental
-              </TabsTrigger>
-              <TabsTrigger value="sentiment" className="bg-blue-500 flex-1">
-                <MessageSquare className="w-4 h-4 mr-2" /> Sentiment
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="prediction" className="mt-4">
-              <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Price Target</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">$195.50</div>
-                    <div className="text-sm text-gray-500">30-day forecast</div>
-                    <div className="text-sm text-green-600">+7.2%</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Confidence Score</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">85%</div>
-                    <div className="text-sm text-gray-500">Based on model accuracy</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Risk Level</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-yellow-600">Moderate</div>
-                    <div className="text-sm text-gray-500">Volatility: Medium</div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="technical" className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Volume Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={historicalData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="volume" fill="#3b82f6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Price Momentum</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span>Momentum Score</span>
-                        <span className="text-green-600 font-bold">Strong Buy</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Trend Strength</span>
-                        <span className="text-blue-600 font-bold">85%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Volatility Index</span>
-                        <span className="font-bold">Medium</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="fundamental" className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Financial Ratios</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span>P/E Ratio</span>
-                        <span className="font-bold">28.5</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>PEG Ratio</span>
-                        <span className="font-bold">1.8</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Price/Book</span>
-                        <span className="font-bold">15.2</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Debt/Equity</span>
-                        <span className="font-bold">1.2</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Growth Metrics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span>Revenue Growth (YoY)</span>
-                        <span className="text-green-600 font-bold">+12.4%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>EPS Growth (YoY)</span>
-                        <span className="text-green-600 font-bold">+15.2%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Profit Margin</span>
-                        <span className="font-bold">25.3%</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="sentiment" className="mt-4">
-              <div className="space-y-4">
-                {/* Sentiment Analysis Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Market Sentiment Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sentimentData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="positive" fill="#22c55e" stackId="sentiment" />
-                        <Bar dataKey="negative" fill="#ef4444" stackId="sentiment" />
-                        <Bar dataKey="neutral" fill="#94a3b8" stackId="sentiment" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                {/* News Feed */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Latest News & Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {newsData.map((news, index) => (
-                        <div key={index} className="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-lg">
-                          <div className={`w-2 h-2 mt-2 rounded-full ${
-                            news.sentiment === 'positive' ? 'bg-green-500' :
-                            news.sentiment === 'negative' ? 'bg-red-500' : 'bg-gray-500'
-                          }`} />
-                          <div className="flex-1">
-                            <h4 className="font-medium">{news.title}</h4>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <span>{news.source}</span>
-                              <span>•</span>
-                              <span>{news.time}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+          </Card>
         </div>
+        </TabsContent>
+          </Tabs>
 
-        {/* Sidebar */}
-       <StockChatbot/>
-      </main>
+        </main>
+      </div>
     </div>
-  );
-};
-
-export default AnalysisPage;
+    );
+  };
+  
+export default AnalysisDashboard;
