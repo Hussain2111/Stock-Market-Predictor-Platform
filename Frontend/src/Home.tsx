@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Search, TrendingUp, Brain, LineChart, ArrowRight, ChevronDown, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import logo from "../logo.jpg"
 
 interface Stock {
   symbol: string
@@ -159,7 +160,7 @@ export default function HomePage() {
         scrolled ? 'bg-black/20 backdrop-blur-sm border-b border-white/10' : ''
       }`}>
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">Logo</h1>
+        <img src={logo} alt="Logo" className="h-20 w-26 w-auto" />  
           <button 
             onClick={() => setShowAuthModal(true)}
             className="px-4 py-2 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
