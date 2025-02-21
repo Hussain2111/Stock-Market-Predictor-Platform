@@ -1,19 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Brain, TrendingUp, LineChart, ArrowUpRight, ArrowDownRight, 
+import { useState} from 'react';
+import { Button } from './button'; // Adjust the import path as necessary
+import { Search, Brain, LineChart, ArrowUpRight, 
          MessageSquare, Activity, DollarSign, Bell, Share2, Download,
-         Newspaper, TrendingDown, AlertTriangle, ExternalLink, BarChart as BarChartIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+        ExternalLink, BarChart as BarChartIcon, X, 
+         } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-         BarChart, Bar, Legend, AreaChart, Area, ComposedChart } from 'recharts';
+         BarChart, Bar, ComposedChart } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from './card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import logo from './logo.jpg';
+import {Link} from 'react-router-dom';
+import { Input } from './input'; // Adjust the import path as necessary
 
+const SearchOverlay = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Windows/Command + K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault(); // Prevent default browser behavior
+        setIsOpen(true);
+      }
+      // Handle Escape key to close
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Prevent body scroll when overlay is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  const toggleSearch = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Add your search logic here
+  };
+
+  return (
+    <div>
+      {/* Search Icon Button */}
+      <button
+        onClick={toggleSearch}
+        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        aria-label="Open search"
+      >
+        <Search className="w-6 h-6" />
+      </button>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div className="absolute inset-0 z-50 min-h-screen overflow-y-auto">
+          {/* Blur Background */}
+          <div 
+            className="absolute inset-0 bg-black/30 backdrop-blur-xl backdrop-saturate-200"
+          />
+
+          {/* Search Content */}
+          <div className="relative min-h-screen flex flex-col opacity-90 rounded-full border-emerald-200 items-center">
+            {/* Search Container */}
+            <div className="w-full max-w-2xl rounded-full border-emerald-200 mx-auto px-4 pt-32">
+              {/* Search Form */}
+              <div className="bg-white rounded-full border-emerald-200 shadow-lg mb-4">
+                <form onSubmit={handleSubmit} className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search... (⌘K)"
+                    className="w-full px-4 py-4 pr-12 text-lg border-emerald-200 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-700"
+                    autoFocus
+                  />
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    onClick={toggleSearch}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Close search"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 const Chatbot = () => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Hello! I can help you analyze this stock. What would you like to know?' }
   ]);
   const [input, setInput] = useState('');
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Prevent body scroll when fullscreen
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFullscreen]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -26,34 +154,107 @@ const Chatbot = () => {
     setInput('');
   };
 
-  return (
-    <div className="w-[350px] border-l border-gray-800 bg-black/20 h-full p-4  overflow-x-visible">
-      <div className="h-full flex flex-col">
-        <h3 className="text-xl font-bold mb-4">AI Assistant</h3>
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={`p-3 rounded-lg ${
+  // Preview Chat Component
+  const ChatContent = ({ isPreview = false }) => (
+    <div className={`flex flex-col ${isPreview ? 'h-full' : 'h-[600px]'}`}>
+      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <h3 className="text-xl font-bold">Aurora</h3>
+        {!isPreview && (
+          <button 
+            onClick={() => setIsFullscreen(false)}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+        {isPreview && (
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`p-3 rounded-lg ${
               msg.role === 'assistant' ? 'bg-gray-800' : 'bg-emerald-500/20'
-            }`}>
-              {msg.content}
-            </div>
-          ))}
-        </div>
-        <form onSubmit={handleSend} className="flex gap-2">
+            }`}
+          >
+            {msg.content}
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={handleSend} className="p-4 border-t border-gray-800">
+        <div className="flex gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-white/5 rounded-lg px-4 py-2 border border-gray-700"
+            className="flex-1 bg-black/20 rounded-lg px-4 py-2 border border-gray-700 focus:border-emerald-500 focus:outline-none"
             placeholder="Ask about this stock..."
           />
-          <button type="submit" className="px-4 py-2 bg-emerald-500 rounded-lg">Send</button>
-        </form>
-      </div>
+          <button 
+            type="submit" 
+            className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </form>
     </div>
   );
+
+  return (
+    <>
+      {/* Preview Chat */}
+      <div className="w-[350px] border-l border-gray-800 bg-black/20 h-full">
+        <ChatContent isPreview={true} />
+      </div>
+
+      {/* Fullscreen Overlay */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 overflow-y-auto"
+          >
+            {/* Blur Background */}
+            <div 
+              className="fixed inset-0 bg-black/30 backdrop-blur-xl backdrop-saturate-200"
+              onClick={() => setIsFullscreen(false)}
+            />
+
+            {/* Chat Content */}
+            <div className="relative min-h-screen flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                className="bg-[#111827] rounded-xl w-full max-w-lg shadow-xl"
+              >
+                <ChatContent />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 };
+
+
 const AnalysisDashboard = () => {
 
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const sentimentData = [
     { 
       period: 'Last Week', 
@@ -124,10 +325,52 @@ const AnalysisDashboard = () => {
     returnOnAssets: 0.22
   };
 
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('prediction');
-  const [isAlertSet, setIsAlertSet] = useState(false);
+  const AuthModal = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+    >
+      <div className="bg-[#111827] rounded-xl p-8 w-full max-w-md relative">
+        <button 
+          onClick={() => setShowAuthModal(false)}
+          className="absolute right-4 top-4 text-gray-400 hover:text-white"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <h2 className="text-2xl font-bold mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
+        <form className="space-y-4">
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
+            />
+          )}
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
+          />
+          <button className="w-full py-3 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
+            {isLogin ? "Login" : "Create Account"}
+          </button>
+        </form>
+        <button 
+          onClick={() => setIsLogin(!isLogin)}
+          className="mt-4 text-sm text-gray-400 hover:text-white"
+        >
+          {isLogin ? "Need an account? Sign up" : "Already have an account? Login"}
+        </button>
+      </div>
+    </motion.div>
+  )
 
   const mockData = Array.from({ length: 30 }, (_, i) => ({
     date: `2024-${String(i + 1).padStart(2, '0')}-01`,
@@ -137,27 +380,34 @@ const AnalysisDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
+      <AnimatePresence>
+        {showAuthModal && <AuthModal />}
+      </AnimatePresence>
       <div className="flex-1">
       <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="relative flex-1 max-w-xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search stocks..."
-                className="w-full pl-12 pr-4 py-3 rounded-lg bg-white/5 border border-gray-700 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            <div className="flex gap-4">
-              <button className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-white/5">Login</button>
-              <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600">Sign Up</button>
-            </div>
+          <div className="container max-w-6xl mx-4 ml-10 px-6 py-4 flex items-center justify-between gap-6">
+
+            <Link to="/">
+              <img src={logo} alt="Logo" className="h-16 w-22 w-auto" /> 
+            </Link>     
+            <nav className="hidden md:flex gap-6">
+              <Link to="/analysis" className="text-white hover:text-emerald-500 transition-colors">Analysis</Link>
+              <Link to="/portfolio" className="text-white hover:text-emerald-500 transition-colors">Portfolio</Link>
+              <Link to="/watchlist" className="text-white hover:text-emerald-500 transition-colors">Watchlist</Link>
+              <Link to="/news" className="text-white hover:text-emerald-500 transition-colors">News</Link>
+            </nav>        
+            <div className="relative flex-1 max-w-xl mx-4">
+              </div>
+              <button 
+                className="h-10 w-18 px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                onClick={() => setShowAuthModal(true)}
+              >
+                Get Started
+              </button>
+              <SearchOverlay />
           </div>
-        </div>
-      </header>
+        </header>
+
 
       <main className="container mx-auto px-6 py-8">
         <motion.div
@@ -545,4 +795,6 @@ const AnalysisDashboard = () => {
     );
   };
   
+import { useEffect } from 'react';
 export default AnalysisDashboard;
+
