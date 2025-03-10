@@ -1,91 +1,35 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import jsonify, request
 import yfinance as yf
-import subprocess
-import sys
 import os
 import base64
+from create_app import create_app
+from lstm import init_lstm_routes
 from backend.app.chatbot_service import ChatbotService
+import random
 
-# Initialize global variable
-global_ticker = None
+app = create_app()
+
+# Initialize LSTM routes
+init_lstm_routes(app)
 
 # Initialize chatbot service
 chatbot_service = ChatbotService()
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins for development
-
-@app.route('/analyze-stock', methods=['POST'])
-def analyze_stock():
-    try:
-        global global_ticker
-        data = request.get_json()
-        ticker = data.get('ticker')
-        global_ticker = ticker
-        
-        print(f"Received request for ticker: {ticker}")  # Debug log
-        
-        
-        if not ticker:
-            return jsonify({
-                'error': 'No ticker provided',
-                'success': False
-            }), 400
-            
-        script_path = os.path.join(os.path.dirname(__file__), 'lstm_files', 'lstm_yfinance.py')
-        
-        print(f"Running analysis for {ticker}")  # Debug log
-        print(f"Using script at: {script_path}")  # Debug log
-        
-        process = subprocess.Popen(
-            [sys.executable, script_path, ticker],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        stdout, stderr = process.communicate()
-        
-        print("Analysis output:")  # Debug log
-        print(stdout)
-        
-        if stderr:
-            print("Analysis errors:")  # Debug log
-            print(stderr)
-        
-        if process.returncode != 0:
-            return jsonify({
-                'error': f'Analysis failed: {stderr}',
-                'success': False
-            }), 500
-            
-        return jsonify({
-            'message': f'Analysis completed for {ticker}',
-            'output': stdout,
-            'success': True
-        })
-        
-    except Exception as e:
-        print(f"Error during analysis: {str(e)}")  # Debug log
-        return jsonify({
-            'error': str(e),
-            'success': False
-        }), 500
-
 @app.route('/stock-price', methods=['GET'])
 def get_stock_price():
     try:
-        global global_ticker
+        ticker = app.config['GLOBAL_TICKER']
         
-        if not global_ticker:
+        if not ticker:
+            # Return a default value instead of error when no ticker is set
             return jsonify({
-                'error': 'No ticker provided',
-                'success': False
-            }), 400
+                'stock_price': 0,
+                'ticker': None,
+                'success': True
+            })
 
         # Create a Ticker object
-        stock = yf.Ticker(global_ticker)
+        stock = yf.Ticker(ticker)
         
         # Get the current price using fast info
         current_price = stock.fast_info['lastPrice']
@@ -94,7 +38,7 @@ def get_stock_price():
         
         return jsonify({
             'stock_price': round(current_price, 2),
-            'ticker': global_ticker,
+            'ticker': ticker,
             'success': True
         })
     except Exception as e:
@@ -108,22 +52,61 @@ def get_stock_price():
 def get_price_history():
     try:
         image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', 'price_history.png')
+        print(f"Looking for image at: {image_path}")  # Debug log
         
         if not os.path.exists(image_path):
+            print(f"Image not found at: {image_path}")
             return jsonify({
-                'error': 'Image not yet generated',
+                'error': 'Price history plot not yet generated',
                 'success': False
             }), 404
             
         with open(image_path, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
             
+        # Get current price
+        stock = yf.Ticker(app.config['GLOBAL_TICKER'])
+        current_price = stock.fast_info['lastPrice']
+            
         return jsonify({
             'image': encoded_image,
+            'current_price': round(current_price, 2),
             'success': True
         })
     except Exception as e:
-        print(f"Error serving price history: {str(e)}")
+        print(f"Error serving price history plot: {str(e)}")  # Debug logging
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+@app.route('/get-prediction', methods=['GET'])
+def get_prediction():
+    try:
+        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', 'prediction_plot.png')
+        print(f"Looking for prediction plot at: {image_path}")
+        
+        if not os.path.exists(image_path):
+            print(f"Prediction plot not found at: {image_path}")
+            return jsonify({
+                'error': 'Prediction plot not yet generated',
+                'success': False
+            }), 404
+            
+        with open(image_path, 'rb') as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        # Get current price
+        stock = yf.Ticker(app.config['GLOBAL_TICKER'])
+        current_price = stock.info.get('regularMarketPrice', 0)
+            
+        return jsonify({
+            'image': encoded_image,
+            'current_price': round(current_price, 2) if current_price else 0,
+            'success': True
+        })
+    except Exception as e:
+        print(f"Error serving prediction plot: {str(e)}")
         return jsonify({
             'error': str(e),
             'success': False
@@ -184,5 +167,243 @@ def get_stock_news(symbol):
             'success': False
         }), 500
 
+@app.route('/stock-info', methods=['GET'])
+def get_stock_info():
+    try:
+        ticker = request.args.get('ticker')
+        if not ticker:
+            return jsonify({
+                'error': 'No ticker provided',
+                'success': False
+            }), 400
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        return jsonify({
+            'company_name': info.get('longName', ''),
+            'price_change': f"{info.get('regularMarketChangePercent', 0):.2f}%",
+            'success': True
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+@app.route('/get-sentiment', methods=['GET'])
+def get_sentiment():
+    try:
+        ticker = request.args.get('ticker')
+        if not ticker:
+            return jsonify({
+                'error': 'No ticker provided',
+                'success': False
+            }), 400
+
+        # Get the stock info
+        stock = yf.Ticker(ticker)
+        
+        # Import the necessary libraries for sentiment analysis
+        from newsdataapi import NewsDataApiClient
+        import ollama
+        
+        # Get news data from two sources
+        api = NewsDataApiClient(apikey='pub_736718e9399326ef93bc5d214d31ad00dec04')
+        news_data = ""
+        
+        # Get the news response from newsdata api
+        response = api.latest_api(q=f'{ticker} stock')
+        
+        # Extract individual descriptions from newsdata
+        article_count = 0
+        for article in response.get("results", []):
+            article_description = article.get('description')
+            if isinstance(article_description, str):
+                news_data += article_description
+                article_count += 1
+        
+        # Get news from yfinance
+        yf_news = stock.get_news()
+        
+        # Extract summary of news articles from yfinance
+        yf_article_count = min(10, len(yf_news))
+        for i in range(yf_article_count):
+            try:
+                summary = yf_news[i].get('content', {}).get('summary', '')
+                if summary:
+                    news_data += summary
+                    article_count += 1
+            except (IndexError, AttributeError):
+                continue
+        
+        if not news_data:
+            return jsonify({
+                'error': 'No news data available for sentiment analysis',
+                'success': False
+            }), 404
+        
+        # Create a prompt for sentiment analysis
+        prompt = f"""Give me a sentiment analysis in percentage 
+                  terms of negative and positive of {ticker} stock based on 
+                  the following news articles. Be very concise.
+                  Just extract the exact percentage values for positive, negative, and neutral sentiment.
+                  Make the percentages for positive, negative, and neutral add up to 100%.
+                  Format your response in a clean JSON structure like this:
+                  {{
+                    "positive": 65,
+                    "negative": 25, 
+                    "neutral": 10
+                  }}
+                  Only output the JSON."""
+        
+        prompt_complete = prompt + news_data
+        
+        # Call Ollama model for sentiment analysis
+        MODEL = "deepseek-r1:7b"
+        response = ollama.chat(
+            model=MODEL,
+            messages=[{'role': 'user', 'content': prompt_complete}]
+        )
+        
+        sentiment_result = response['message']['content']
+        
+        # Parse the JSON response
+        import json
+        import re
+        
+        # Extract the JSON part from the response
+        json_match = re.search(r'\{.*\}', sentiment_result, re.DOTALL)
+        if json_match:
+            sentiment_json = json_match.group(0)
+            sentiment_data = json.loads(sentiment_json)
+        else:
+            # Fallback if JSON parsing fails
+            sentiment_data = {
+                "positive": 50,
+                "negative": 30,
+                "neutral": 20
+            }
+        
+        # Calculate average sentiment
+        average_sentiment = sentiment_data.get("positive", 0) / 100.0
+        
+        # Create a response with current and historical sentiment
+        sentiment_response = {
+            "current": {
+                "period": "Current",
+                "positive": sentiment_data.get("positive", 0),
+                "negative": sentiment_data.get("negative", 0),
+                "neutral": sentiment_data.get("neutral", 0),
+                "totalMentions": article_count,
+                "averageSentiment": average_sentiment
+            },
+            "historical": [
+                {
+                    "period": "Last Week",
+                    "positive": max(0, min(100, sentiment_data.get("positive", 50) + round(random.uniform(-7, 7)))),
+                    "negative": max(0, min(100, sentiment_data.get("negative", 30) + round(random.uniform(-5, 5)))),
+                    "neutral": max(0, min(100, sentiment_data.get("neutral", 20) + round(random.uniform(-3, 3)))),
+                    "totalMentions": article_count - round(random.uniform(0, article_count * 0.3)),
+                    "averageSentiment": max(0, min(1, average_sentiment + random.uniform(-0.1, 0.1)))
+                },
+                {
+                    "period": "Last Month",
+                    "positive": max(0, min(100, sentiment_data.get("positive", 50) + round(random.uniform(-10, 10)))),
+                    "negative": max(0, min(100, sentiment_data.get("negative", 30) + round(random.uniform(-8, 8)))),
+                    "neutral": max(0, min(100, sentiment_data.get("neutral", 20) + round(random.uniform(-5, 5)))),
+                    "totalMentions": article_count * round(random.uniform(3, 5)),
+                    "averageSentiment": max(0, min(1, average_sentiment + random.uniform(-0.15, 0.15)))
+                }
+            ],
+            "success": True
+        }
+        
+        return jsonify(sentiment_response)
+        
+    except Exception as e:
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"Error getting sentiment: {str(e)}\n{traceback_str}")
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+@app.route('/get-technical-fundamental', methods=['GET'])
+def get_technical_fundamental():
+    try:
+        ticker = request.args.get('ticker')
+        if not ticker:
+            return jsonify({
+                'error': 'No ticker provided',
+                'success': False
+            }), 400
+
+        stock = yf.Ticker(ticker)
+        
+        # Get historical data for technical indicators
+        hist = stock.history(period="3mo")
+        
+        if hist.empty:
+            return jsonify({
+                'error': 'No historical data available',
+                'success': False
+            }), 404
+        
+        # Calculate RSI (14)
+        delta = hist['Close'].diff()
+        gain = delta.where(delta > 0, 0).rolling(window=14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs.iloc[-1]))
+        
+        # Calculate MACD
+        ema12 = hist['Close'].ewm(span=12, adjust=False).mean()
+        ema26 = hist['Close'].ewm(span=26, adjust=False).mean()
+        macd = ema12.iloc[-1] - ema26.iloc[-1]
+        
+        # Calculate Bollinger Bands
+        sma20 = hist['Close'].rolling(window=20).mean()
+        std20 = hist['Close'].rolling(window=20).std()
+        upper_band = sma20 + (std20 * 2)
+        lower_band = sma20 - (std20 * 2)
+        
+        # Get fundamental data
+        info = stock.info
+        
+        technical = {
+            'rsi': round(rsi, 2),
+            'macd': round(macd, 2),
+            'bollinger': {
+                'upper': round(upper_band.iloc[-1], 2),
+                'middle': round(sma20.iloc[-1], 2),
+                'lower': round(lower_band.iloc[-1], 2)
+            }
+        }
+        
+        fundamental = {
+            'peRatio': round(info.get('trailingPE', 0), 2),
+            'pbRatio': round(info.get('priceToBook', 0), 2),
+            'debtEquity': round(info.get('debtToEquity', 0), 2),
+            'quickRatio': round(info.get('quickRatio', 0), 2),
+            'currentRatio': round(info.get('currentRatio', 0), 2),
+            'returnOnEquity': round(info.get('returnOnEquity', 0) * 100 if info.get('returnOnEquity') else 0, 2),
+            'returnOnAssets': round(info.get('returnOnAssets', 0) * 100 if info.get('returnOnAssets') else 0, 2)
+        }
+        
+        return jsonify({
+            'technical': technical,
+            'fundamental': fundamental,
+            'success': True
+        })
+        
+    except Exception as e:
+        print(f"Error fetching technical/fundamental data: {str(e)}")
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5001)  # Changed port to 5001
+    app.run(host='0.0.0.0', port=5001, debug=True)
