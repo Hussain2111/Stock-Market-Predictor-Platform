@@ -404,6 +404,88 @@ def get_technical_fundamental():
             'error': str(e),
             'success': False
         }), 500
+        
+@app.route('/api/stock', methods=['GET'])
+def get_stock_data():
+    try:
+        # Get stock symbol from query parameter
+        stock_symbol = request.args.get('symbol', '')
+        
+        if not stock_symbol:
+            return jsonify({"error": "Stock symbol is required"}), 400
+            
+        # Default period is 1 year if not specified
+        period = request.args.get('period', '1y')
+        
+        # Get data from yfinance
+        stock = yf.Ticker(stock_symbol)
+        hist = stock.history(period=period)
+        
+        # Reset index to make date a column and convert to string format
+        hist = hist.reset_index()
+        hist['Date'] = hist['Date'].dt.strftime('%Y-%m-%d')
+        
+        # Get current price (use regularMarketPrice as currentPrice might not be available)
+        current_price = stock.info.get('regularMarketPrice', 0)
+        
+        # Prepare the response data
+        stock_data = {
+            "symbol": stock_symbol,
+            "name": stock.info.get('shortName', stock_symbol),
+            "currency": stock.info.get('currency', 'USD'),
+            "currentPrice": current_price,
+            "previousClose": stock.info.get('previousClose', 0),
+            "marketCap": stock.info.get('marketCap', 0),
+            "dayHigh": stock.info.get('dayHigh', 0),
+            "dayLow": stock.info.get('dayLow', 0),
+            "priceData": hist[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']].to_dict('records')
+        }
+        
+        return jsonify(stock_data)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/search', methods=['GET'])
+def search_stocks():
+    try:
+        query = request.args.get('q', '')
+        
+        if not query or len(query) < 2:
+            return jsonify([])
+            
+        # This is a simplified approach - in production, you'd want a more robust search
+        # For demo purposes, just return a few matching stocks
+        matches = []
+        if 'apple' in query.lower() or 'aapl' in query.lower():
+            matches.append({"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ"})
+        if 'tesla' in query.lower() or 'tsla' in query.lower():
+            matches.append({"symbol": "TSLA", "name": "Tesla, Inc.", "exchange": "NASDAQ"})
+        if 'google' in query.lower() or 'goog' in query.lower():
+            matches.append({"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ"})
+        if 'amazon' in query.lower() or 'amzn' in query.lower():
+            matches.append({"symbol": "AMZN", "name": "Amazon.com, Inc.", "exchange": "NASDAQ"})
+        if 'microsoft' in query.lower() or 'msft' in query.lower():
+            matches.append({"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ"})
+            
+        # If no matches in our simple list, try to get a ticker directly with this name
+        if not matches and len(query) >= 2:
+            try:
+                ticker = yf.Ticker(query.upper())
+                info = ticker.info
+                if info and 'shortName' in info:
+                    matches.append({
+                        "symbol": query.upper(),
+                        "name": info.get('shortName', query.upper()),
+                        "exchange": info.get('exchange', 'Unknown')
+                    })
+            except:
+                pass
+                
+        return jsonify(matches)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
