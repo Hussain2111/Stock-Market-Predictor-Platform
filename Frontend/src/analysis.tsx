@@ -510,6 +510,17 @@ const [showMA, setShowMA] = useState({
   );
 };
 
+// Removed redundant state updates
+const fetchStockData = async () => {
+  try {
+    const response = await fetch(`/api/stock?ticker=${ticker}`);
+    const data = await response.json();
+    if (data.success) setStockPrice(data.price);
+  } catch (error) {
+    console.error("Error fetching stock data:", error);
+  }
+};
+
 const AnalysisDashboard = () => {
   const [sentimentData, setSentimentData] = useState([
     {
