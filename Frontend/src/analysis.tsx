@@ -352,6 +352,16 @@ const Chatbot = () => {
       }).format(parseFloat(price))
     );
 
+const [showMA, setShowMA] = useState({
+  ma20: true,
+  ma50: true,
+  ma200: false,
+});
+
+<LineChart>
+  {showMA.ma20 && <Line type="monotone" dataKey="ma20" stroke="#60A5FA" />}
+  {showMA.ma50 && <Line type="monotone" dataKey="ma50" stroke="#F59E0B" />}
+</LineChart>
     // Format market cap
     response = response.replace(/Market Cap: (\d+)/g, (match, cap) => {
       const value = parseInt(cap);
