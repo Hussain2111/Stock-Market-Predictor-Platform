@@ -49,6 +49,21 @@ const SearchOverlay = () => {
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Extracted event listeners into reusable functions
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k" && !isInputFocused) {
+      e.preventDefault();
+      setIsOpen(true);
+    } else if (e.key === "Escape" && isOpen) {
+      setIsOpen(false);
+    }
+  };
+
+  document.addEventListener("keydown", handleKeyDown);
+  return () => document.removeEventListener("keydown", handleKeyDown);
+}, [isOpen]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
