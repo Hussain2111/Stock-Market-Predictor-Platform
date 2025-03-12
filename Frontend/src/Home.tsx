@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import analysis from "./analysis";
-import logo from "../logo.jpg"
+import logo from "./logo.jpg";
 
 interface Stock {
   symbol: string;
@@ -210,7 +210,7 @@ export default function HomePage() {
         }`}
       >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <img src={logo} alt="Logo" className="h-20 w-26 w-auto" />  
+          <img src={logo} alt="Logo" className="h-20 w-26 w-auto" />
           <button
             onClick={() => setShowAuthModal(true)}
             className="px-4 py-2 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
