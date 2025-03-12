@@ -44,25 +44,20 @@ import { Link } from "react-router-dom";
 import { Input } from "./input";
 import { Button } from "./button";
 
+interface NewsItem {
+  title: string;
+  source: string;
+  sentiment?: "positive" | "negative" | "neutral";
+  time: string;
+  summary: string;
+  impact?: "High" | "Medium" | "Low";
+  url: string;
+}
+
 // SearchOverlay Component
 const SearchOverlay = () => {
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Extracted event listeners into reusable functions
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "k" && !isInputFocused) {
-      e.preventDefault();
-      setIsOpen(true);
-    } else if (e.key === "Escape" && isOpen) {
-      setIsOpen(false);
-    }
-  };
-
-  document.addEventListener("keydown", handleKeyDown);
-  return () => document.removeEventListener("keydown", handleKeyDown);
-}, [isOpen]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -274,13 +269,6 @@ const Chatbot = () => {
     // Send to API
     sendToAPI(messageText, thinkingId);
   };
-  <Card>
-  <CardContent>
-    <h4 className="text-lg font-semibold">Sentiment Overview</h4>
-    <p className="text-green-400">Positive: {sentimentData.positive}%</p>
-    <p className="text-red-400">Negative: {sentimentData.negative}%</p>
-  </CardContent>
-</Card>
 
   // Send message to API
   const sendToAPI = async (message: string, thinkingId: number) => {
@@ -359,16 +347,6 @@ const Chatbot = () => {
       }).format(parseFloat(price))
     );
 
-const [showMA, setShowMA] = useState({
-  ma20: true,
-  ma50: true,
-  ma200: false,
-});
-
-<LineChart>
-  {showMA.ma20 && <Line type="monotone" dataKey="ma20" stroke="#60A5FA" />}
-  {showMA.ma50 && <Line type="monotone" dataKey="ma50" stroke="#F59E0B" />}
-</LineChart>
     // Format market cap
     response = response.replace(/Market Cap: (\d+)/g, (match, cap) => {
       const value = parseInt(cap);
@@ -510,15 +488,289 @@ const [showMA, setShowMA] = useState({
   );
 };
 
-// Removed redundant state updates
-const fetchStockData = async () => {
-  try {
-    const response = await fetch(`/api/stock?ticker=${ticker}`);
-    const data = await response.json();
-    if (data.success) setStockPrice(data.price);
-  } catch (error) {
-    console.error("Error fetching stock data:", error);
-  }
+// Add this interface for the stock data
+interface StockPriceData {
+  date: string;
+  price: number;
+  volume: number;
+  ma20: number | null; // Allow null values
+  ma50: number | null;
+  ma200: number | null;
+}
+
+// Add this new component for the stock price chart
+const StockPriceChart = ({
+  data,
+  timeframe,
+}: {
+  data: StockPriceData[];
+  timeframe: string;
+}) => {
+  const [chartType, setChartType] = useState<"line" | "candlestick" | "area">(
+    "line"
+  );
+  const [showVolume, setShowVolume] = useState(true);
+  const [showMA, setShowMA] = useState({
+    ma20: true,
+    ma50: true,
+    ma200: false,
+  });
+
+  // Filter out any invalid data points
+  const validData = data.map((point) => ({
+    ...point,
+    ma20: point.ma20 || null,
+    ma50: point.ma50 || null,
+    ma200: point.ma200 || null,
+    volume: point.volume || 0,
+    price: point.price || 0,
+  }));
+
+  return (
+    <div className="w-full h-full">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setChartType("line")}
+            className={`px-3 py-1 rounded ${
+              chartType === "line" ? "bg-emerald-500" : "bg-white/5"
+            }`}
+          >
+            Line
+          </button>
+          <button
+            onClick={() => setChartType("area")}
+            className={`px-3 py-1 rounded ${
+              chartType === "area" ? "bg-emerald-500" : "bg-white/5"
+            }`}
+          >
+            Area
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={showVolume}
+              onChange={(e) => setShowVolume(e.target.checked)}
+              className="text-emerald-500"
+            />
+            Volume
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={showMA.ma20}
+              onChange={(e) => setShowMA({ ...showMA, ma20: e.target.checked })}
+              className="text-emerald-500"
+            />
+            MA20
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={showMA.ma50}
+              onChange={(e) => setShowMA({ ...showMA, ma50: e.target.checked })}
+              className="text-emerald-500"
+            />
+            MA50
+          </label>
+        </div>
+      </div>
+
+      <div className="h-[calc(100%-60px)]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={validData}
+            margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+          >
+            <XAxis
+              dataKey="date"
+              stroke="#9CA3AF"
+              tickFormatter={(value) => {
+                const date = new Date(value);
+                switch (timeframe) {
+                  case "1D":
+                    return date.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                  case "1W":
+                  case "1M":
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  case "3M":
+                  case "1Y":
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      year: "2-digit",
+                    });
+                  case "ALL":
+                    return date.toLocaleDateString("en-US", {
+                      year: "numeric",
+                    });
+                  default:
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                }
+              }}
+              angle={-45}
+              textAnchor="end"
+              height={50}
+              interval="preserveStartEnd"
+              tick={{ fontSize: 12 }}
+            />
+
+            <YAxis
+              yAxisId="price"
+              stroke="#9CA3AF"
+              domain={["auto", "auto"]}
+              tickFormatter={(value) => `$${value.toFixed(2)}`}
+              tick={{ fontSize: 12 }}
+              width={80}
+            />
+
+            {showVolume && (
+              <YAxis
+                yAxisId="volume"
+                orientation="right"
+                stroke="#4B5563"
+                tickFormatter={(value) => {
+                  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+                  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+                  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+                  return value.toString();
+                }}
+                tick={{ fontSize: 12 }}
+                width={60}
+              />
+            )}
+
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1F2937",
+                border: "1px solid #374151",
+                borderRadius: "0.375rem",
+                padding: "8px",
+              }}
+              labelStyle={{ color: "#9CA3AF", marginBottom: "4px" }}
+              labelFormatter={(label) => {
+                const date = new Date(label);
+                return date.toLocaleString("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: timeframe === "1D" ? "short" : undefined,
+                });
+              }}
+              formatter={(value: number, name: string) => {
+                if (name === "volume") {
+                  if (value >= 1e9)
+                    return [`${(value / 1e9).toFixed(2)}B`, "Volume"];
+                  if (value >= 1e6)
+                    return [`${(value / 1e6).toFixed(2)}M`, "Volume"];
+                  return [value.toLocaleString(), "Volume"];
+                }
+                return [
+                  `$${value.toFixed(2)}`,
+                  name === "price" ? "Price" : name,
+                ];
+              }}
+            />
+
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#374151"
+              opacity={0.5}
+            />
+
+            {/* Price Line/Area with improved styling */}
+            {chartType === "line" ? (
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#10B981"
+                dot={false}
+                strokeWidth={2}
+                yAxisId="price"
+                connectNulls={true}
+                animationDuration={750}
+              />
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="price"
+                stroke="#10B981"
+                fill="#10B981"
+                fillOpacity={0.1}
+                yAxisId="price"
+                connectNulls={true}
+                animationDuration={750}
+              />
+            )}
+
+            {/* Moving Averages with improved visibility */}
+            {showMA.ma20 && (
+              <Line
+                type="monotone"
+                dataKey="ma20"
+                stroke="#60A5FA"
+                dot={false}
+                strokeWidth={1.5}
+                yAxisId="price"
+                connectNulls={true}
+                strokeDasharray="3 3"
+              />
+            )}
+            {showMA.ma50 && (
+              <Line
+                type="monotone"
+                dataKey="ma50"
+                stroke="#F59E0B"
+                dot={false}
+                strokeWidth={1.5}
+                yAxisId="price"
+                connectNulls={true}
+                strokeDasharray="3 3"
+              />
+            )}
+
+            {/* Volume Bars with improved styling */}
+            {showVolume && (
+              <Bar
+                dataKey="volume"
+                fill="#374151"
+                yAxisId="volume"
+                opacity={0.3}
+                barSize={timeframe === "1D" ? 3 : 6}
+              />
+            )}
+
+            <Legend
+              verticalAlign="top"
+              height={36}
+              formatter={(value) => {
+                switch (value) {
+                  case "price":
+                    return "Price";
+                  case "ma20":
+                    return "MA20";
+                  case "ma50":
+                    return "MA50";
+                  case "volume":
+                    return "Volume";
+                  default:
+                    return value;
+                }
+              }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 };
 
 const AnalysisDashboard = () => {
@@ -549,48 +801,8 @@ const AnalysisDashboard = () => {
     },
   ]);
 
-  const newsData = [
-    {
-      title: "Apple's AI Strategy Revealed",
-      source: "Tech Analysis Daily",
-      sentiment: "positive",
-      time: "2h ago",
-      summary:
-        "Apple plans to integrate AI features across its product line...",
-      impact: "High",
-      url: "https://example.com/apple-ai-strategy",
-    },
-    {
-      title: "Tech Giant's Q4 Earnings Exceed Expectations",
-      source: "Financial Times",
-      sentiment: "positive",
-      time: "1d ago",
-      summary:
-        "Strong performance in services and wearables segment drives growth...",
-      impact: "Medium",
-      url: "https://example.com/earnings-report",
-    },
-    {
-      title: "Supply Chain Challenges Ahead",
-      source: "Wall Street Journal",
-      sentiment: "negative",
-      time: "3d ago",
-      summary: "Potential component shortages may impact Q1 production...",
-      impact: "Low",
-      url: "https://example.com/supply-chain-issues",
-    },
-  ];
-
-const AuthModal = () => (
-  <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-    <div className="bg-[#111827] p-6 rounded-lg">
-      <h2 className="text-2xl font-bold">Login</h2>
-      <input type="email" placeholder="Email" className="w-full p-2" />
-      <input type="password" placeholder="Password" className="w-full p-2" />
-      <button className="bg-green-500 w-full p-2 mt-4">Sign In</button>
-    </div>
-  </motion.div>
-);
+  const [newsData, setNewsData] = useState<NewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
 
   const [technicalIndicators, setTechnicalIndicators] = useState({
     rsi: 0,
@@ -635,6 +847,10 @@ const AuthModal = () => (
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
+  // Add new state for stock price data
+  const [stockPriceData, setStockPriceData] = useState<StockPriceData[]>([]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("1M");
+
   const Redirect_Search = () => {
     // This will navigate to second component
     navigate("/analysis");
@@ -643,19 +859,7 @@ const AuthModal = () => (
     upper: 190,
     lower: 175,
   };
-useEffect(() => {
-  const fetchStockInfo = async () => {
-    try {
-      const response = await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
-      const data = await response.json();
-      if (data.success) setStockName(data.company_name);
-    } catch (error) {
-      console.error("Error fetching stock info:", error);
-    }
-  };
 
-  fetchStockInfo();
-}, [ticker]); // Runs only when ticker changes
   // Authentication Modal
   const AuthModal = () => (
     <motion.div
@@ -855,6 +1059,60 @@ useEffect(() => {
     }
   }, [ticker]);
 
+  // Add this useEffect to fetch stock price data
+  useEffect(() => {
+    const fetchStockPriceData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `http://localhost:5001/stock-price-data?ticker=${ticker}&timeframe=${selectedTimeframe}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          setStockPriceData(data.priceData);
+        } else {
+          console.error("Failed to fetch stock price data:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching stock price data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStockPriceData();
+  }, [ticker, selectedTimeframe]);
+
+  // Add this useEffect for fetching news
+  useEffect(() => {
+    const fetchNews = async () => {
+      setIsLoadingNews(true);
+      try {
+        const response = await fetch(
+          `http://localhost:5001/api/stock-news?ticker=${ticker}`
+        );
+        const data = await response.json();
+
+        console.log("Received news data:", data); // Debug log
+
+        if (data.success) {
+          setNewsData(data.news);
+        } else {
+          console.error("Failed to fetch news:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      } finally {
+        setIsLoadingNews(false);
+      }
+    };
+
+    if (ticker) {
+      fetchNews();
+    }
+  }, [ticker]);
+
   const mockData = Array.from({ length: 30 }, (_, i) => ({
     date: `2024-${String(i + 1).padStart(2, "0")}-01`,
     price: Math.random() * 50 + 150,
@@ -946,23 +1204,39 @@ useEffect(() => {
               </button>
             </div>
 
-            <div className="flex mt-8 h-[400px] bg-white/5 rounded-xl">
+            <div className="flex mt-8 h-[600px] bg-white/5 rounded-xl">
               <div className="flex-1 p-6">
                 <Tabs defaultValue="history" className="h-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="history">Price History</TabsTrigger>
                     <TabsTrigger value="prediction">Prediction</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="history" className="h-full">
-                    {priceHistoryImage ? (
-                      <img
-                        src={`data:image/png;base64,${priceHistoryImage}`}
-                        alt="Price History"
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
+                  <TabsContent value="history" className="h-[calc(100%-40px)]">
+                    <div className="mb-4 flex gap-2">
+                      {["1D", "1W", "1M", "3M", "1Y", "ALL"].map((tf) => (
+                        <button
+                          key={tf}
+                          onClick={() => setSelectedTimeframe(tf)}
+                          className={`px-3 py-1 rounded ${
+                            selectedTimeframe === tf
+                              ? "bg-emerald-500"
+                              : "bg-white/5"
+                          }`}
+                        >
+                          {tf}
+                        </button>
+                      ))}
+                    </div>
+                    {isLoading ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                      </div>
+                    ) : (
+                      <div className="h-[calc(100%-40px)]">
+                        <StockPriceChart
+                          data={stockPriceData}
+                          timeframe={selectedTimeframe}
+                        />
                       </div>
                     )}
                   </TabsContent>
@@ -1331,55 +1605,73 @@ useEffect(() => {
             <TabsContent value="News">
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-6">
-                  {newsData.map((news, i) => (
-                    <Card
-                      key={i}
-                      className={`bg-white/5 border-gray-800 hover:bg-white/10 transition-colors ${
-                        news.sentiment === "positive"
-                          ? "border-l-4 border-green-500"
-                          : news.sentiment === "negative"
-                          ? "border-l-4 border-red-500"
-                          : "border-l-4 border-gray-500"
-                      }`}
-                    >
+                  {isLoadingNews ? (
+                    <div className="flex items-center justify-center h-40">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                    </div>
+                  ) : newsData.length === 0 ? (
+                    <Card className="bg-white/5 border-gray-800">
                       <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-lg mb-1 flex justify-between items-start">
-                              {news.title}
-                              <a
-                                href={news.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-emerald-400 hover:text-emerald-300"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            </h4>
-                            <p className="text-gray-400 mb-2">{news.summary}</p>
-                            <div className="flex items-center justify-between text-sm text-gray-500">
-                              <div className="flex items-center gap-2">
-                                <span>{news.source}</span>
-                                <span>•</span>
-                                <span>{news.time}</span>
-                              </div>
-                              <div
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  news.impact === "High"
-                                    ? "bg-red-500/20 text-red-400"
-                                    : news.impact === "Medium"
-                                    ? "bg-yellow-500/20 text-yellow-400"
-                                    : "bg-green-500/20 text-green-400"
-                                }`}
-                              >
-                                {news.impact} Impact
-                              </div>
-                            </div>
-                          </div>
+                        <div className="text-center text-gray-400">
+                          No recent news available for {ticker}
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  ) : (
+                    newsData.map((news, i) => (
+                      <Card
+                        key={i}
+                        className={`bg-white/5 border-gray-800 hover:bg-white/10 transition-colors ${
+                          news.sentiment === "positive"
+                            ? "border-l-4 border-green-500"
+                            : news.sentiment === "negative"
+                            ? "border-l-4 border-red-500"
+                            : "border-l-4 border-gray-500"
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-lg mb-1 flex justify-between items-start">
+                                {news.title || "Untitled"}
+                                {news.url && (
+                                  <a
+                                    href={news.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-emerald-400 hover:text-emerald-300"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </h4>
+                              <p className="text-gray-400 mb-2">
+                                {news.summary || "No summary available"}
+                              </p>
+                              <div className="flex items-center justify-between text-sm text-gray-500">
+                                <div className="flex items-center gap-2">
+                                  <span>{news.source}</span>
+                                  <span>•</span>
+                                  <span>{news.time}</span>
+                                </div>
+                                <div
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    news.impact === "High"
+                                      ? "bg-red-500/20 text-red-400"
+                                      : news.impact === "Medium"
+                                      ? "bg-yellow-500/20 text-yellow-400"
+                                      : "bg-green-500/20 text-green-400"
+                                  }`}
+                                >
+                                  {news.impact} Impact
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
 
                 <Card className="bg-white/5 border-gray-800">
