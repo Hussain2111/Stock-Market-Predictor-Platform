@@ -614,7 +614,19 @@ const AnalysisDashboard = () => {
     upper: 190,
     lower: 175,
   };
+useEffect(() => {
+  const fetchStockInfo = async () => {
+    try {
+      const response = await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
+      const data = await response.json();
+      if (data.success) setStockName(data.company_name);
+    } catch (error) {
+      console.error("Error fetching stock info:", error);
+    }
+  };
 
+  fetchStockInfo();
+}, [ticker]); // Runs only when ticker changes
   // Authentication Modal
   const AuthModal = () => (
     <motion.div
