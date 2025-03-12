@@ -6,6 +6,11 @@ from create_app import create_app
 from lstm import init_lstm_routes
 from backend.app.chatbot_service import ChatbotService
 import random
+import pandas as pd
+from datetime import datetime, timedelta
+import numpy as np
+from textblob import TextBlob
+import logging
 
 app = create_app()
 
@@ -486,6 +491,169 @@ def search_stocks():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/stock-price-data')
+def get_stock_price_data():
+    ticker = request.args.get('ticker', 'AAPL')
+    timeframe = request.args.get('timeframe', '1M')
+    
+    timeframe_mapping = {
+        '1D': ('1d', '5m'),
+        '1W': ('1wk', '15m'),
+        '1M': ('1mo', '1d'),
+        '3M': ('3mo', '1d'),
+        '1Y': ('1y', '1d'),
+        'ALL': ('max', '1wk')
+    }
+    
+    period, interval = timeframe_mapping.get(timeframe, ('1mo', '1d'))
+    
+    try:
+        # Fetch stock data
+        stock = yf.Ticker(ticker)
+        df = stock.history(period=period, interval=interval)
+        
+        # Calculate moving averages
+        if len(df) > 20:
+            df['MA20'] = df['Close'].rolling(window=20).mean()
+        if len(df) > 50:
+            df['MA50'] = df['Close'].rolling(window=50).mean()
+        if len(df) > 200:
+            df['MA200'] = df['Close'].rolling(window=200).mean()
+        
+        # Convert NaN values to None (null in JSON)
+        df = df.replace({np.nan: None})
+        
+        # Format data for frontend
+        price_data = []
+        for index, row in df.iterrows():
+            price_data.append({
+                'date': index.strftime('%Y-%m-%d %H:%M:%S'),
+                'price': row['Close'],
+                'volume': row['Volume'],
+                'ma20': row.get('MA20'),
+                'ma50': row.get('MA50'),
+                'ma200': row.get('MA200')
+            })
+        
+        return jsonify({
+            'success': True,
+            'priceData': price_data
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/stock-news', methods=['GET'])
+def fetch_stock_news():
+    try:
+        ticker = request.args.get('ticker')
+        if not ticker:
+            return jsonify({'success': False, 'error': 'No ticker provided'})
+
+        # Get stock info
+        stock = yf.Ticker(ticker)
+        raw_news = stock.news
+        
+        print(f"Fetched {len(raw_news)} raw news items for {ticker}")  # Debug print
+
+        # Process and format news
+        processed_news = []
+        for item in raw_news:
+            try:
+                # Extract content from the nested structure
+                content = item.get('content', item)  # Handle both direct and nested content
+                
+                # Extract title and summary
+                title = content.get('title', '').strip()
+                summary = content.get('summary', '').strip()
+                
+                if not title:  # Skip items without a title
+                    continue
+
+                # Get publisher info
+                provider = content.get('provider', {})
+                source = provider.get('displayName', 'Unknown Source')
+
+                # Get URL
+                click_through = content.get('clickThroughUrl', {})
+                url = click_through.get('url', '')
+
+                # Get publish date and format time
+                pub_date = content.get('pubDate')
+                if pub_date:
+                    try:
+                        dt = datetime.strptime(pub_date, '%Y-%m-%dT%H:%M:%SZ')
+                        now = datetime.utcnow()
+                        diff = now - dt
+                        
+                        if diff.days > 0:
+                            time_str = f"{diff.days}d ago"
+                        elif diff.seconds >= 3600:
+                            hours = diff.seconds // 3600
+                            time_str = f"{hours}h ago"
+                        else:
+                            minutes = (diff.seconds // 60) or 1
+                            time_str = f"{minutes}m ago"
+                    except Exception as e:
+                        print(f"Error parsing date: {e}")
+                        time_str = "Recent"
+                else:
+                    time_str = "Recent"
+
+                # Perform sentiment analysis
+                text_for_analysis = f"{title} {summary}"
+                analysis = TextBlob(text_for_analysis)
+                sentiment_score = analysis.sentiment.polarity
+
+                # Determine sentiment category
+                if sentiment_score > 0.1:
+                    sentiment = 'positive'
+                elif sentiment_score < -0.1:
+                    sentiment = 'negative'
+                else:
+                    sentiment = 'neutral'
+
+                # Determine impact based on sentiment strength
+                if abs(sentiment_score) > 0.5:
+                    impact = 'High'
+                elif abs(sentiment_score) > 0.2:
+                    impact = 'Medium'
+                else:
+                    impact = 'Low'
+
+                news_item = {
+                    'title': title,
+                    'source': source,
+                    'sentiment': sentiment,
+                    'time': time_str,
+                    'summary': summary,
+                    'impact': impact,
+                    'url': url
+                }
+                processed_news.append(news_item)
+                print(f"Processed news item: {title}")  # Debug print
+
+            except Exception as e:
+                print(f"Error processing individual news item: {str(e)}")
+                continue
+
+        print(f"Successfully processed {len(processed_news)} news items for {ticker}")
+
+        return jsonify({
+            'success': True,
+            'news': processed_news
+        })
+
+    except Exception as e:
+        print(f"Error in news processing: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
