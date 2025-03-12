@@ -54,34 +54,35 @@ const SearchOverlay = () => {
     const handleKeyDown = (e) => {
       // Check if focus is in an input field or textarea
       const target = e.target as HTMLElement;
-      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
-      
+      const isInputFocused =
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+
       // Only handle Cmd/Ctrl+K if not typing in an input
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !isInputFocused) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k" && !isInputFocused) {
         e.preventDefault(); // Prevent default browser behavior
         setIsOpen(true);
       }
-      
+
       // Handle Escape key to close (this is fine for any element)
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         setIsOpen(false);
       }
     };
 
     // Add event listener
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
   // Prevent body scroll when overlay is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      
+      document.body.style.overflow = "hidden";
+
       // Focus the search input when overlay opens
       setTimeout(() => {
         if (searchInputRef.current) {
@@ -89,11 +90,11 @@ const SearchOverlay = () => {
         }
       }, 100);
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
-    
+
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -120,7 +121,7 @@ const SearchOverlay = () => {
 
       {/* Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 min-h-screen overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -129,13 +130,13 @@ const SearchOverlay = () => {
           }}
         >
           {/* Blur Background */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/30 backdrop-blur-xl backdrop-saturate-200"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Search Content */}
-          <div 
+          <div
             className="relative min-h-screen flex flex-col opacity-90 rounded-full border-emerald-200 items-center"
             onClick={(e) => e.stopPropagation()}
           >
@@ -188,80 +189,81 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
   // Handle escape key for fullscreen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
+      if (e.key === "Escape" && isFullscreen) {
         setIsFullscreen(false);
       }
     };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFullscreen]);
-  
+
   // Handle body scroll lock
   useEffect(() => {
     if (isFullscreen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
-    
+
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isFullscreen]);
-  
+
   // Handle sending a message
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!inputRef.current || isLoading) return;
-    
+
     const messageText = inputRef.current.value.trim();
     if (!messageText) return;
-    
+
     // Add user message
-    setMessages(prevMessages => [
+    setMessages((prevMessages) => [
       ...prevMessages,
       {
         id: Date.now(),
         text: messageText,
         isBot: false,
-      }
+      },
     ]);
-    
+
     // Clear input field
-    inputRef.current.value = '';
-    
+    inputRef.current.value = "";
+
     // Add thinking message
     const thinkingId = Date.now() + 1;
-    setMessages(prevMessages => [
+    setMessages((prevMessages) => [
       ...prevMessages,
       {
         id: thinkingId,
         text: "Thinking...",
         isBot: true,
-      }
+      },
     ]);
-    
+
     // Send to API
     sendToAPI(messageText, thinkingId);
   };
-  
+
   // Send message to API
   const sendToAPI = async (message: string, thinkingId: number) => {
     setIsLoading(true);
-    
+
     try {
       const response = await fetch("http://localhost:5001/chat", {
         method: "POST",
@@ -274,53 +276,55 @@ const Chatbot = () => {
           userId: "user123",
         }),
       });
-      
+
       const data = await response.json();
-      
+
       // Remove thinking message
-      setMessages(prev => prev.filter(msg => msg.id !== thinkingId));
-      
+      setMessages((prev) => prev.filter((msg) => msg.id !== thinkingId));
+
       if (data.success) {
         // Add bot response
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             id: Date.now(),
             text: formatResponse(data.response),
             isBot: true,
-          }
+          },
         ]);
       } else {
         // Add error message
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             id: Date.now(),
             text: `Sorry, I couldn't process your request. ${data.error || ""}`,
             isBot: true,
-          }
+          },
         ]);
       }
     } catch (error) {
       // Handle error
-      setMessages(prev => 
-        prev.filter(msg => msg.id !== thinkingId).concat({
-          id: Date.now(),
-          text: "Sorry, I encountered an error processing your request. Please try again.",
-          isBot: true,
-        })
+      setMessages((prev) =>
+        prev
+          .filter((msg) => msg.id !== thinkingId)
+          .concat({
+            id: Date.now(),
+            text: "Sorry, I encountered an error processing your request. Please try again.",
+            isBot: true,
+          })
       );
       console.error("Error sending message:", error);
     } finally {
       setIsLoading(false);
-      
+
       // Re-focus the input field
       if (inputRef.current) {
         inputRef.current.focus();
       }
     }
   };
-  
+
   // Format response text
   const formatResponse = (response: string) => {
     // Format currency
@@ -332,40 +336,34 @@ const Chatbot = () => {
         maximumFractionDigits: 2,
       }).format(parseFloat(price))
     );
-    
+
     // Format market cap
-    response = response.replace(
-      /Market Cap: (\d+)/g,
-      (match, cap) => {
-        const value = parseInt(cap);
-        if (value >= 1e12) return `Market Cap: ${(value / 1e12).toFixed(2)}T`;
-        if (value >= 1e9) return `Market Cap: ${(value / 1e9).toFixed(2)}B`;
-        if (value >= 1e6) return `Market Cap: ${(value / 1e6).toFixed(2)}M`;
-        return `Market Cap: ${value.toLocaleString()}`;
-      }
-    );
-    
+    response = response.replace(/Market Cap: (\d+)/g, (match, cap) => {
+      const value = parseInt(cap);
+      if (value >= 1e12) return `Market Cap: ${(value / 1e12).toFixed(2)}T`;
+      if (value >= 1e9) return `Market Cap: ${(value / 1e9).toFixed(2)}B`;
+      if (value >= 1e6) return `Market Cap: ${(value / 1e6).toFixed(2)}M`;
+      return `Market Cap: ${value.toLocaleString()}`;
+    });
+
     // Format volume
-    response = response.replace(
-      /Volume: (\d+)/g,
-      (match, vol) => {
-        const value = parseInt(vol);
-        if (value >= 1e12) return `Volume: ${(value / 1e12).toFixed(2)}T`;
-        if (value >= 1e9) return `Volume: ${(value / 1e9).toFixed(2)}B`;
-        if (value >= 1e6) return `Volume: ${(value / 1e6).toFixed(2)}M`;
-        return `Volume: ${value.toLocaleString()}`;
-      }
-    );
-    
+    response = response.replace(/Volume: (\d+)/g, (match, vol) => {
+      const value = parseInt(vol);
+      if (value >= 1e12) return `Volume: ${(value / 1e12).toFixed(2)}T`;
+      if (value >= 1e9) return `Volume: ${(value / 1e9).toFixed(2)}B`;
+      if (value >= 1e6) return `Volume: ${(value / 1e6).toFixed(2)}M`;
+      return `Volume: ${value.toLocaleString()}`;
+    });
+
     // Format percentages
     response = response.replace(/([-+]?\d+(\.\d+)?%)/g, (match) => {
       const value = parseFloat(match);
       return `${value.toFixed(2)}%`;
     });
-    
+
     return response;
   };
-  
+
   // Chat component (shared between preview and fullscreen)
   const ChatUI = ({ isPreview = false }) => {
     // Focus the input field on mount
@@ -374,9 +372,9 @@ const Chatbot = () => {
         inputRef.current.focus();
       }
     }, [isPreview, isFullscreen]);
-    
+
     return (
-      <div className={`flex flex-col ${isPreview ? 'h-full' : 'h-[600px]'}`}>
+      <div className={`flex flex-col ${isPreview ? "h-full" : "h-[600px]"}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h3 className="text-xl font-bold">Aurora</h3>
@@ -398,26 +396,29 @@ const Chatbot = () => {
             </button>
           )}
         </div>
-        
+
         {/* Messages */}
-        <div 
+        <div
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto p-4 space-y-4"
         >
-          {messages.map(msg => (
+          {messages.map((msg) => (
             <div
               key={msg.id}
               className={`p-3 rounded-lg ${
-                msg.isBot ? 'bg-gray-800' : 'bg-emerald-500/20'
+                msg.isBot ? "bg-gray-800" : "bg-emerald-500/20"
               } ${msg.text === "Thinking..." ? "animate-pulse" : ""}`}
             >
               {msg.text}
             </div>
           ))}
         </div>
-        
+
         {/* Input form */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800">
+        <form
+          onSubmit={handleSendMessage}
+          className="p-4 border-t border-gray-800"
+        >
           <div className="flex gap-2">
             <input
               type="text"
@@ -431,7 +432,7 @@ const Chatbot = () => {
               type="submit"
               disabled={isLoading}
               className={`px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors ${
-                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
               Send
@@ -441,7 +442,7 @@ const Chatbot = () => {
       </div>
     );
   };
-  
+
   // Main component render
   return (
     <>
@@ -449,7 +450,7 @@ const Chatbot = () => {
       <div className="w-[350px] border-l border-gray-800 bg-black/20 h-full">
         <ChatUI isPreview={true} />
       </div>
-      
+
       {/* Fullscreen modal */}
       <AnimatePresence>
         {isFullscreen && (
@@ -466,7 +467,7 @@ const Chatbot = () => {
               exit={{ scale: 0.95, y: 20 }}
               transition={{ duration: 0.15 }}
               className="bg-[#111827] rounded-xl w-full max-w-lg shadow-2xl"
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <ChatUI isPreview={false} />
             </motion.div>
@@ -598,13 +599,15 @@ const AnalysisDashboard = () => {
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
     >
       <div className="bg-[#111827] rounded-xl p-8 w-full max-w-md relative">
-        <button 
+        <button
           onClick={() => setShowAuthModal(false)}
           className="absolute right-4 top-4 text-gray-400 hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-2xl font-bold mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          {isLogin ? "Login" : "Sign Up"}
+        </h2>
         <form className="space-y-4">
           {!isLogin && (
             <input
@@ -627,11 +630,13 @@ const AnalysisDashboard = () => {
             {isLogin ? "Login" : "Create Account"}
           </button>
         </form>
-        <button 
+        <button
           onClick={() => setIsLogin(!isLogin)}
           className="mt-4 text-sm text-gray-400 hover:text-white"
         >
-          {isLogin ? "Need an account? Sign up" : "Already have an account? Login"}
+          {isLogin
+            ? "Need an account? Sign up"
+            : "Already have an account? Login"}
         </button>
       </div>
     </motion.div>
@@ -764,13 +769,10 @@ const AnalysisDashboard = () => {
 
         if (data.success) {
           console.log("Sentiment data received:", data);
-          
+
           // Format the data for our chart
-          const formattedData = [
-            data.current,
-            ...data.historical
-          ];
-          
+          const formattedData = [data.current, ...data.historical];
+
           setSentimentData(formattedData);
         } else {
           console.error("API returned error:", data.error || "Unknown error");
@@ -795,27 +797,45 @@ const AnalysisDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
-      <AnimatePresence>
-        {showAuthModal && <AuthModal />}
-      </AnimatePresence>
-      
+      <AnimatePresence>{showAuthModal && <AuthModal />}</AnimatePresence>
+
       <div className="flex-1">
         <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
           <div className="w-full px-6 py-4 flex items-center">
             <div className="flex items-center">
               <Link to="/" className="mr-10">
-                <img src={logo} alt="Logo" className="h-16 w-auto" /> 
-              </Link>     
+                <img src={logo} alt="Logo" className="h-16 w-auto" />
+              </Link>
               <nav className="hidden md:flex gap-6">
-                <Link to="/analysis" className="text-white hover:text-emerald-500 transition-colors">Analysis</Link>
-                <Link to="/portfolio" className="text-white hover:text-emerald-500 transition-colors">Portfolio</Link>
-                <Link to="/watchlist" className="text-white hover:text-emerald-500 transition-colors">Watchlist</Link>
-                <Link to="/news" className="text-white hover:text-emerald-500 transition-colors">News</Link>
+                <Link
+                  to="/analysis"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Analysis
+                </Link>
+                <Link
+                  to="/portfolio"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Portfolio
+                </Link>
+                <Link
+                  to="/watchlist"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Watchlist
+                </Link>
+                <Link
+                  to="/trade"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Trade
+                </Link>
               </nav>
             </div>
             <div className="flex-grow"></div>
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 className="h-10 px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                 onClick={() => setShowAuthModal(true)}
               >
