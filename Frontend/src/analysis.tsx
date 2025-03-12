@@ -274,6 +274,13 @@ const Chatbot = () => {
     // Send to API
     sendToAPI(messageText, thinkingId);
   };
+  <Card>
+  <CardContent>
+    <h4 className="text-lg font-semibold">Sentiment Overview</h4>
+    <p className="text-green-400">Positive: {sentimentData.positive}%</p>
+    <p className="text-red-400">Negative: {sentimentData.negative}%</p>
+  </CardContent>
+</Card>
 
   // Send message to API
   const sendToAPI = async (message: string, thinkingId: number) => {
