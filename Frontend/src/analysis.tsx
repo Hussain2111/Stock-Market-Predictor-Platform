@@ -570,6 +570,17 @@ const AnalysisDashboard = () => {
     },
   ];
 
+const AuthModal = () => (
+  <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div className="bg-[#111827] p-6 rounded-lg">
+      <h2 className="text-2xl font-bold">Login</h2>
+      <input type="email" placeholder="Email" className="w-full p-2" />
+      <input type="password" placeholder="Password" className="w-full p-2" />
+      <button className="bg-green-500 w-full p-2 mt-4">Sign In</button>
+    </div>
+  </motion.div>
+);
+
   const [technicalIndicators, setTechnicalIndicators] = useState({
     rsi: 0,
     macd: 0,
