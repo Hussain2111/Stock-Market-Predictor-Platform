@@ -947,49 +947,55 @@ const AnalysisDashboard = () => {
       try {
         console.log(`Starting analysis for ticker: ${ticker}`);
 
-        // First ensure the analysis is complete
-        const analysisResponse = await fetch("http://localhost:5001/run-lstm", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ticker: ticker,
+        // Start both the analysis and fetching price history in parallel
+        const [analysisResponse, historyResponse] = await Promise.all([
+          fetch("http://localhost:5001/run-lstm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ticker: ticker,
+            }),
           }),
-        });
+          fetch(`http://localhost:5001/get-price-history?ticker=${ticker}`),
+        ]);
 
-        const analysisData = await analysisResponse.json();
+        const [analysisData, historyData] = await Promise.all([
+          analysisResponse.json(),
+          historyResponse.json(),
+        ]);
+
         console.log("Analysis response:", analysisData);
+        console.log("History response:", historyData);
 
         if (!analysisData.success) {
           throw new Error(analysisData.error || "Analysis failed");
         }
 
-        // Add delay to ensure plots are generated
-        console.log("Waiting for plots generation...");
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        // Fetch both price history and prediction plots
-        const [historyResponse, predictionResponse] = await Promise.all([
-          fetch(`http://localhost:5001/get-price-history?ticker=${ticker}`),
-          fetch(`http://localhost:5001/get-prediction?ticker=${ticker}`),
-        ]);
-        const historyData = await historyResponse.json();
-        const predictionData = await predictionResponse.json();
-
-        console.log("History response:", historyData);
-        console.log("Prediction response:", predictionData);
-
-        if (!historyData.success || !predictionData.success) {
-          throw new Error("Failed to load one or both plots");
+        if (historyData.success) {
+          setPriceHistoryImage(historyData.image);
         }
 
-        setPriceHistoryImage(historyData.image);
+        // Fetch prediction immediately after analysis is complete
+        const predictionResponse = await fetch(
+          `http://localhost:5001/get-prediction?ticker=${ticker}`
+        );
+        const predictionData = await predictionResponse.json();
+
+        console.log("Prediction response:", predictionData);
+
+        if (!predictionData.success) {
+          throw new Error("Failed to load prediction plot");
+        }
+
         setPredictionImage(predictionData.image);
         setStockPrice(predictionData.current_price);
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
-        setError(error.message);
+        const errorMessage =
+          error instanceof Error ? error.message : "An unknown error occurred";
+        setError(errorMessage);
       } finally {
         setIsLoadingGraph(false);
       }
@@ -1241,15 +1247,53 @@ const AnalysisDashboard = () => {
                     )}
                   </TabsContent>
                   <TabsContent value="prediction" className="h-full">
-                    {predictionImage ? (
+                    {isLoadingGraph ? (
+                      <div className="flex flex-col items-center justify-center h-full space-y-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                        <p className="text-gray-400">
+                          Generating AI prediction...
+                        </p>
+                      </div>
+                    ) : error ? (
+                      <div className="flex flex-col items-center justify-center h-full space-y-4">
+                        <AlertTriangle className="w-8 h-8 text-red-500" />
+                        <p className="text-red-400">{error}</p>
+                        <button
+                          onClick={() => {
+                            setError(null);
+                            setIsLoadingGraph(true);
+                            // Retry prediction
+                            fetch(
+                              `http://localhost:5001/get-prediction?ticker=${ticker}`
+                            )
+                              .then((res) => res.json())
+                              .then((data) => {
+                                if (data.success) {
+                                  setPredictionImage(data.image);
+                                  setStockPrice(data.current_price);
+                                } else {
+                                  throw new Error(
+                                    data.error || "Failed to load prediction"
+                                  );
+                                }
+                              })
+                              .catch((err) => setError(err.message))
+                              .finally(() => setIsLoadingGraph(false));
+                          }}
+                          className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : predictionImage ? (
                       <img
                         src={`data:image/png;base64,${predictionImage}`}
                         alt="Price Prediction"
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        No prediction data available
                       </div>
                     )}
                   </TabsContent>
@@ -1304,7 +1348,7 @@ const AnalysisDashboard = () => {
                 {[
                   {
                     title: "Price Target",
-                    value: "$195.50",
+                    value: "$225.50",
                     subtext: "+7.2% Upside",
                   },
                   {
