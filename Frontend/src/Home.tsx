@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import analysis from "./analysis";
 import logo from "./logo.jpg";
+import { usePrediction } from "./context/PredictionContext";
 
 interface Stock {
   symbol: string;
@@ -44,25 +45,28 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
+  const { currentTicker } = usePrediction();
 
   const handleAnalysis = async (ticker: string) => {
     if (ticker) {
       try {
         // Navigate to analysis page first
         window.location.href = `/analysis?ticker=${ticker}`;
+        
+        // Only run LSTM if we don't have predictions for this ticker
+        if (currentTicker !== ticker) {
+          const response = await fetch("http://localhost:5001/run-lstm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ticker }),
+          });
 
-        // Send request to run LSTM analysis
-        const response = await fetch("http://localhost:5001/run-lstm", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ticker }),
-        });
-
-        const data = await response.json();
-        if (!data.success) {
-          console.error("LSTM analysis failed:", data.error);
+          const data = await response.json();
+          if (!data.success) {
+            console.error("LSTM analysis failed:", data.error);
+          }
         }
       } catch (error) {
         console.error("Error during LSTM analysis:", error);
