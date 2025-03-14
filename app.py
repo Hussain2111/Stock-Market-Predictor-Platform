@@ -1,4 +1,5 @@
-from flask import jsonify, request
+from flask import Flask, jsonify, request
+from pymongo import MongoClient
 import yfinance as yf
 import os
 import base64
