@@ -43,6 +43,7 @@ import logo from "./logo.jpg";
 import { Link } from "react-router-dom";
 import { Input } from "./input";
 import { Button } from "./button";
+import { usePrediction } from "./context/PredictionContext";
 
 interface NewsItem {
   title: string;
@@ -774,6 +775,15 @@ const StockPriceChart = ({
 };
 
 const AnalysisDashboard = () => {
+  const { 
+    predictionImage, 
+    setPredictionImage, 
+    priceHistoryImage, 
+    setPriceHistoryImage,
+    currentTicker,
+    setCurrentTicker 
+  } = usePrediction();
+  
   const [sentimentData, setSentimentData] = useState([
     {
       period: "Current",
@@ -831,15 +841,7 @@ const AnalysisDashboard = () => {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [stockPrice, setStockPrice] = useState<number | null>(null);
   const [error, setError] = useState(null);
-  const [isLoadingGraph, setIsLoadingGraph] = useState(true);
-  const [priceHistoryImage, setPriceHistoryImage] = useState<string | null>(
-    null
-  );
-  const [predictionImage, setPredictionImage] = useState<string | null>(null);
-  const [ticker, setTicker] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("ticker") || "AAPL";
-  });
+  const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [stockName, setStockName] = useState("");
   const [priceChange, setPriceChange] = useState<string>("+0.00%");
   const [isLoading, setIsLoading] = useState(true);
@@ -911,6 +913,13 @@ const AnalysisDashboard = () => {
       </div>
     </motion.div>
   );
+
+  // Initialize ticker from URL params only if we don't have a currentTicker
+  const [ticker, setTicker] = useState(() => {
+    if (currentTicker) return currentTicker;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("ticker") || "AAPL";
+  });
 
   useEffect(() => {
     const fetchStockInfo = async () => {
