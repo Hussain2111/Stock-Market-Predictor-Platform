@@ -1161,6 +1161,12 @@ const AnalysisDashboard = () => {
                 >
                   Trade
                 </Link>
+                <Link
+                  to="/settings"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Settings
+                </Link>
               </nav>
             </div>
             <div className="flex-grow"></div>
@@ -1370,7 +1376,7 @@ const AnalysisDashboard = () => {
                   >
                     <Card className="bg-white/5 border-gray-800">
                       <CardHeader>
-                        <CardTitle className="text-gray-400">
+                        <CardTitle className="text-gray-200">
                           {metric.title}
                         </CardTitle>
                       </CardHeader>
@@ -1378,7 +1384,7 @@ const AnalysisDashboard = () => {
                         <div className="text-2xl font-bold text-emerald-400">
                           {metric.value}
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-gray-200">
                           {metric.subtext}
                         </div>
                       </CardContent>
@@ -1392,26 +1398,26 @@ const AnalysisDashboard = () => {
               <div className="grid grid-cols-2 gap-6">
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Technical Indicators</CardTitle>
+                    <CardTitle className="text-white">Technical Indicators</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span>RSI (14)</span>
+                        <span className="text-white">RSI (14)</span>
                         <span
                           className={`font-bold ${
                             technicalIndicators.rsi > 70
                               ? "text-red-500"
                               : technicalIndicators.rsi < 30
                               ? "text-green-500"
-                              : "text-gray-400"
+                              : "text-gray-200"
                           }`}
                         >
                           {technicalIndicators.rsi}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>MACD</span>
+                        <span className="text-white">MACD</span>
                         <span
                           className={`font-bold ${
                             technicalIndicators.macd > 0
@@ -1423,23 +1429,23 @@ const AnalysisDashboard = () => {
                         </span>
                       </div>
                       <div>
-                        <span className="block mb-2">Bollinger Bands</span>
+                        <span className="block mb-2 text-white">Bollinger Bands</span>
                         <div className="space-y-2 pl-4">
                           <div className="flex justify-between">
-                            <span className="text-sm">Upper</span>
-                            <span className="font-bold">
+                            <span className="text-sm text-gray-200">Upper</span>
+                            <span className="font-bold text-white">
                               ${technicalIndicators.bollinger.upper}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm">Middle</span>
-                            <span className="font-bold">
+                            <span className="text-sm text-gray-200">Middle</span>
+                            <span className="font-bold text-white">
                               ${technicalIndicators.bollinger.middle}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm">Lower</span>
-                            <span className="font-bold">
+                            <span className="text-sm text-gray-200">Lower</span>
+                            <span className="font-bold text-white">
                               ${technicalIndicators.bollinger.lower}
                             </span>
                           </div>
@@ -1451,18 +1457,19 @@ const AnalysisDashboard = () => {
 
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Volume Analysis</CardTitle>
+                    <CardTitle className="text-white">Volume Analysis</CardTitle>
                   </CardHeader>
                   <CardContent className="h-[300px]">
                     <ResponsiveContainer>
                       <BarChart data={mockData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="date" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
+                        <XAxis dataKey="date" stroke="#FFFFFF" />
+                        <YAxis stroke="#FFFFFF" />
                         <Tooltip
                           contentStyle={{
                             background: "#1F2937",
                             border: "none",
+                            color: "#FFFFFF"
                           }}
                         />
                         <Bar dataKey="volume" fill="#10B981" />
@@ -1477,19 +1484,19 @@ const AnalysisDashboard = () => {
               <div className="grid grid-cols-3 gap-6">
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Valuation Metrics</CardTitle>
+                    <CardTitle className="text-white">Valuation Metrics</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span>P/E Ratio</span>
-                        <span className="font-bold">
+                        <span className="text-white">P/E Ratio</span>
+                        <span className="font-bold text-white">
                           {fundamentalData.peRatio}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>P/B Ratio</span>
-                        <span className="font-bold">
+                        <span className="text-white">P/B Ratio</span>
+                        <span className="font-bold text-white">
                           {fundamentalData.pbRatio}
                         </span>
                       </div>
@@ -1499,19 +1506,19 @@ const AnalysisDashboard = () => {
 
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Liquidity Ratios</CardTitle>
+                    <CardTitle className="text-white">Liquidity Ratios</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span>Quick Ratio</span>
-                        <span className="font-bold">
+                        <span className="text-white">Quick Ratio</span>
+                        <span className="font-bold text-white">
                           {fundamentalData.quickRatio}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Current Ratio</span>
-                        <span className="font-bold">
+                        <span className="text-white">Current Ratio</span>
+                        <span className="font-bold text-white">
                           {fundamentalData.currentRatio}
                         </span>
                       </div>
@@ -1521,19 +1528,19 @@ const AnalysisDashboard = () => {
 
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Profitability</CardTitle>
+                    <CardTitle className="text-white">Profitability</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span>ROE</span>
-                        <span className="font-bold">
+                        <span className="text-white">ROE</span>
+                        <span className="font-bold text-white">
                           {(fundamentalData.returnOnEquity * 100).toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>ROA</span>
-                        <span className="font-bold">
+                        <span className="text-white">ROA</span>
+                        <span className="font-bold text-white">
                           {(fundamentalData.returnOnAssets * 100).toFixed(1)}%
                         </span>
                       </div>
@@ -1547,7 +1554,7 @@ const AnalysisDashboard = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <BarChartIcon className="w-5 h-5" /> Sentiment
                       Distribution
                     </CardTitle>
@@ -1555,8 +1562,8 @@ const AnalysisDashboard = () => {
                   <CardContent className="h-[300px]">
                     <ResponsiveContainer>
                       <ComposedChart data={sentimentData}>
-                        <XAxis dataKey="period" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
+                        <XAxis dataKey="period" stroke="#FFFFFF" />
+                        <YAxis stroke="#FFFFFF" />
                         <Tooltip
                           contentStyle={{
                             background: "#1F2937",
@@ -1592,14 +1599,14 @@ const AnalysisDashboard = () => {
 
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Sentiment Overview</CardTitle>
+                    <CardTitle className="text-white">Sentiment Overview</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {sentimentData.map((data, index) => (
                         <div key={index} className="bg-white/10 p-4 rounded-lg">
                           <div className="flex justify-between mb-2">
-                            <span className="font-medium">{data.period}</span>
+                            <span className="font-medium text-white">{data.period}</span>
                             <span className="text-emerald-400">
                               {(data.averageSentiment * 100).toFixed(1)}%
                               Positive
@@ -1608,7 +1615,7 @@ const AnalysisDashboard = () => {
                           <div className="flex space-x-4">
                             <div className="flex-1">
                               <div className="flex justify-between text-sm mb-1">
-                                <span>Positive</span>
+                                <span className="text-white">Positive</span>
                                 <span className="text-green-500">
                                   {data.positive}%
                                 </span>
@@ -1622,7 +1629,7 @@ const AnalysisDashboard = () => {
                             </div>
                             <div className="flex-1">
                               <div className="flex justify-between text-sm mb-1">
-                                <span>Negative</span>
+                                <span className="text-white">Negative</span>
                                 <span className="text-red-500">
                                   {data.negative}%
                                 </span>
@@ -1635,7 +1642,7 @@ const AnalysisDashboard = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="mt-2 text-sm text-gray-400">
+                          <div className="mt-2 text-sm text-gray-200">
                             Total Mentions: {data.totalMentions}
                           </div>
                         </div>
@@ -1656,7 +1663,7 @@ const AnalysisDashboard = () => {
                   ) : newsData.length === 0 ? (
                     <Card className="bg-white/5 border-gray-800">
                       <CardContent className="p-4">
-                        <div className="text-center text-gray-400">
+                        <div className="text-center text-white">
                           No recent news available for {ticker}
                         </div>
                       </CardContent>
@@ -1676,7 +1683,7 @@ const AnalysisDashboard = () => {
                         <CardContent className="p-4">
                           <div className="flex items-start gap-4">
                             <div className="flex-1">
-                              <h4 className="font-medium text-lg mb-1 flex justify-between items-start">
+                              <h4 className="font-medium text-lg mb-1 flex justify-between items-start text-white">
                                 {news.title || "Untitled"}
                                 {news.url && (
                                   <a
@@ -1689,10 +1696,10 @@ const AnalysisDashboard = () => {
                                   </a>
                                 )}
                               </h4>
-                              <p className="text-gray-400 mb-2">
+                              <p className="text-gray-200 mb-2">
                                 {news.summary || "No summary available"}
                               </p>
-                              <div className="flex items-center justify-between text-sm text-gray-500">
+                              <div className="flex items-center justify-between text-sm text-gray-300">
                                 <div className="flex items-center gap-2">
                                   <span>{news.source}</span>
                                   <span>•</span>
@@ -1720,16 +1727,16 @@ const AnalysisDashboard = () => {
 
                 <Card className="bg-white/5 border-gray-800">
                   <CardHeader>
-                    <CardTitle>News Summary</CardTitle>
+                    <CardTitle className="text-white">News Summary</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span>Total News Items</span>
-                        <span className="font-bold">{newsData.length}</span>
+                        <span className="text-white">Total News Items</span>
+                        <span className="font-bold text-white">{newsData.length}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>Positive News</span>
+                        <span className="text-white">Positive News</span>
                         <span className="text-green-500 font-bold">
                           {
                             newsData.filter((n) => n.sentiment === "positive")
@@ -1738,7 +1745,7 @@ const AnalysisDashboard = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>Negative News</span>
+                        <span className="text-white">Negative News</span>
                         <span className="text-red-500 font-bold">
                           {
                             newsData.filter((n) => n.sentiment === "negative")
@@ -1747,7 +1754,7 @@ const AnalysisDashboard = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>High Impact News</span>
+                        <span className="text-white">High Impact News</span>
                         <span className="text-red-400 font-bold">
                           {newsData.filter((n) => n.impact === "High").length}
                         </span>
