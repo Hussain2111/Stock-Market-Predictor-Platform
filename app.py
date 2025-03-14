@@ -661,6 +661,48 @@ def fetch_stock_news():
             'success': False,
             'error': str(e)
         })
+        
+@app.route('/buy-stock', methods=['POST'])
+def buy_stock():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        ticker = data.get('ticker')
+        #stock_price = data.get('stock_price')
+
+        if not all([user_id, ticker]):
+            return jsonify({"error": "Missing required fields", "success": False}), 400
+        
+        # Save the purchase to MongoDB
+        investment = {
+            "user_id": user_id,
+            "ticker": ticker,
+            #"stock_price": stock_price,
+            "date": datetime.utcnow()
+        }
+        investments_collection.insert_one(investment)
+
+        return jsonify({"message": "Investment saved!", "success": True})
+    except Exception as e:
+        return jsonify({"error": str(e), "success": False}), 500
+    
+@app.route('/sell-stock', methods=['POST'])
+def sell_stock():
+    data = request.json
+    ticker = data.get("ticker")
+    user_id = data.get("user_id")  # Make sure the frontend sends this
+    print(data)
+
+    if not ticker or not user_id:
+        return jsonify({"success": False, "error": "Missing ticker or user ID"})
+
+    result = investments_collection.delete_one({"ticker": ticker, "user_id": user_id})  # Delete based on both fields
+
+    if result.deleted_count > 0:
+        return jsonify({"success": True, "message": f"Stock {ticker} removed from your portfolio!"})
+    
+    return jsonify({"success": False, "error": "Stock not found or already sold"})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
