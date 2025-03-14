@@ -78,8 +78,8 @@ const Trading = () => {
   const [searchResults, setSearchResults] = useState<
     Array<{ symbol: string; name: string; exchange: string }>
   >([]);
-  const [savedStocks, setSavedStocks] = useState(["AAPL", "TSLA", "GOOGL"]);
-  const [selectedStock, setSelectedStock] = useState<string>("AAPL");
+  const [savedStocks, setSavedStocks] = useState([""]);
+  const [selectedStock, setSelectedStock] = useState<string>("");
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -136,6 +136,51 @@ const Trading = () => {
     }
   };
 
+  const buyStock = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/buy-stock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: "uzair", // Replace with actual user ID
+          ticker: selectedStock,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("Stock purchased successfully!");
+      } else {
+        alert("Error buying stock: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleSellStock = async () => {
+    if (!selectedStock) return;
+
+    try {
+      const response = await fetch("http://localhost:5001/sell-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: "uzair", ticker: selectedStock }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log(result.message);
+      } else {
+        console.error("Sell failed:", result.error);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
       <div className="flex-1 flex flex-col">
@@ -182,7 +227,7 @@ const Trading = () => {
         <div className="flex flex-1">
           {/* Sidebar */}
           <div className="w-1/6 bg-gray-800/50 p-4">
-            <h2 className="text-lg font-bold mb-4">Saved Stocks</h2>
+            <h2 className="text-lg font-bold mb-4">Recent Stocks</h2>
             <ul>
               {savedStocks.map((stock, index) => (
                 <li
@@ -350,10 +395,16 @@ const Trading = () => {
 
             {/* Buy & Sell Buttons */}
             <div className="flex gap-4">
-              <button className="bg-green-500 px-8 py-3 rounded-lg hover:bg-green-600 font-medium transition-colors">
+              <button
+                onClick={buyStock}
+                className="bg-green-500 px-8 py-3 rounded-lg hover:bg-green-600 font-medium transition-colors"
+              >
                 Buy
               </button>
-              <button className="bg-red-500 px-8 py-3 rounded-lg hover:bg-red-600 font-medium transition-colors">
+              <button
+                onClick={handleSellStock}
+                className="bg-red-500 px-8 py-3 rounded-lg hover:bg-red-600 font-medium transition-colors"
+              >
                 Sell
               </button>
             </div>

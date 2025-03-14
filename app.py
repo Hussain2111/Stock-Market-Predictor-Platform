@@ -703,6 +703,5 @@ def sell_stock():
     
     return jsonify({"success": False, "error": "Stock not found or already sold"})
 
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
