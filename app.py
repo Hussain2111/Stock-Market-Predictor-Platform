@@ -21,6 +21,12 @@ init_lstm_routes(app)
 # Initialize chatbot service
 chatbot_service = ChatbotService()
 
+# Initialise the mongodb connection
+# MongoDB connection
+client = MongoClient("mongodb+srv://uas4:AlphaCentauri1206@stockdb.gupsk.mongodb.net/?retryWrites=true&w=majority&appName=stockdb")  # Update if using a remote DB
+db = client["trading_app"]
+investments_collection = db["investments"]
+
 @app.route('/stock-price', methods=['GET'])
 def get_stock_price():
     try:
