@@ -668,40 +668,95 @@ def buy_stock():
         data = request.get_json()
         user_id = data.get('user_id')
         ticker = data.get('ticker')
+        quantity = data.get('quantity', 1)
         #stock_price = data.get('stock_price')
 
-        if not all([user_id, ticker]):
-            return jsonify({"error": "Missing required fields", "success": False}), 400
+        if not all([user_id, ticker, quantity]):
+            return jsonify({
+                "error": "Missing required fields", 
+                "success": False}), 400
         
-        # Save the purchase to MongoDB
-        investment = {
+        # Check if the user already owns this stock
+        existing_investment = investments_collection.find_one({
             "user_id": user_id,
-            "ticker": ticker,
-            #"stock_price": stock_price,
-            "date": datetime.utcnow()
-        }
-        investments_collection.insert_one(investment)
+            "ticker": ticker
+        })
+        
+        if existing_investment:
+            # If stock exists, update the quantity
+            investments_collection.update_one(
+                {"_id": existing_investment["_id"]},
+                {"$inc": {"quantity": quantity}, 
+                 "$set": {"date": datetime.now()}}
+            )
+            message = "Stock quantity updated!"
+        
+        else:
+            # Otherwise, insert a new stock purchase
+            investment = {
+                "user_id": user_id,
+                "ticker": ticker,
+                "quantity": quantity,
+                "date": datetime.now()
+            }
+            investments_collection.insert_one(investment)
+            message = "New investment added!"
 
         return jsonify({"message": "Investment saved!", "success": True})
+    
     except Exception as e:
         return jsonify({"error": str(e), "success": False}), 500
     
 @app.route('/sell-stock', methods=['POST'])
 def sell_stock():
-    data = request.json
-    ticker = data.get("ticker")
-    user_id = data.get("user_id")  # Make sure the frontend sends this
-    print(data)
+    try:
+        data = request.json
+        ticker = data.get("ticker")
+        user_id = data.get("user_id")
+        quantity = data.get("quantity", 1)  # Default to selling 1 stock if not specified
 
-    if not ticker or not user_id:
-        return jsonify({"success": False, "error": "Missing ticker or user ID"})
+        if not all([ticker, user_id, quantity]):
+            return jsonify({
+                "success": False, 
+                "error": "Missing required fields"}), 400
 
-    result = investments_collection.delete_one({"ticker": ticker, "user_id": user_id})  # Delete based on both fields
+        # Find the stock entry
+        existing_investment = investments_collection.find_one({
+            "ticker": ticker, 
+            "user_id": user_id})
 
-    if result.deleted_count > 0:
-        return jsonify({"success": True, "message": f"Stock {ticker} removed from your portfolio!"})
-    
-    return jsonify({"success": False, "error": "Stock not found or already sold"})
+        if not existing_investment:
+            return jsonify({
+                "success": False, 
+                "error": "Stock not found in portfolio"}), 404
+
+        current_quantity = existing_investment.get("quantity")
+
+        if current_quantity < quantity:
+            return jsonify({
+                "success": False, 
+                "error": "Not enough stock to sell"}), 400
+
+        if current_quantity == quantity:
+            # If selling all stocks, remove the entry completely
+            investments_collection.delete_one({"_id": existing_investment["_id"]})
+            message = f"Sold all {ticker} stocks, removed from portfolio!"
+        else:
+            # Otherwise, decrement the quantity
+            investments_collection.update_one(
+                {"_id": existing_investment["_id"]},
+                {"$inc": {"quantity": -quantity}}
+            )
+            message = f"Sold {quantity} {ticker} stocks, {current_quantity - quantity} remaining."
+
+        return jsonify({
+            "success": True, 
+            "message": message})
+
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
