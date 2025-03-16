@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logo from "./logo.jpg";
 import {
   User,
   Settings,
@@ -181,22 +182,52 @@ const Account = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white">
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/analysis"
-              className="flex items-center text-emerald-400 hover:text-emerald-300"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Analysis
-            </Link>
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation Bar */}
+        <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
+          <div className="w-full px-6 py-4 flex items-center">
+            <div className="flex items-center">
+              <Link to="/" className="mr-10">
+                <img src={logo} alt="Logo" className="h-16 w-auto" />
+              </Link>
+              <nav className="hidden md:flex gap-6">
+                <Link
+                  to="/analysis"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Analysis
+                </Link>
+                <Link
+                  to="/portfolio"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Portfolio
+                </Link>
+                <Link
+                  to="/watchlist"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Watchlist
+                </Link>
+                <Link
+                  to="/trade"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Trade
+                </Link>
+                <Link
+                  to="/settings"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Settings
+                </Link>
+              </nav>
+            </div>
+            <div className="flex-grow"></div>
+            <div className="flex items-center gap-4"></div>
           </div>
-          <div className="font-semibold text-xl">Account & Settings</div>
-          <div className="w-32"></div> {/* Spacer for alignment */}
-        </div>
-      </header>
-
+        </header>
+      </div>
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
@@ -328,10 +359,12 @@ const Account = () => {
                 </button>
 
                 <div className="pt-4 mt-4 border-t border-gray-700">
-                  <button className="w-full flex items-center text-red-400 hover:text-red-300 p-3 rounded-lg hover:bg-white/10 transition-colors">
-                    <LogOut className="w-5 h-5 mr-3" />
-                    Logout
-                  </button>
+                  <Link to="/" className="mr-10">
+                    <button className="w-full flex items-center text-red-400 hover:text-red-300 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                      <LogOut className="w-5 h-5 mr-3" />
+                      Logout
+                    </button>
+                  </Link>
                 </div>
               </nav>
             </div>
