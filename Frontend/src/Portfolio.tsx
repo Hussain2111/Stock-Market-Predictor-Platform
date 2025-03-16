@@ -79,12 +79,6 @@ const Portfolio = () => {
             <div className="flex items-center gap-4"></div>
           </div>
         </header>
-
-        {/* Main Content Area */}
-        <div className="flex flex-1">
-          {/* Main Content */}
-          <div className="flex-1 p-6"></div>
-        </div>
       </div>
     </div>
   );
