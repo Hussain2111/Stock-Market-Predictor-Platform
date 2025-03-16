@@ -216,6 +216,12 @@ const Trading = () => {
                 >
                   Trade
                 </Link>
+                <Link
+                  to="/settings"
+                  className="text-white hover:text-emerald-500 transition-colors"
+                >
+                  Settings
+                </Link>
               </nav>
             </div>
             <div className="flex-grow"></div>
