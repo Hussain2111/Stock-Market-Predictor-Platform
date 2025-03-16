@@ -757,6 +757,19 @@ def sell_stock():
         return jsonify({
             "success": False, 
             "error": str(e)}), 500
+        
+# Portfolio (Fetch User's Stocks)
+@app.route('/portfolio', methods=['GET'])
+def get_portfolio():
+    try:
+        user_id = request.args.get("user_id")
+        if not user_id:
+            return jsonify({"success": False, "error": "User ID required"}), 400
+
+        stocks = list(investments_collection.find({"user_id": user_id}, {"_id": 0}))  # Exclude _id
+        return jsonify(stocks)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
