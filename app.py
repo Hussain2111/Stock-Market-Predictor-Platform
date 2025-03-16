@@ -669,7 +669,7 @@ def buy_stock():
         user_id = data.get('user_id')
         ticker = data.get('ticker')
         quantity = data.get('quantity', 1)
-        #stock_price = data.get('stock_price')
+        stock_price = data.get('currentPrice')
 
         if not all([user_id, ticker, quantity]):
             return jsonify({
@@ -697,6 +697,7 @@ def buy_stock():
                 "user_id": user_id,
                 "ticker": ticker,
                 "quantity": quantity,
+                "currentPrice": stock_price,
                 "date": datetime.now()
             }
             investments_collection.insert_one(investment)
@@ -713,7 +714,8 @@ def sell_stock():
         data = request.json
         ticker = data.get("ticker")
         user_id = data.get("user_id")
-        quantity = data.get("quantity", 1)  # Default to selling 1 stock if not specified
+        quantity = data.get("quantity", 1) # Default to selling 1 stock if not specified
+        currentPrice = data.get("currentPrice")
 
         if not all([ticker, user_id, quantity]):
             return jsonify({

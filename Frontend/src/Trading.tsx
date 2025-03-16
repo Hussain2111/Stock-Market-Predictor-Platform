@@ -137,6 +137,11 @@ const Trading = () => {
   };
 
   const buyStock = async () => {
+    if (!stockData) {
+      alert("Stock data is unavailable.");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5001/buy-stock", {
         method: "POST",
@@ -146,6 +151,7 @@ const Trading = () => {
         body: JSON.stringify({
           user_id: "uzair", // Replace with actual user ID
           ticker: selectedStock,
+          currentPrice: stockData.currentPrice,
         }),
       });
 
