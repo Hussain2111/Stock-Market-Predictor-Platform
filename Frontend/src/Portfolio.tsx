@@ -171,11 +171,15 @@ const Portfolio = () => {
               return (
                 <motion.div
                   key={index}
-                  className="bg-gray-900 p-5 rounded-2xl shadow-lg transform hover:scale-105 transition cursor-pointer"
+                  className="bg-gray-900 p-5 rounded-2xl shadow-lg cursor-pointer"
                   onClick={() => openModal(stock.ticker)}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{
+                    duration: 0.1,
+                    delay: index * 0.05,
+                  }}
                 >
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl font-semibold">{stock.ticker}</h2>
