@@ -151,7 +151,7 @@ const Trading = () => {
         body: JSON.stringify({
           user_id: "uzair", // Replace with actual user ID
           ticker: selectedStock,
-          currentPrice: stockData.currentPrice,
+          stock_holdings: stockData.currentPrice,
         }),
       });
 
@@ -167,13 +167,17 @@ const Trading = () => {
   };
 
   const handleSellStock = async () => {
-    if (!selectedStock) return;
+    if (!selectedStock || !stockData) return;
 
     try {
       const response = await fetch("http://localhost:5001/sell-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: "uzair", ticker: selectedStock }),
+        body: JSON.stringify({
+          user_id: "uzair",
+          ticker: selectedStock,
+          currentPrice: stockData.currentPrice,
+        }),
       });
 
       const result = await response.json();

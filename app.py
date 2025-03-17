@@ -669,9 +669,9 @@ def buy_stock():
         user_id = data.get('user_id')
         ticker = data.get('ticker')
         quantity = data.get('quantity', 1)
-        currentPrice = data.get('currentPrice')
+        stock_holdings = data.get('stock_holdings')
 
-        if not all([user_id, ticker, quantity,currentPrice]):
+        if not all([user_id, ticker, quantity,stock_holdings]):
             return jsonify({
                 "error": "Missing required fields", 
                 "success": False}), 400
@@ -683,11 +683,14 @@ def buy_stock():
         })
         
         if existing_investment:
+            old_holdings = existing_investment.get('stock_holdings')
+            stock_holdings = old_holdings + stock_holdings
             # If stock exists, update the quantity and stock holdings
             investments_collection.update_one(
                 {"_id": existing_investment["_id"]},
                 {"$inc": {"quantity": quantity}, 
-                 "$set": {"date": datetime.now()}}
+                 "$set": {"date": datetime.now(), 
+                          "stock_holdings": stock_holdings}}
             )
             message = "Stock quantity updated!"
         
@@ -697,7 +700,7 @@ def buy_stock():
                 "user_id": user_id,
                 "ticker": ticker,
                 "quantity": quantity,
-                "currentPrice": currentPrice,
+                "stock_holdings": stock_holdings,
                 "date": datetime.now()
             }
             investments_collection.insert_one(investment)
@@ -717,7 +720,7 @@ def sell_stock():
         quantity = data.get("quantity", 1) # Default to selling 1 stock if not specified
         currentPrice = data.get("currentPrice")
 
-        if not all([ticker, user_id, quantity, currentPrice]):
+        if not all([ticker, user_id]):
             return jsonify({
                 "success": False, 
                 "error": "Missing required fields"}), 400
@@ -747,7 +750,7 @@ def sell_stock():
             # Otherwise, decrement the quantity
             investments_collection.update_one(
                 {"_id": existing_investment["_id"]},
-                {"$inc": {"quantity": -quantity}}
+                {"$inc": {"quantity": -quantity, "stock_holdings": -currentPrice}}
             )
             message = f"Sold {quantity} {ticker} stocks, {current_quantity - quantity} remaining."
 
