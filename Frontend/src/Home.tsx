@@ -6,14 +6,13 @@ import {
   LineChart,
   ArrowRight,
   ChevronDown,
-  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import analysis from "./analysis";
 import logo from "./logo.jpg";
 import { usePrediction } from "./context/PredictionContext";
-
+import AuthModal from "../login"; 
 interface Stock {
   symbol: string;
   name: string;
@@ -41,11 +40,18 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const navigate = useNavigate();
   const { currentTicker } = usePrediction();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleAnalysis = async (ticker: string) => {
     if (ticker) {
@@ -151,60 +157,17 @@ export default function HomePage() {
     handleAnalysis(searchQuery);
   };
 
-  const AuthModal = () => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-    >
-      <div className="bg-[#111827] rounded-xl p-8 w-full max-w-md relative">
-        <button
-          onClick={() => setShowAuthModal(false)}
-          className="absolute right-4 top-4 text-gray-400 hover:text-white"
-        >
-          <X className="w-5 h-5" />
-        </button>
-        <h2 className="text-2xl font-bold mb-6">
-          {isLogin ? "Login" : "Sign Up"}
-        </h2>
-        <form className="space-y-4">
-          {!isLogin && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-            />
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-          />
-          <button className="w-full py-3 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
-            {isLogin ? "Login" : "Create Account"}
-          </button>
-        </form>
-        <button
-          onClick={() => setIsLogin(!isLogin)}
-          className="mt-4 text-sm text-gray-400 hover:text-white"
-        >
-          {isLogin
-            ? "Need an account? Sign up"
-            : "Already have an account? Login"}
-        </button>
-      </div>
-    </motion.div>
-  );
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white">
-      <AnimatePresence>{showAuthModal && <AuthModal />}</AnimatePresence>
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal 
+            isOpen={showAuthModal} 
+            onClose={() => setShowAuthModal(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-300 ${
@@ -215,14 +178,30 @@ export default function HomePage() {
       >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <img src={logo} alt="Logo" className="h-20 w-26 w-auto" />
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="px-4 py-2 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
-          >
-            Get Started
-          </button>
+          <div className="flex items-center gap-4">
+            {isLoggedIn ? (
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("authToken");
+                  localStorage.removeItem("userId");
+                  setIsLoggedIn(false);
+                }}
+                className="px-4 py-2 border border-gray-700 rounded-lg font-medium hover:bg-white/5 transition-colors"
+              >
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+              >
+                Get Started
+              </button>
+            )}
+          </div>
         </div>
       </header>
+
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center border-b border-gray-800 pt-20">
