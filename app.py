@@ -661,7 +661,69 @@ def fetch_stock_news():
             'success': False,
             'error': str(e)
         })
+
+@app.route('/api/stocks', methods=['GET'])
+def get_multiple_stocks():
+    try:
+        # Get comma-separated stock symbols from query params
+        symbols_str = request.args.get('symbols')
+        if not symbols_str:
+            return jsonify({
+                'error': 'No stock symbols provided',
+                'success': False
+            }), 400
+            
+        # Split symbols and create a list
+        symbols = [sym.strip() for sym in symbols_str.split(',')]
         
+        # Initialize result array
+        result = []
+        
+        # Fetch data for each symbol
+        for symbol in symbols:
+            try:
+                ticker = yf.Ticker(symbol)
+                
+                # Get the price data for the last 2 days to calculate percent change
+                hist = ticker.history(period="2d")
+                
+                if len(hist) >= 2:
+                    yesterday_close = hist['Close'].iloc[-2]
+                    today_price = hist['Close'].iloc[-1]
+                    price_change_percent = ((today_price - yesterday_close) / yesterday_close) * 100
+                else:
+                    # Fallback if we don't have enough history
+                    today_price = hist['Close'].iloc[-1] if len(hist) > 0 else 0
+                    price_change_percent = 0
+                
+                stock_data = {
+                    'symbol': symbol,
+                    'regularMarketPrice': round(today_price, 2),
+                    'regularMarketChangePercent': round(price_change_percent, 2),
+                    'name': ticker.info.get('shortName', symbol)
+                }
+                
+                result.append(stock_data)
+            except Exception as e:
+                # If there's an error with one stock, log it but continue
+                logging.error(f"Error fetching data for {symbol}: {str(e)}")
+                result.append({
+                    'symbol': symbol,
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'stocks': result,
+            'success': True
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in get_multiple_stocks: {str(e)}")
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
 @app.route('/buy-stock', methods=['POST'])
 def buy_stock():
     try:
