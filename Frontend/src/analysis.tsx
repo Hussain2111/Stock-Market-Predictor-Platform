@@ -18,6 +18,7 @@ import {
   ExternalLink,
   BarChart as BarChartIcon,
   X,
+  Bookmark
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -921,28 +922,36 @@ const AnalysisDashboard = () => {
     return params.get("ticker") || "AAPL";
   });
 
+  // Separate useEffect to fetch stock info and price immediately
   useEffect(() => {
+    // Set loading state
+    setIsLoading(true);
+    
+    // First immediately fetch and display the stock info
     const fetchStockInfo = async () => {
       try {
-        const stock = await fetch(`http://localhost:5001/stock-price`);
-        const data = await stock.json();
-
-        if (data.success) {
-          setStockPrice(data.stock_price);
-          // Get company name using yfinance
-          const info = await fetch(
-            `http://localhost:5001/stock-info?ticker=${ticker}`
-          );
-          const infoData = await info.json();
-          if (infoData.success) {
-            setStockName(infoData.company_name);
-            setPriceChange(infoData.price_change);
-          }
+        // Get company name using yfinance
+        const info = await fetch(
+          `http://localhost:5001/stock-info?ticker=${ticker}`
+        );
+        const infoData = await info.json();
+        
+        if (infoData.success) {
+          setStockName(infoData.company_name);
+          setPriceChange(infoData.price_change);
+        }
+        
+        // Get current price immediately
+        const priceResponse = await fetch(`http://localhost:5001/stock-price`);
+        const priceData = await priceResponse.json();
+        
+        if (priceData.success) {
+          setStockPrice(priceData.currentPrice);
         }
       } catch (error) {
         console.error("Error fetching stock info:", error);
       } finally {
-        setIsLoadingGraph(false);
+        // Set loading to false for just the price section
         setIsLoading(false);
       }
     };
@@ -999,7 +1008,7 @@ const AnalysisDashboard = () => {
         }
 
         setPredictionImage(predictionData.image);
-        setStockPrice(predictionData.current_price);
+        // Don't update price here as we've already fetched it
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
         const errorMessage =
@@ -1204,7 +1213,7 @@ const AnalysisDashboard = () => {
                   <span className="text-gray-400">{stockName}</span>
                   <div className="flex gap-2">
                     <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
-                      <Bell className="w-5 h-5" />
+                      <Bookmark className="w-5 h-5" />
                     </button>
                     <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
                       <Share2 className="w-5 h-5" />
