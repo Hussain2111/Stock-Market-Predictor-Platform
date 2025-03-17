@@ -781,6 +781,61 @@ def get_individual_stock():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/profit-or-loss', methods=['POST'])
+def profit_or_loss():
+    try:
+        data = request.json
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return jsonify({"success": False, "error": "Missing user_id"}), 400
+
+        # Fetch all stocks owned by the user from MongoDB
+        stocks = list(investments_collection.find({"user_id": (user_id)}))
+
+        if not stocks:
+            return jsonify({"success": False, "error": "No stocks found for user"}), 404
+
+        total_cost = 0
+        total_current_value = 0
+        stock_results = []
+
+        for stock in stocks:
+            ticker = stock["ticker"]
+            price_bought = stock["priceBought"]  # Initial purchase price
+            current_price = stock["currentPrice"]  # Current market price
+
+            investment = price_bought  # Since we store one record per stock purchase
+            current_value = current_price
+            profit_loss = current_value - investment
+            profit_loss_percentage = (profit_loss / investment) * 100 if investment > 0 else 0
+
+            total_cost += investment
+            total_current_value += current_value
+
+            stock_results.append({
+                "ticker": ticker,
+                "priceBought": price_bought,
+                "currentPrice": current_price,
+                "profit_loss": profit_loss,
+                "profit_loss_percentage": round(profit_loss_percentage, 2)
+            })
+
+        # Calculate overall profit/loss
+        overall_profit_loss = total_current_value - total_cost
+        overall_profit_loss_percentage = (overall_profit_loss / total_cost) * 100 if total_cost > 0 else 0
+
+        return jsonify({
+            "success": True,
+            "total_investment": total_cost,
+            "current_value": total_current_value,
+            "profit_loss": overall_profit_loss,
+            "profit_loss_percentage": round(overall_profit_loss_percentage, 2),
+            "stocks": stock_results
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
