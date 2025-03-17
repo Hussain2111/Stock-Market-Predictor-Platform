@@ -2,16 +2,24 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logo from "./logo.jpg";
 import { DollarSign, TrendingUp } from "lucide-react";
+import Modal from "react-modal";
+
+// Ensure the modal can be opened/closed
+Modal.setAppElement("#root");
 
 interface Stock {
   ticker: string;
   quantity: number;
   currentPrice: number;
+  priceBought: number;
+  date: Date;
 }
 
 const Portfolio = () => {
   const [portfolio, setPortfolio] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
 
   useEffect(() => {
     fetch("http://localhost:5001/portfolio?user_id=uzair")
@@ -22,6 +30,17 @@ const Portfolio = () => {
       })
       .catch((error) => console.error("Error fetching portfolio:", error));
   }, []);
+
+  const openModal = (ticker: string) => {
+    const selectedStocks = portfolio.filter((stock) => stock.ticker === ticker);
+    setSelectedStock(selectedStocks.length > 0 ? selectedStocks[0] : null);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setSelectedStock(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex flex-col">
@@ -81,7 +100,8 @@ const Portfolio = () => {
             {portfolio.map((stock, index) => (
               <div
                 key={index}
-                className="bg-gray-900 p-5 rounded-2xl shadow-lg transform hover:scale-105 transition"
+                className="bg-gray-900 p-5 rounded-2xl shadow-lg transform hover:scale-105 transition cursor-pointer"
+                onClick={() => openModal(stock.ticker)} // Open modal when stock is clicked
               >
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">{stock.ticker}</h2>
@@ -104,6 +124,49 @@ const Portfolio = () => {
           </div>
         )}
       </main>
+
+      {/* Modal for Stock Details */}
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        contentLabel="Stock Details Modal"
+        className="modal-content bg-gray-900 p-8 rounded-lg text-white max-w-lg mx-auto"
+        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+      >
+        <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
+        {selectedStock ? (
+          <>
+            <div className="text-lg">
+              <p>
+                <strong>Ticker:</strong> {selectedStock.ticker}
+              </p>
+              <p>
+                <strong>Quantity:</strong> {selectedStock.quantity}
+              </p>
+              <p>
+                <strong>Price Bought:</strong> ${selectedStock.priceBought}
+              </p>
+              <p>
+                <strong>Current Price:</strong> ${selectedStock.currentPrice}
+              </p>
+              <p>
+                <strong>Purchase Date:</strong>{" "}
+                {new Date(selectedStock.date).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="mt-6">
+              <button
+                onClick={closeModal}
+                className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700"
+              >
+                Close
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>No details available for this stock.</p>
+        )}
+      </Modal>
     </div>
   );
 };

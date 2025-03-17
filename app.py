@@ -755,6 +755,32 @@ def get_portfolio():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/individual-stock', methods=['GET'])
+def get_individual_stock():
+    try:
+        # Extract user_id and ticker from the query parameters
+        user_id = request.args.get("user_id")
+        ticker = request.args.get("ticker")
+        
+        if not user_id or not ticker:
+            return jsonify({"success": False, "error": "User ID and Ticker are required"}), 400
+
+        # Query to find all the individual stocks for the given user_id and ticker
+        stocks = list(investments_collection.find({
+            "user_id": user_id,
+            "ticker": ticker  # Filter by user_id and ticker
+        }, {
+            "_id": 0  # Exclude the _id field from the result
+        }))
+        
+        if not stocks:
+            return jsonify({"success": False, "error": f"No stocks found for ticker {ticker}"}), 404
+
+        return jsonify({"success": True, "stocks": stocks})
+    
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
