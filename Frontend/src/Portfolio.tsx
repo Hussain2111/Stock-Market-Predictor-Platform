@@ -109,6 +109,37 @@ const Portfolio = () => {
     setSelectedStock(null);
   };
 
+  // Function to handle the sell action
+  const sellStock = (ticker: string) => {
+    fetch("http://localhost:5001/sell-stock", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: "uzair",
+        ticker: ticker,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          // Successfully sold 1 stock, update portfolio
+          const updatedPortfolio = portfolio.map((stock) =>
+            stock.ticker === ticker
+              ? { ...stock, quantity: stock.quantity - 1 }
+              : stock
+          );
+          setPortfolio(updatedPortfolio);
+          setSelectedStock(null);
+          setModalIsOpen(false);
+        } else {
+          alert("Error selling the stock!");
+        }
+      })
+      .catch((error) => console.error("Error selling stock:", error));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex flex-col">
       {/* Top Navigation Bar */}
@@ -175,9 +206,9 @@ const Portfolio = () => {
                   onClick={() => openModal(stock.ticker)}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.09 }}
                   transition={{
-                    duration: 0.1,
+                    duration: 0.3,
                     delay: index * 0.05,
                   }}
                 >
@@ -306,6 +337,21 @@ const Portfolio = () => {
         )}
 
         <div className="mt-6 text-center">
+          <button
+            onClick={() =>
+              selectedStock && selectedStock.length > 0
+                ? sellStock(selectedStock[0].ticker)
+                : null
+            }
+            className="bg-red-500 text-white py-3 px-8 rounded-lg hover:bg-red-600 transition-colors mr-4"
+            disabled={
+              !selectedStock ||
+              selectedStock.length === 0 ||
+              selectedStock[0].quantity <= 0
+            }
+          >
+            Sell 1 Stock
+          </button>
           <button
             onClick={closeModal}
             className="bg-emerald-500 text-white py-3 px-8 rounded-lg hover:bg-emerald-600 transition-colors"
