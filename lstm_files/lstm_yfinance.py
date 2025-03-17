@@ -154,7 +154,14 @@ try:
     plt.plot(train['Close'], linewidth=3)
     plt.plot(test['Close'], linewidth=3)
     plt.plot(test["Predictions"], linewidth=3)
-    plt.legend(['Train', 'Test', 'Predictions'])
+    plt.legend(['Train', 'Test', 'Predictions'], loc='best', fontsize=14, facecolor='white', edgecolor='white', framealpha=0.5)
+    
+    # Set the background color of the plot
+    plt.gcf().set_facecolor('black')
+    plt.gca().set_facecolor('black')
+
+    # Set the ticks' color to white
+    plt.tick_params(axis='both', colors='white')
 
     # Save the plot to a file
     save_path = os.path.join(os.path.dirname(__file__), 'prediction_plot.png')
