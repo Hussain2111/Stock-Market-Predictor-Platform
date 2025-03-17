@@ -675,12 +675,17 @@ def buy_stock():
                 "error": "Missing required fields", 
                 "success": False}), 400
         
-        
+        # Update existing stocks with the same ticker to the new price
+        investments_collection.update_many(
+            {"user_id": user_id, "ticker": ticker},  # Find all stocks with the same user_id and ticker
+            {"$set": {"currentPrice": currentPrice}}  # Update the currentPrice field
+        )
         
         # Otherwise, insert a new stock purchase
         investment = {
             "user_id": user_id,
             "ticker": ticker,
+            "priceBought": currentPrice,
             "currentPrice": currentPrice,
             "date": datetime.now()
         }
