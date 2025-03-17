@@ -6,6 +6,7 @@ import {
   LineChart,
   ArrowRight,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ interface Stock {
   name: string;
   change: string;
   price: string;
+  isLoading?: boolean;
 }
 
 interface Step {
@@ -42,6 +44,12 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [trendingStocks, setTrendingStocks] = useState<Stock[]>([
+    { symbol: "NVDA", name: "NVIDIA", change: "", price: "", isLoading: true },
+    { symbol: "AAPL", name: "Apple", change: "", price: "", isLoading: true },
+    { symbol: "MSFT", name: "Microsoft", change: "", price: "", isLoading: true },
+    { symbol: "META", name: "Meta", change: "", price: "", isLoading: true },
+  ]);
 
   const navigate = useNavigate();
   const { currentTicker } = usePrediction();
@@ -51,6 +59,56 @@ export default function HomePage() {
     if (token) {
       setIsLoggedIn(true);
     }
+  }, []);
+
+  // Function to fetch stock data from Yahoo Finance
+  const fetchStockData = async () => {
+    try {
+      const stockSymbols = trendingStocks.map(stock => stock.symbol).join(",");
+      const response = await fetch(`http://localhost:5001/api/stocks?symbols=${stockSymbols}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch stock data');
+      }
+      
+      const data = await response.json();
+      
+      if (data && data.stocks) {
+        const updatedStocks = trendingStocks.map(stock => {
+          const stockData = data.stocks.find((s: any) => s.symbol === stock.symbol);
+          if (stockData) {
+            const priceValue = parseFloat(stockData.regularMarketPrice);
+            const changePercent = parseFloat(stockData.regularMarketChangePercent);
+            
+            return {
+              ...stock,
+              price: `$${priceValue.toFixed(2)}`,
+              change: `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`,
+              isLoading: false,
+            };
+          }
+          return stock;
+        });
+        
+        setTrendingStocks(updatedStocks);
+      }
+    } catch (error) {
+      console.error("Error fetching stock data:", error);
+      // Set isLoading to false even on error to show placeholder data
+      setTrendingStocks(prevStocks => 
+        prevStocks.map(stock => ({ ...stock, isLoading: false }))
+      );
+    }
+  };
+
+  // Fetch stock data when component mounts
+  useEffect(() => {
+    fetchStockData();
+    // Refresh stock data every 5 minutes (300000 ms)
+    const intervalId = setInterval(fetchStockData, 300000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleAnalysis = async (ticker: string) => {
@@ -89,13 +147,6 @@ export default function HomePage() {
       handleAnalysis(searchQuery);
     }
   };
-
-  const trendingStocks: Stock[] = [
-    { symbol: "NVDA", name: "NVIDIA", change: "+3.43%", price: "$149.43" },
-    { symbol: "AAPL", name: "Apple", change: "+1.21%", price: "$182.63" },
-    { symbol: "MSFT", name: "Microsoft", change: "+2.15%", price: "$397.58" },
-    { symbol: "META", name: "Meta", change: "+4.12%", price: "$394.14" },
-  ];
 
   const steps: Step[] = [
     {
@@ -354,15 +405,29 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 className="p-6 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                onClick={() => handleAnalysis(stock.symbol)}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-semibold">{stock.symbol}</h3>
                     <p className="text-sm text-gray-400">{stock.name}</p>
                   </div>
-                  <span className="text-emerald-400">{stock.change}</span>
+                  {stock.isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  ) : (
+                    <span className={`${parseFloat(stock.change) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {stock.change}
+                    </span>
+                  )}
                 </div>
-                <p className="text-2xl font-bold">{stock.price}</p>
+                {stock.isLoading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    <span className="text-gray-400">Loading...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold">{stock.price}</p>
+                )}
               </motion.div>
             ))}
           </div>

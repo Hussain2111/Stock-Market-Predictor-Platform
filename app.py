@@ -221,7 +221,7 @@ def get_sentiment():
         import ollama
         
         # Get news data from two sources
-        api = NewsDataApiClient(apikey='pub_736718e9399326ef93bc5d214d31ad00dec04')
+        api = NewsDataApiClient(apikey='pub_67694630073f7b1a43688748fde40ddfd74bf')
         news_data = ""
         
         # Get the news response from newsdata api
@@ -661,7 +661,69 @@ def fetch_stock_news():
             'success': False,
             'error': str(e)
         })
+
+@app.route('/api/stocks', methods=['GET'])
+def get_multiple_stocks():
+    try:
+        # Get comma-separated stock symbols from query params
+        symbols_str = request.args.get('symbols')
+        if not symbols_str:
+            return jsonify({
+                'error': 'No stock symbols provided',
+                'success': False
+            }), 400
+            
+        # Split symbols and create a list
+        symbols = [sym.strip() for sym in symbols_str.split(',')]
         
+        # Initialize result array
+        result = []
+        
+        # Fetch data for each symbol
+        for symbol in symbols:
+            try:
+                ticker = yf.Ticker(symbol)
+                
+                # Get the price data for the last 2 days to calculate percent change
+                hist = ticker.history(period="2d")
+                
+                if len(hist) >= 2:
+                    yesterday_close = hist['Close'].iloc[-2]
+                    today_price = hist['Close'].iloc[-1]
+                    price_change_percent = ((today_price - yesterday_close) / yesterday_close) * 100
+                else:
+                    # Fallback if we don't have enough history
+                    today_price = hist['Close'].iloc[-1] if len(hist) > 0 else 0
+                    price_change_percent = 0
+                
+                stock_data = {
+                    'symbol': symbol,
+                    'regularMarketPrice': round(today_price, 2),
+                    'regularMarketChangePercent': round(price_change_percent, 2),
+                    'name': ticker.info.get('shortName', symbol)
+                }
+                
+                result.append(stock_data)
+            except Exception as e:
+                # If there's an error with one stock, log it but continue
+                logging.error(f"Error fetching data for {symbol}: {str(e)}")
+                result.append({
+                    'symbol': symbol,
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'stocks': result,
+            'success': True
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in get_multiple_stocks: {str(e)}")
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
 @app.route('/buy-stock', methods=['POST'])
 def buy_stock():
     try:
@@ -781,6 +843,86 @@ def get_individual_stock():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/profit-or-loss', methods=['POST'])
+def profit_or_loss():
+    try:
+        data = request.json
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return jsonify({"success": False, "error": "Missing user_id"}), 400
+
+        # Fetch all stocks owned by the user from MongoDB
+        stocks = list(investments_collection.find({"user_id": (user_id)}))
+
+        if not stocks:
+            return jsonify({"success": False, "error": "No stocks found for user"}), 404
+
+        total_cost = 0
+        total_current_value = 0
+        stock_results = []
+
+        for stock in stocks:
+            ticker = stock["ticker"]
+            price_bought = stock["priceBought"]  # Initial purchase price
+            current_price = stock["currentPrice"]  # Current market price
+
+            investment = price_bought  # Since we store one record per stock purchase
+            current_value = current_price
+            profit_loss = current_value - investment
+            profit_loss_percentage = (profit_loss / investment) * 100 if investment > 0 else 0
+
+            total_cost += investment
+            total_current_value += current_value
+
+            stock_results.append({
+                "ticker": ticker,
+                "priceBought": price_bought,
+                "currentPrice": current_price,
+                "profit_loss": profit_loss,
+                "profit_loss_percentage": round(profit_loss_percentage, 2)
+            })
+
+        # Calculate overall profit/loss
+        overall_profit_loss = total_current_value - total_cost
+        overall_profit_loss_percentage = (overall_profit_loss / total_cost) * 100 if total_cost > 0 else 0
+
+        return jsonify({
+            "success": True,
+            "total_investment": total_cost,
+            "current_value": total_current_value,
+            "profit_loss": overall_profit_loss,
+            "profit_loss_percentage": round(overall_profit_loss_percentage, 2),
+            "stocks": stock_results
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route('/stock-profit', methods=['GET'])
+def stock_profit():
+    try:
+        user_id = request.args.get("user_id")
+        ticker = request.args.get("ticker")
+
+        if not user_id or not ticker:
+            return jsonify({"success": False, "error": "Missing user_id or ticker"}), 400
+
+        investments = list(investments_collection.find({"user_id": user_id, "ticker": ticker}))
+
+        if not investments:
+            return jsonify({"success": False, "message": "No stocks found for this user and ticker"}), 404
+
+        total_profit = sum((stock["currentPrice"] - stock["priceBought"]) for stock in investments)
+
+        return jsonify({
+            "success": True,
+            "ticker": ticker,
+            "profit": total_profit
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
