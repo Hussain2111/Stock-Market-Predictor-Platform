@@ -668,10 +668,9 @@ def buy_stock():
         data = request.get_json()
         user_id = data.get('user_id')
         ticker = data.get('ticker')
-        quantity = data.get('quantity', 1)
-        stock_holdings = data.get('stock_holdings')
+        currentPrice = data.get('currentPrice')
 
-        if not all([user_id, ticker, quantity,stock_holdings]):
+        if not all([user_id, ticker, currentPrice]):
             return jsonify({
                 "error": "Missing required fields", 
                 "success": False}), 400
