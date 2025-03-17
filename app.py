@@ -35,7 +35,7 @@ def get_stock_price():
         if not ticker:
             # Return a default value instead of error when no ticker is set
             return jsonify({
-                'stock_price': 0,
+                'currentPrice': 0,
                 'ticker': None,
                 'success': True
             })
@@ -49,7 +49,7 @@ def get_stock_price():
         print(f"Successfully fetched price: {current_price}")  # Debug logging
         
         return jsonify({
-            'stock_price': round(current_price, 2),
+            'currentPrice': round(current_price, 2),
             'ticker': ticker,
             'success': True
         })
@@ -669,9 +669,9 @@ def buy_stock():
         user_id = data.get('user_id')
         ticker = data.get('ticker')
         quantity = data.get('quantity', 1)
-        stock_price = data.get('currentPrice')
+        currentPrice = data.get('currentPrice')
 
-        if not all([user_id, ticker, quantity]):
+        if not all([user_id, ticker, quantity,currentPrice]):
             return jsonify({
                 "error": "Missing required fields", 
                 "success": False}), 400
@@ -683,7 +683,7 @@ def buy_stock():
         })
         
         if existing_investment:
-            # If stock exists, update the quantity
+            # If stock exists, update the quantity and stock holdings
             investments_collection.update_one(
                 {"_id": existing_investment["_id"]},
                 {"$inc": {"quantity": quantity}, 
@@ -697,7 +697,7 @@ def buy_stock():
                 "user_id": user_id,
                 "ticker": ticker,
                 "quantity": quantity,
-                "currentPrice": stock_price,
+                "currentPrice": currentPrice,
                 "date": datetime.now()
             }
             investments_collection.insert_one(investment)
@@ -717,7 +717,7 @@ def sell_stock():
         quantity = data.get("quantity", 1) # Default to selling 1 stock if not specified
         currentPrice = data.get("currentPrice")
 
-        if not all([ticker, user_id, quantity]):
+        if not all([ticker, user_id, quantity, currentPrice]):
             return jsonify({
                 "success": False, 
                 "error": "Missing required fields"}), 400
