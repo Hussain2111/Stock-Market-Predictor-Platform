@@ -18,6 +18,7 @@ import {
   ExternalLink,
   BarChart as BarChartIcon,
   X,
+  Bookmark
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1204,7 +1205,7 @@ const AnalysisDashboard = () => {
                   <span className="text-gray-400">{stockName}</span>
                   <div className="flex gap-2">
                     <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
-                      <Bell className="w-5 h-5" />
+                      <Bookmark className="w-5 h-5" />
                     </button>
                     <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
                       <Share2 className="w-5 h-5" />
