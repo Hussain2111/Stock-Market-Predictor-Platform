@@ -24,5 +24,9 @@ dist-ssr
 *.sw?
 
 
-#Project files
+# Project files
 *.venv
+
+# Ignore changes made after running each time
+*.png
+*.pyc
