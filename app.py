@@ -898,6 +898,31 @@ def profit_or_loss():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route('/stock-profit', methods=['GET'])
+def stock_profit():
+    try:
+        user_id = request.args.get("user_id")
+        ticker = request.args.get("ticker")
+
+        if not user_id or not ticker:
+            return jsonify({"success": False, "error": "Missing user_id or ticker"}), 400
+
+        investments = list(investments_collection.find({"user_id": user_id, "ticker": ticker}))
+
+        if not investments:
+            return jsonify({"success": False, "message": "No stocks found for this user and ticker"}), 404
+
+        total_profit = sum((stock["currentPrice"] - stock["priceBought"]) for stock in investments)
+
+        return jsonify({
+            "success": True,
+            "ticker": ticker,
+            "profit": total_profit
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
