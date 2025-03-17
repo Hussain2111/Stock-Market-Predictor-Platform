@@ -184,47 +184,66 @@ const Portfolio = () => {
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Stock Details Modal"
-        className="modal-content bg-black p-12 rounded-3xl text-white w-11/12 max-w-5xl mx-auto"
-        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm flex justify-center items-center"
+        className="bg-[#111827] rounded-xl p-8 w-full max-w-4xl min-h-[30vh] relative shadow-lg"
+        overlayClassName="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50"
       >
-        <h2 className="text-3xl font-semibold mb-8 text-yellow-300">
+        <button
+          onClick={closeModal}
+          className="absolute right-6 top-6 text-gray-400 hover:text-white text-2xl"
+        >
+          ✕
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-emerald-400">
           {selectedStock ? selectedStock[0].ticker : "Stock Details"}
         </h2>
 
         {selectedStock ? (
-          <table className="w-full text-left table-auto mb-6">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                  Date & Time
-                </th>
-                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                  Price Bought
-                </th>
-                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                  Current Price
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedStock.map((stock, index) => (
-                <tr key={index} className="border-b border-gray-700">
-                  <td className="px-6 py-4 text-gray-300">
-                    {new Date(stock.date).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-red-400">
-                    ${stock.priceBought.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-white">
-                    ${stock.currentPrice.toFixed(2)}
-                  </td>
+          <div className="overflow-y-auto max-h-[50vh]">
+            <table className="w-full text-left table-auto mb-6">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-gray-300">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-gray-300">
+                    Price Bought
+                  </th>
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-gray-300">
+                    Current Price
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {selectedStock.map((stock, index) => (
+                  <tr key={index} className="border-b border-gray-700">
+                    <td className="px-6 py-4 text-gray-300">
+                      {new Date(stock.date).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-red-400">
+                      ${stock.priceBought.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-green-400">
+                      ${stock.currentPrice.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <p className="text-center text-gray-300">No details available.</p>
+          <p className="text-center text-gray-300">
+            No details available for this stock.
+          </p>
         )}
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={closeModal}
+            className="bg-emerald-500 text-white py-3 px-8 rounded-lg hover:bg-emerald-600 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </Modal>
     </div>
   );
