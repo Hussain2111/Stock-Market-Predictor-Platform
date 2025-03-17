@@ -675,35 +675,17 @@ def buy_stock():
                 "error": "Missing required fields", 
                 "success": False}), 400
         
-        # Check if the user already owns this stock
-        existing_investment = investments_collection.find_one({
+        
+        
+        # Otherwise, insert a new stock purchase
+        investment = {
             "user_id": user_id,
-            "ticker": ticker
-        })
-        
-        if existing_investment:
-            old_holdings = existing_investment.get('stock_holdings')
-            stock_holdings = old_holdings + stock_holdings
-            # If stock exists, update the quantity and stock holdings
-            investments_collection.update_one(
-                {"_id": existing_investment["_id"]},
-                {"$inc": {"quantity": quantity}, 
-                 "$set": {"date": datetime.now(), 
-                          "stock_holdings": stock_holdings}}
-            )
-            message = "Stock quantity updated!"
-        
-        else:
-            # Otherwise, insert a new stock purchase
-            investment = {
-                "user_id": user_id,
-                "ticker": ticker,
-                "quantity": quantity,
-                "stock_holdings": stock_holdings,
-                "date": datetime.now()
-            }
-            investments_collection.insert_one(investment)
-            message = "New investment added!"
+            "ticker": ticker,
+            "priceBought": currentPrice,
+            "date": datetime.now()
+        }
+        investments_collection.insert_one(investment)
+        message = "New investment added!"
 
         return jsonify({"message": "Investment saved!", "success": True})
     
