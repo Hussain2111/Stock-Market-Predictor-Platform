@@ -176,7 +176,6 @@ const Trading = () => {
         body: JSON.stringify({
           user_id: "uzair",
           ticker: selectedStock,
-          currentPrice: stockData.currentPrice,
         }),
       });
 

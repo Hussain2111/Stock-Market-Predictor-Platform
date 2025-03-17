@@ -698,25 +698,21 @@ def sell_stock():
         data = request.json
         ticker = data.get("ticker")
         user_id = data.get("user_id")
-        currentPrice = data.get("currentPrice")
 
-        if not all([ticker, user_id]):
-            return jsonify({
-                "success": False, 
-                "error": "Missing required fields"}), 400
+        if not ticker or not user_id:
+            return jsonify({"success": False, "error": "Missing ticker or user ID"})
 
-        message = f"Sold 1 {ticker} stock."
+        result = investments_collection.delete_one({"ticker": ticker, "user_id": user_id})  # Delete based on both fields
 
-        return jsonify({
-            "success": True, 
-            "message": message})
+        if result.deleted_count > 0:
+            return jsonify({"success": True, "message": f"Stock {ticker} removed from your portfolio!"})
+    
 
     except Exception as e:
         return jsonify({
             "success": False, 
             "error": str(e)}), 500
         
-# Portfolio (Fetch User's Stocks)
 @app.route('/portfolio', methods=['GET'])
 def get_portfolio():
     try:
@@ -724,10 +720,36 @@ def get_portfolio():
         if not user_id:
             return jsonify({"success": False, "error": "User ID required"}), 400
 
-        stocks = list(investments_collection.find({"user_id": user_id}, {"_id": 0}))  # Exclude _id
+        # Aggregation pipeline to group stocks by ticker, count the quantity, and calculate the total value
+        pipeline = [
+            {
+                "$match": {"user_id": user_id}  # Filter by user_id
+            },
+            {
+                "$group": {
+                    "_id": "$ticker",  # Group by ticker symbol
+                    "quantity": {"$sum": 1},  # Count the number of documents per ticker (equivalent to quantity)
+                    "currentPrice": {"$sum": {"$multiply": ["$currentPrice", 1]}}  # Calculate total value per ticker (currentPrice * quantity)
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,  # Exclude the _id field
+                    "ticker": "$_id",  # Rename _id to ticker
+                    "quantity": 1,  # Keep the quantity
+                    "currentPrice": 1  # Keep the total value of stocks
+                }
+            }
+        ]
+
+        # Execute the aggregation pipeline
+        stocks = list(investments_collection.aggregate(pipeline))
+        
         return jsonify(stocks)
+    
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
