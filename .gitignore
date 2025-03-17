@@ -28,5 +28,7 @@ dist-ssr
 *.venv
 
 # Ignore changes made after running each time
-*.png
+prediction_plot.png
+price_history.png
+training_loss.png
 *.pyc
