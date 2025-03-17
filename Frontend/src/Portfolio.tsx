@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logo from "./logo.jpg";
-import { DollarSign, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  DollarSign,
+  ArrowUp,
+  ArrowDown,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import Modal from "react-modal";
 import { motion } from "framer-motion";
 
@@ -157,7 +163,7 @@ const Portfolio = () => {
         ) : portfolio.length === 0 ? (
           <p className="text-center text-gray-400">No stocks bought yet.</p>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {portfolio.map((stock, index) => {
               const stockProfit = stockProfits[stock.ticker] || 0;
               const isProfitable = stockProfit > 0;
@@ -174,9 +180,9 @@ const Portfolio = () => {
                   <div className="flex justify-between items-center">
                     <h2 className="text-xl font-semibold">{stock.ticker}</h2>
                     {isProfitable ? (
-                      <ArrowUp className="text-green-400 w-6 h-6" />
+                      <TrendingUp className="text-green-400 w-6 h-6" />
                     ) : (
-                      <ArrowDown className="text-red-400 w-6 h-6" />
+                      <TrendingDown className="text-red-400 w-6 h-6" />
                     )}
                   </div>
 
@@ -263,7 +269,7 @@ const Portfolio = () => {
                     Date & Time
                   </th>
                   <th className="px-6 py-3 border-b text-lg font-semibold text-gray-300">
-                    Price Bought
+                    Purchase Price
                   </th>
                   <th className="px-6 py-3 border-b text-lg font-semibold text-gray-300">
                     Current Price
