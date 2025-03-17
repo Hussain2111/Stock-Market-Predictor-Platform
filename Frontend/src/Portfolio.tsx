@@ -19,7 +19,7 @@ const Portfolio = () => {
   const [portfolio, setPortfolio] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [selectedStock, setSelectedStock] = useState<Stock[] | null>(null); // Changed to an array to hold all individual stocks
 
   useEffect(() => {
     fetch("http://localhost:5001/portfolio?user_id=uzair")
@@ -32,9 +32,22 @@ const Portfolio = () => {
   }, []);
 
   const openModal = (ticker: string) => {
-    const selectedStocks = portfolio.filter((stock) => stock.ticker === ticker);
-    setSelectedStock(selectedStocks.length > 0 ? selectedStocks[0] : null);
-    setModalIsOpen(true);
+    // Fetch individual stock details for the selected ticker
+    fetch(
+      `http://localhost:5001/individual-stock?user_id=uzair&ticker=${ticker}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setSelectedStock(data.stocks); // Set individual stocks in the modal
+        } else {
+          setSelectedStock([]); // If no stocks found, set empty array
+        }
+        setModalIsOpen(true);
+      })
+      .catch((error) =>
+        console.error("Error fetching individual stocks:", error)
+      );
   };
 
   const closeModal = () => {
@@ -130,41 +143,59 @@ const Portfolio = () => {
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Stock Details Modal"
-        className="modal-content bg-gray-900 p-8 rounded-lg text-white max-w-lg mx-auto"
-        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        className="modal-content bg-gray-900 p-12 rounded-lg text-white w-11/12 max-w-5xl mx-auto" // Increased size here (max-w-5xl for wider modal)
+        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center" // Adjusted opacity
       >
-        <h2 className="text-2xl font-semibold mb-4">Stock Details</h2>
+        {/* Dynamically set the modal title to the ticker */}
+        <h2 className="text-3xl font-semibold mb-8">
+          {selectedStock ? selectedStock[0].ticker : "Stock Details"}{" "}
+          {/* Ticker name */}
+        </h2>
+
         {selectedStock ? (
           <>
-            <div className="text-lg">
-              <p>
-                <strong>Ticker:</strong> {selectedStock.ticker}
-              </p>
-              <p>
-                <strong>Quantity:</strong> {selectedStock.quantity}
-              </p>
-              <p>
-                <strong>Price Bought:</strong> ${selectedStock.priceBought}
-              </p>
-              <p>
-                <strong>Current Price:</strong> ${selectedStock.currentPrice}
-              </p>
-              <p>
-                <strong>Purchase Date:</strong>{" "}
-                {new Date(selectedStock.date).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="mt-6">
+            <table className="w-full text-left table-auto mb-6">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                    Price Bought
+                  </th>
+                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                    Current Price
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedStock.map((stock, index) => (
+                  <tr key={index} className="border-b border-gray-700">
+                    <td className="px-6 py-4">
+                      {new Date(stock.date).toLocaleString()}{" "}
+                      {/* Shows both date and time */}
+                    </td>
+                    <td className="px-6 py-4">
+                      ${stock.priceBought.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      ${stock.currentPrice.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-8 text-center">
               <button
                 onClick={closeModal}
-                className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700"
+                className="bg-red-600 text-white py-3 px-8 rounded-lg hover:bg-red-700"
               >
                 Close
               </button>
             </div>
           </>
         ) : (
-          <p>No details available for this stock.</p>
+          <p className="text-center">No details available for this stock.</p>
         )}
       </Modal>
     </div>
