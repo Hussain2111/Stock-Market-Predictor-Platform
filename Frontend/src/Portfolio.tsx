@@ -143,11 +143,11 @@ const Portfolio = () => {
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Stock Details Modal"
-        className="modal-content bg-gray-900 p-12 rounded-lg text-white w-11/12 max-w-5xl mx-auto" // Increased size here (max-w-5xl for wider modal)
-        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center" // Adjusted opacity
+        className="modal-content bg-black p-12 rounded-3xl text-white w-11/12 max-w-5xl mx-auto" // Black modal background
+        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm flex justify-center items-center" // Transparent overlay with black background
       >
         {/* Dynamically set the modal title to the ticker */}
-        <h2 className="text-3xl font-semibold mb-8">
+        <h2 className="text-3xl font-semibold mb-8 text-yellow-300">
           {selectedStock ? selectedStock[0].ticker : "Stock Details"}{" "}
           {/* Ticker name */}
         </h2>
@@ -157,13 +157,13 @@ const Portfolio = () => {
             <table className="w-full text-left table-auto mb-6">
               <thead>
                 <tr>
-                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
                     Date & Time
                   </th>
-                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
                     Price Bought
                   </th>
-                  <th className="px-6 py-3 border-b text-lg font-semibold">
+                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
                     Current Price
                   </th>
                 </tr>
@@ -171,14 +171,14 @@ const Portfolio = () => {
               <tbody>
                 {selectedStock.map((stock, index) => (
                   <tr key={index} className="border-b border-gray-700">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-gray-300">
                       {new Date(stock.date).toLocaleString()}{" "}
                       {/* Shows both date and time */}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-red-400">
                       ${stock.priceBought.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-white-400">
                       ${stock.currentPrice.toFixed(2)}
                     </td>
                   </tr>
@@ -195,7 +195,9 @@ const Portfolio = () => {
             </div>
           </>
         ) : (
-          <p className="text-center">No details available for this stock.</p>
+          <p className="text-center text-gray-300">
+            No details available for this stock.
+          </p>
         )}
       </Modal>
     </div>
