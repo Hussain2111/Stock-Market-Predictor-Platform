@@ -4,6 +4,7 @@ import AnalysisPage from "./analysis";
 import Trading from "./Trading";
 import Account from "./setting";
 import Portfolio from "./Portfolio";
+import Watchlist from "./Watchlist";
 import { PredictionProvider } from "./context/PredictionContext";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="/trade" element={<Trading />} />
           <Route path="/settings" element={<Account />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/watchlist" element={<Watchlist />} />
         </Routes>
       </Router>
     </PredictionProvider>
