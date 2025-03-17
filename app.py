@@ -681,7 +681,7 @@ def buy_stock():
         investment = {
             "user_id": user_id,
             "ticker": ticker,
-            "priceBought": currentPrice,
+            "currentPrice": currentPrice,
             "date": datetime.now()
         }
         investments_collection.insert_one(investment)
@@ -698,7 +698,6 @@ def sell_stock():
         data = request.json
         ticker = data.get("ticker")
         user_id = data.get("user_id")
-        quantity = data.get("quantity", 1) # Default to selling 1 stock if not specified
         currentPrice = data.get("currentPrice")
 
         if not all([ticker, user_id]):
@@ -706,34 +705,7 @@ def sell_stock():
                 "success": False, 
                 "error": "Missing required fields"}), 400
 
-        # Find the stock entry
-        existing_investment = investments_collection.find_one({
-            "ticker": ticker, 
-            "user_id": user_id})
-
-        if not existing_investment:
-            return jsonify({
-                "success": False, 
-                "error": "Stock not found in portfolio"}), 404
-
-        current_quantity = existing_investment.get("quantity")
-
-        if current_quantity < quantity:
-            return jsonify({
-                "success": False, 
-                "error": "Not enough stock to sell"}), 400
-
-        if current_quantity == quantity:
-            # If selling all stocks, remove the entry completely
-            investments_collection.delete_one({"_id": existing_investment["_id"]})
-            message = f"Sold all {ticker} stocks, removed from portfolio!"
-        else:
-            # Otherwise, decrement the quantity
-            investments_collection.update_one(
-                {"_id": existing_investment["_id"]},
-                {"$inc": {"quantity": -quantity, "stock_holdings": -currentPrice}}
-            )
-            message = f"Sold {quantity} {ticker} stocks, {current_quantity - quantity} remaining."
+        message = f"Sold 1 {ticker} stock."
 
         return jsonify({
             "success": True, 
