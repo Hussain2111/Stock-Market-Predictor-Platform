@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import logo from "./logo.jpg";
 import { DollarSign, TrendingUp } from "lucide-react";
 import Modal from "react-modal";
+import { motion } from "framer-motion"; // Import for animations
 
-// Ensure the modal can be opened/closed
 Modal.setAppElement("#root");
 
 interface Stock {
@@ -19,7 +19,11 @@ const Portfolio = () => {
   const [portfolio, setPortfolio] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedStock, setSelectedStock] = useState<Stock[] | null>(null); // Changed to an array to hold all individual stocks
+  const [selectedStock, setSelectedStock] = useState<Stock[] | null>(null);
+  const [profitLoss, setProfitLoss] = useState<number | null>(null);
+  const [profitLossPercentage, setProfitLossPercentage] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     fetch("http://localhost:5001/portfolio?user_id=uzair")
@@ -29,19 +33,35 @@ const Portfolio = () => {
         setLoading(false);
       })
       .catch((error) => console.error("Error fetching portfolio:", error));
+
+    // Fetch Profit/Loss
+    fetch("http://localhost:5001/profit-or-loss", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user_id: "uzair" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setProfitLoss(data.profit_loss);
+          setProfitLossPercentage(data.profit_loss_percentage);
+        }
+      })
+      .catch((error) => console.error("Error fetching profit/loss:", error));
   }, []);
 
   const openModal = (ticker: string) => {
-    // Fetch individual stock details for the selected ticker
     fetch(
       `http://localhost:5001/individual-stock?user_id=uzair&ticker=${ticker}`
     )
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setSelectedStock(data.stocks); // Set individual stocks in the modal
+          setSelectedStock(data.stocks);
         } else {
-          setSelectedStock([]); // If no stocks found, set empty array
+          setSelectedStock([]);
         }
         setModalIsOpen(true);
       })
@@ -101,7 +121,7 @@ const Portfolio = () => {
       </header>
 
       {/* Portfolio Content */}
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-6 py-10 relative">
         <h1 className="text-3xl font-bold text-center mb-6">Your Portfolio</h1>
 
         {loading ? (
@@ -111,10 +131,13 @@ const Portfolio = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {portfolio.map((stock, index) => (
-              <div
+              <motion.div
                 key={index}
                 className="bg-gray-900 p-5 rounded-2xl shadow-lg transform hover:scale-105 transition cursor-pointer"
-                onClick={() => openModal(stock.ticker)} // Open modal when stock is clicked
+                onClick={() => openModal(stock.ticker)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
               >
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">{stock.ticker}</h2>
@@ -132,9 +155,27 @@ const Portfolio = () => {
                     ${stock.currentPrice?.toFixed(2) || "N/A"}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
+        )}
+
+        {/* Profit/Loss Display */}
+        {profitLoss !== null && (
+          <motion.div
+            className={`fixed top-20 right-10 p-6 rounded-lg shadow-lg text-white text-xl font-bold ${
+              profitLoss >= 0 ? "bg-green-600" : "bg-red-600"
+            }`}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, type: "spring" }}
+          >
+            {profitLoss >= 0 ? "📈 Profit" : "📉 Loss"}: $
+            {profitLoss.toFixed(2)}
+            <span className="ml-2 text-sm">
+              ({profitLossPercentage?.toFixed(2)}%)
+            </span>
+          </motion.div>
         )}
       </main>
 
@@ -143,61 +184,46 @@ const Portfolio = () => {
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
         contentLabel="Stock Details Modal"
-        className="modal-content bg-black p-12 rounded-3xl text-white w-11/12 max-w-5xl mx-auto" // Black modal background
-        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm flex justify-center items-center" // Transparent overlay with black background
+        className="modal-content bg-black p-12 rounded-3xl text-white w-11/12 max-w-5xl mx-auto"
+        overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-0 backdrop-blur-sm flex justify-center items-center"
       >
-        {/* Dynamically set the modal title to the ticker */}
         <h2 className="text-3xl font-semibold mb-8 text-yellow-300">
-          {selectedStock ? selectedStock[0].ticker : "Stock Details"}{" "}
-          {/* Ticker name */}
+          {selectedStock ? selectedStock[0].ticker : "Stock Details"}
         </h2>
 
         {selectedStock ? (
-          <>
-            <table className="w-full text-left table-auto mb-6">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                    Date & Time
-                  </th>
-                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                    Price Bought
-                  </th>
-                  <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
-                    Current Price
-                  </th>
+          <table className="w-full text-left table-auto mb-6">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
+                  Date & Time
+                </th>
+                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
+                  Price Bought
+                </th>
+                <th className="px-6 py-3 border-b text-lg font-semibold text-yellow-200">
+                  Current Price
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedStock.map((stock, index) => (
+                <tr key={index} className="border-b border-gray-700">
+                  <td className="px-6 py-4 text-gray-300">
+                    {new Date(stock.date).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-red-400">
+                    ${stock.priceBought.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 text-white">
+                    ${stock.currentPrice.toFixed(2)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {selectedStock.map((stock, index) => (
-                  <tr key={index} className="border-b border-gray-700">
-                    <td className="px-6 py-4 text-gray-300">
-                      {new Date(stock.date).toLocaleString()}{" "}
-                      {/* Shows both date and time */}
-                    </td>
-                    <td className="px-6 py-4 text-red-400">
-                      ${stock.priceBought.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 text-white-400">
-                      ${stock.currentPrice.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="mt-8 text-center">
-              <button
-                onClick={closeModal}
-                className="bg-red-600 text-white py-3 px-8 rounded-lg hover:bg-red-700"
-              >
-                Close
-              </button>
-            </div>
-          </>
+              ))}
+            </tbody>
+          </table>
         ) : (
-          <p className="text-center text-gray-300">
-            No details available for this stock.
-          </p>
+          <p className="text-center text-gray-300">No details available.</p>
         )}
       </Modal>
     </div>
