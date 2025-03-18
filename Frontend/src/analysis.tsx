@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
+import Header   from "@/components/Header";
 import {
   Search,
   Brain,
-  TrendingUp,
   LineChart,
-  ArrowUpRight,
-  ArrowDownRight,
   MessageSquare,
   Activity,
   DollarSign,
-  Bell,
   Share2,
   Download,
-  Newspaper,
-  TrendingDown,
   AlertTriangle,
   ExternalLink,
   BarChart as BarChartIcon,
@@ -21,8 +16,8 @@ import {
   Bookmark
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePrediction } from "@/components/context/PredictionContext";
 import {
-  LineChart as RechartsLineChart,
   Line,
   XAxis,
   YAxis,
@@ -32,19 +27,13 @@ import {
   BarChart,
   Bar,
   Legend,
-  AreaChart,
   Area,
   ComposedChart,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent } from "./card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import logo from "./logo.jpg";
 import { Link } from "react-router-dom";
-import { Input } from "./input";
-import { Button } from "./button";
-import { usePrediction } from "./context/PredictionContext";
 
 interface NewsItem {
   title: string;
@@ -1145,61 +1134,8 @@ const AnalysisDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
-      <AnimatePresence>{showAuthModal && <AuthModal />}</AnimatePresence>
-
       <div className="flex-1">
-        <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
-          <div className="w-full px-6 py-4 flex items-center">
-            <div className="flex items-center">
-              <Link to="/" className="mr-10">
-                <img src={logo} alt="Logo" className="h-16 w-auto" />
-              </Link>
-              <nav className="hidden md:flex gap-6">
-                <Link
-                  to="/analysis"
-                  className="text-white hover:text-emerald-500 transition-colors"
-                >
-                  Analysis
-                </Link>
-                <Link
-                  to="/portfolio"
-                  className="text-white hover:text-emerald-500 transition-colors"
-                >
-                  Portfolio
-                </Link>
-                <Link
-                  to="/watchlist"
-                  className="text-white hover:text-emerald-500 transition-colors"
-                >
-                  Watchlist
-                </Link>
-                <Link
-                  to="/trade"
-                  className="text-white hover:text-emerald-500 transition-colors"
-                >
-                  Trade
-                </Link>
-                <Link
-                  to="/settings"
-                  className="text-white hover:text-emerald-500 transition-colors"
-                >
-                  Settings
-                </Link>
-              </nav>
-            </div>
-            <div className="flex-grow"></div>
-            <div className="flex items-center gap-4">
-              <button
-                className="h-10 px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
-                onClick={() => setShowAuthModal(true)}
-              >
-                Get Started
-              </button>
-              <SearchOverlay />
-            </div>
-          </div>
-        </header>
-
+        <Header />
         <main className="container mx-auto px-6 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
