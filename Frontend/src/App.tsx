@@ -5,7 +5,7 @@ import Trading from "./Trading";
 import Settings from "./Settings/setting";
 import Portfolio from "./Portfolio";
 import Watchlist from "./Watchlist";
-import { PredictionProvider } from "./context/PredictionContext";
+import { PredictionProvider } from "./components/context/PredictionContext";
 
 function App() {
   return (
