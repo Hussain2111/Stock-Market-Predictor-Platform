@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { UserProfile } from "./data";
+import { useRef } from "react";
 
 interface ProfileProps {
   activeTab: string;
@@ -8,6 +9,28 @@ interface ProfileProps {
 }
 
 const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
+
+    // Reference to the file input element
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create a URL for the selected image
+      const imageUrl = URL.createObjectURL(file);
+      // Update the user profile with the new avatar
+      setUserProfile({
+        ...userProfile,
+        avatar: imageUrl
+      });
+    }
+  };
+
+  // Trigger file input click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
   return (
     <>
       {activeTab === "profile" && (
@@ -20,16 +43,34 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
             Profile Information
           </h2>
           <div className="space-y-6">
+            {/* Profile Avatar Section with Properly Centered Content */}
             <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <div className="md:w-1/3">
-                <img
-                  src={userProfile.avatar}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full border-2 border-emerald-500"
-                />
+              <div className="md:w-1/3 flex justify-center md:justify-start">
+                {userProfile.avatar ? (
+                  <img
+                    src={userProfile.avatar}
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full border-2 border-emerald-500 object-cover"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full border-2 border-emerald-500 flex items-center justify-center bg-gray-800 text-emerald-500">
+                    <span className="text-xl">Profile</span>
+                  </div>
+                )}
               </div>
               <div className="md:w-2/3">
-                <button className="px-4 py-2 border border-emerald-500 text-emerald-500 rounded-lg hover:bg-emerald-500 hover:text-white transition-colors">
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                {/* Button that triggers the hidden file input */}
+                <button 
+                  onClick={handleUploadClick}
+                >
                   Upload New Photo
                 </button>
               </div>
@@ -111,7 +152,7 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
                 </div>
               </div>
             </div>
-
+                  
             <div className="flex justify-end">
               <button className="px-6 py-2 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
                 Save Changes

@@ -94,34 +94,7 @@ const Security = ({activeTab, preferences, setPreferences}: PreferencesProps) =>
                       </div>
                     </div>
 
-                    <div className="border-t border-gray-700 pt-6">
-                      <h3 className="font-semibold mb-4">API Keys</h3>
-                      <div className="space-y-4">
-                        <div className="p-4 rounded-lg bg-white/5 flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">Personal API Key</div>
-                            <div className="text-sm text-gray-400">
-                              Created on Mar 5, 2025
-                            </div>
-                            <div className="text-xs text-emerald-400 mt-1">
-                              Active
-                            </div>
-                          </div>
-                          <div>
-                            <button className="text-red-400 hover:text-red-300 mr-4">
-                              Revoke
-                            </button>
-                            <button className="text-emerald-400 hover:text-emerald-300">
-                              View
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button className="mt-4 text-emerald-400 hover:text-emerald-300">
-                        + Generate New API Key
-                      </button>
-                    </div>
+                    
 
                     <div className="border-t border-gray-700 pt-6">
                       <h3 className="font-semibold mb-4 text-red-400">

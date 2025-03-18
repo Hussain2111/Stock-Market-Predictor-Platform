@@ -1,11 +1,9 @@
 import { useState} from "react";
 import {
   User,
-  Settings,
   Bell,
   CreditCard,
   Shield,
-  LineChart,
   History,
   ChevronRight,
   LogOut,
@@ -143,36 +141,6 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   <span className="flex items-center">
                     <History className="w-5 h-5 mr-3" />
                     Analysis History
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("watchlist")}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                    activeTab === "watchlist"
-                      ? "bg-emerald-500 text-white"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <LineChart className="w-5 h-5 mr-3" />
-                    Watchlist
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("preferences")}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                    activeTab === "preferences"
-                      ? "bg-emerald-500 text-white"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <Settings className="w-5 h-5 mr-3" />
-                    Preferences
                   </span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
