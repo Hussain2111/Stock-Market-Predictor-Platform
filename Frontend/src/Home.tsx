@@ -10,9 +10,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import analysis from "./analysis";
-import logo from "./logo.jpg";
-import { usePrediction } from "./context/PredictionContext";
+import logo from "./components/logo.jpg";
+import { usePrediction } from "./components/context/PredictionContext";
 import AuthModal from "../login"; 
 interface Stock {
   symbol: string;

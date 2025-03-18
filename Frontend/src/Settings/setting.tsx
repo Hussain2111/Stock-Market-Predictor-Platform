@@ -5,9 +5,9 @@ import Subscriptions from "./Subscriptions";
 import Notifications from "./notifications";
 import History from "./history";
 import Security from "./security";
-import Header from "../header";
+import Header from "../components/Header";
 import {AnimatePresence} from "framer-motion";
-import AuthModal from "../AuthModal";
+import AuthModal from "../components/AuthModal";
 
 
 interface Subscription {
