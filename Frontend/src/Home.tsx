@@ -7,12 +7,15 @@ import {
   ArrowRight,
   ChevronDown,
   Loader2,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import logo from "./components/logo.jpg";
 import { usePrediction } from "./components/context/PredictionContext";
-import AuthModal from "../login"; 
+import { authService } from "./authService";
+import AuthModal from "./AuthModal";
+
 interface Stock {
   symbol: string;
   name: string;
@@ -54,11 +57,23 @@ export default function HomePage() {
   const { currentTicker } = usePrediction();
 
   useEffect(() => {
+    // Check if there's a valid token in localStorage
     const token = localStorage.getItem("authToken");
     if (token) {
+      // If token exists, user is logged in
       setIsLoggedIn(true);
     }
   }, []);
+
+  // Function to handle logout
+  const handleLogout = () => {
+    // Clear authentication data from localStorage
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    
+    // Update logged in state
+    setIsLoggedIn(false);
+  };
 
   // Function to fetch stock data from Yahoo Finance
   const fetchStockData = async () => {
@@ -231,11 +246,7 @@ export default function HomePage() {
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
               <button 
-                onClick={() => {
-                  localStorage.removeItem("authToken");
-                  localStorage.removeItem("userId");
-                  setIsLoggedIn(false);
-                }}
+                onClick={handleLogout}
                 className="px-4 py-2 border border-gray-700 rounded-lg font-medium hover:bg-white/5 transition-colors"
               >
                 Logout
