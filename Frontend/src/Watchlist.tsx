@@ -133,3 +133,114 @@ const Watchlist = () => {
     navigate(`/analysis?ticker=${ticker}`);
   };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex flex-col">
+      {/* Top Navigation Bar */}
+      <Header />
+
+      {/* Watchlist Content */}
+      <main className="flex-1 px-6 py-10 relative">
+        <h1 className="text-3xl font-bold text-center mb-6">Your Watchlist</h1>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          </div>
+        ) : watchlist.length === 0 ? (
+          <div className="text-center text-gray-400 mt-12">
+            <p className="text-xl mb-4">Your watchlist is empty</p>
+            <p className="mb-6">Bookmark stocks from the analysis page to add them to your watchlist</p>
+            <button 
+              onClick={() => navigate('/analysis')}
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+            >
+              Go to Analysis
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {stocksData.map((stock, index) => {
+              const isProfitable = stock.priceChange >= 0;
+
+              return (
+                <motion.div
+                  key={stock.ticker}
+                  className="bg-gray-900 p-5 rounded-2xl shadow-lg cursor-pointer relative group"
+                  onClick={() => navigateToAnalysis(stock.ticker)}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                  }}
+                >
+                  <button
+                    onClick={(e) => handleRemoveFromWatchlist(stock.ticker, e)}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white/5 hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    aria-label="Remove from watchlist"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">{stock.ticker}</h2>
+                    <div className="mr-8">
+                      {isProfitable ? (
+                        <TrendingUp className="text-green-400 w-6 h-6" />
+                      ) : (
+                        <TrendingDown className="text-red-400 w-6 h-6" />
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-gray-400 text-sm mt-1 truncate">{stock.companyName}</p>
+
+                  <div className="flex justify-between items-start mt-4">
+                    <div>
+                      <div className="flex items-center">
+                        <DollarSign className="text-yellow-400 w-5 h-5 mr-1" />
+                        <p className="text-lg font-semibold">
+                          ${stock.currentPrice?.toFixed(2) || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`text-right ${
+                        isProfitable ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      <p className="font-medium">
+                        {isProfitable ? "+" : ""}
+                        {stock.priceChange?.toFixed(2) || "0.00"}
+                      </p>
+                      <p className="text-sm">
+                        {isProfitable ? "+" : ""}
+                        {stock.percentChange?.toFixed(2) || "0.00"}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-800 flex justify-end">
+                    <button
+                      className="flex items-center text-emerald-400 text-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToAnalysis(stock.ticker);
+                      }}
+                    >
+                      View Analysis <ExternalLink className="w-3 h-3 ml-1" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Watchlist;
