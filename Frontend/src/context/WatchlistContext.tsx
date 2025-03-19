@@ -43,4 +43,17 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     }
   };
 
+  const removeFromWatchlist = (ticker: string) => {
+    setWatchlist(watchlist.filter(item => item !== ticker));
+  };
 
+  const isInWatchlist = (ticker: string) => {
+    return watchlist.includes(ticker);
+  };
+
+  return (
+    <WatchlistContext.Provider value={{ watchlist, addToWatchlist, removeFromWatchlist, isInWatchlist }}>
+      {children}
+    </WatchlistContext.Provider>
+  );
+};
