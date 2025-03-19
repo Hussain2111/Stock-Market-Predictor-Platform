@@ -31,7 +31,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       let result;
-      
+
       if (isLogin) {
         // Use authService for login
         result = authService.login(formData.email, formData.password);
@@ -39,12 +39,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         // Use authService for registration
         result = authService.register(formData.email, formData.password);
       }
-      
+
       if (result.success) {
         // Save user token to local storage for persistent login
         localStorage.setItem("authToken", result.token || "");
         localStorage.setItem("userId", result.userId || "");
-        
+
         // Close the modal and refresh the page
         onClose();
         window.location.reload();
@@ -74,14 +74,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         >
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-2xl font-bold mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
-        
+        <h2 className="text-2xl font-bold mb-6">
+          {isLogin ? "Login" : "Sign Up"}
+        </h2>
+
         {error && (
           <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-4">
             {error}
           </div>
         )}
-        
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="email"
@@ -101,7 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
             required
           />
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full py-3 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50"
@@ -113,9 +115,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           onClick={() => setIsLogin(!isLogin)}
           className="mt-4 text-sm text-gray-400 hover:text-white"
         >
-          {isLogin ? "Need an account? Sign up" : "Already have an account? Login"}
+          {isLogin
+            ? "Need an account? Sign up"
+            : "Already have an account? Login"}
         </button>
       </div>
     </motion.div>
   );
-} 
+}
