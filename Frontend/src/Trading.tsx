@@ -83,6 +83,12 @@ const Trading = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [timePeriod, setTimePeriod] = useState("1mo");
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  // New state variables for the quantity popup
+  const [showQuantityPopup, setShowQuantityPopup] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
 
   // Fetch stock data when selected stock or time period changes
   useEffect(() => {
@@ -135,57 +141,75 @@ const Trading = () => {
     }
   };
 
-  const buyStock = async () => {
+  // Open quantity popup for buy
+  const openBuyPopup = () => {
+    setTransactionType("buy");
+    setQuantity(1);
+    setShowQuantityPopup(true);
+  };
+
+  // Open quantity popup for sell
+  const openSellPopup = () => {
+    setTransactionType("sell");
+    setQuantity(1);
+    setShowQuantityPopup(true);
+  };
+
+  // Close the quantity popup
+  const closeQuantityPopup = () => {
+    setShowQuantityPopup(false);
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (value > 0) {
+      setQuantity(value);
+    }
+  };
+
+  // Process the transaction after quantity is provided
+  const processTransaction = async () => {
     if (!stockData) {
       alert("Stock data is unavailable.");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:5001/buy-stock", {
+      const endpoint =
+        transactionType === "buy"
+          ? "http://localhost:5001/buy-stock"
+          : "http://localhost:5001/sell-stock";
+
+      const payload = {
+        user_id: "uzair", // Replace with actual user ID
+        ticker: selectedStock,
+        currentPrice: stockData.currentPrice,
+        quantity: quantity,
+      };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          user_id: "uzair", // Replace with actual user ID
-          ticker: selectedStock,
-          currentPrice: stockData.currentPrice,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert("Stock purchased successfully!");
+        setShowQuantityPopup(false);
+        setShowAnimation(true);
+        setTimeout(() => setShowAnimation(false), 2000);
       } else {
-        alert("Error buying stock: " + data.error);
+        alert(
+          `Error ${transactionType === "buy" ? "buying" : "selling"} stock: ${
+            data.error
+          }`
+        );
       }
     } catch (error) {
       console.error("Error:", error);
-    }
-  };
-
-  const handleSellStock = async () => {
-    if (!selectedStock || !stockData) return;
-
-    try {
-      const response = await fetch("http://localhost:5001/sell-stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: "uzair",
-          ticker: selectedStock,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        console.log(result.message);
-      } else {
-        console.error("Sell failed:", result.error);
-      }
-    } catch (error) {
-      console.error("Network error:", error);
     }
   };
 
@@ -193,7 +217,7 @@ const Trading = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
-        <Header/>
+        <Header />
 
         {/* Main Content Area */}
         <div className="flex flex-1">
@@ -368,18 +392,95 @@ const Trading = () => {
             {/* Buy & Sell Buttons */}
             <div className="flex gap-4">
               <button
-                onClick={buyStock}
+                onClick={openBuyPopup}
                 className="bg-green-500 px-8 py-3 rounded-lg hover:bg-green-600 font-medium transition-colors"
               >
                 Buy
               </button>
               <button
-                onClick={handleSellStock}
+                onClick={openSellPopup}
                 className="bg-red-500 px-8 py-3 rounded-lg hover:bg-red-600 font-medium transition-colors"
               >
                 Sell
               </button>
             </div>
+            {/* Quantity Modal Popup */}
+            {showQuantityPopup && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-700 w-full max-w-md">
+                  <h3 className="text-xl font-bold mb-4">
+                    {transactionType === "buy" ? "Buy" : "Sell"} {selectedStock}
+                  </h3>
+
+                  {stockData && (
+                    <div className="mb-4 text-gray-300">
+                      <p>Current Price: ${stockData.currentPrice.toFixed(2)}</p>
+                      <p className="mt-2">
+                        Total Value: $
+                        {(stockData.currentPrice * quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Quantity
+                    </label>
+                    <div className="flex items-center">
+                      <button
+                        className="bg-gray-700 px-3 py-2 rounded-l-lg border-r border-gray-600"
+                        onClick={() =>
+                          quantity > 1 && setQuantity(quantity - 1)
+                        }
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={handleQuantityChange}
+                        className="bg-gray-800 text-center py-2 w-20 focus:outline-none"
+                      />
+                      <button
+                        className="bg-gray-700 px-3 py-2 rounded-r-lg border-l border-gray-600"
+                        onClick={() => setQuantity(quantity + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 mt-6">
+                    <button
+                      onClick={closeQuantityPopup}
+                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={processTransaction}
+                      className={`px-6 py-2 rounded-lg transition-colors ${
+                        transactionType === "buy"
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-red-600 hover:bg-red-700"
+                      }`}
+                    >
+                      Confirm {transactionType === "buy" ? "Purchase" : "Sale"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Success Animation */}
+            {showAnimation && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="p-6 bg-white text-black rounded-lg shadow-lg animate-fade-in">
+                  ✅ Transaction Successful!
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
