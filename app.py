@@ -731,7 +731,8 @@ def buy_stock():
         user_id = data.get('user_id')
         ticker = data.get('ticker')
         currentPrice = data.get('currentPrice')
-
+        quantity = data.get('quantity', 1)  # Default to 1 if quantity is not provided
+        
         if not all([user_id, ticker, currentPrice]):
             return jsonify({
                 "error": "Missing required fields", 
@@ -743,18 +744,24 @@ def buy_stock():
             {"$set": {"currentPrice": currentPrice}}  # Update the currentPrice field
         )
         
-        # Otherwise, insert a new stock purchase
-        investment = {
-            "user_id": user_id,
-            "ticker": ticker,
-            "priceBought": currentPrice,
-            "currentPrice": currentPrice,
-            "date": datetime.now()
-        }
-        investments_collection.insert_one(investment)
-        message = "New investment added!"
-
-        return jsonify({"message": "Investment saved!", "success": True})
+        # Insert multiple entries based on quantity
+        inserted_ids = []
+        for _ in range(quantity):
+            investment = {
+                "user_id": user_id,
+                "ticker": ticker,
+                "priceBought": currentPrice,
+                "currentPrice": currentPrice,
+                "date": datetime.now()
+            }
+            result = investments_collection.insert_one(investment)
+            inserted_ids.append(result.inserted_id)
+        
+        return jsonify({
+            "message": f"Successfully purchased {quantity} shares of {ticker}!", 
+            "inserted_ids": [str(id) for id in inserted_ids],
+            "success": True
+        })
     
     except Exception as e:
         return jsonify({"error": str(e), "success": False}), 500
@@ -765,16 +772,45 @@ def sell_stock():
         data = request.json
         ticker = data.get("ticker")
         user_id = data.get("user_id")
+        quantity = data.get("quantity", 1)  # Default to 1 if quantity is not provided
 
         if not ticker or not user_id:
             return jsonify({"success": False, "error": "Missing ticker or user ID"})
 
-        result = investments_collection.delete_one({"ticker": ticker, "user_id": user_id})  # Delete based on both fields
-
-        if result.deleted_count > 0:
-            return jsonify({"success": True, "message": f"Stock {ticker} removed from your portfolio!"})
+        # Find all stocks matching the criteria
+        matching_stocks = list(investments_collection.find(
+            {"ticker": ticker, "user_id": user_id}
+        ).sort("date", 1))  # Sort by date to sell oldest shares first (FIFO)
+        
+        available_quantity = len(matching_stocks)
+        
+        if available_quantity == 0:
+            return jsonify({
+                "success": False,
+                "error": f"No shares of {ticker} found in your portfolio"
+            })
+        
+        if quantity > available_quantity:
+            return jsonify({
+                "success": False,
+                "error": f"Insufficient shares. You have {available_quantity} shares of {ticker}, but tried to sell {quantity}."
+            })
+        
+        # Delete the specified number of stocks (oldest first)
+        stocks_to_sell = matching_stocks[:quantity]
+        deleted_count = 0
+        
+        for stock in stocks_to_sell:
+            result = investments_collection.delete_one({"_id": stock["_id"]})
+            if result.deleted_count > 0:
+                deleted_count += 1
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Successfully sold {deleted_count} shares of {ticker}!",
+            "sold_quantity": deleted_count
+        })
     
-
     except Exception as e:
         return jsonify({
             "success": False, 
