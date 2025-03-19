@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import Header   from "@/components/Header";
+import Header from "@/components/Header";
 import {
   Search,
   ArrowRight,
@@ -16,7 +16,7 @@ import {
   DollarSign,
   MessageSquare,
   Activity,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrediction } from "@/components/context/PredictionContext";
@@ -38,6 +38,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import ProtectedAnalysis from "./ProtectedAnalysis";
 
 interface NewsItem {
   title: string;
@@ -774,7 +775,14 @@ const AnalysisDashboard = () => {
   const [stockPrice, setStockPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
   const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
-  const { predictionImage, setPredictionImage, priceHistoryImage, setPriceHistoryImage, currentTicker, setCurrentTicker } = usePrediction();
+  const {
+    predictionImage,
+    setPredictionImage,
+    priceHistoryImage,
+    setPriceHistoryImage,
+    currentTicker,
+    setCurrentTicker,
+  } = usePrediction();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
   const [sentimentData, setSentimentData] = useState([
@@ -915,7 +923,7 @@ const AnalysisDashboard = () => {
   useEffect(() => {
     // Set loading state
     setIsLoading(true);
-    
+
     // First immediately fetch and display the stock info
     const fetchStockInfo = async () => {
       try {
@@ -924,35 +932,41 @@ const AnalysisDashboard = () => {
           `http://localhost:5001/stock-info?ticker=${tickerState}`
         );
         const infoData = await info.json();
-        
+
         if (infoData.success) {
           setStockName(infoData.company_name);
-          
+
           // Get price change data from stock-price-data endpoint
           const priceDataResponse = await fetch(
             `http://localhost:5001/stock-price-data?ticker=${tickerState}&timeframe=1D`
           );
           const priceData = await priceDataResponse.json();
-          
+
           console.log("Price history data:", priceData);
-          
-          if (priceData.success && priceData.priceData && priceData.priceData.length >= 2) {
-            const prices = priceData.priceData.map((item: { price: number }) => item.price);
-            
+
+          if (
+            priceData.success &&
+            priceData.priceData &&
+            priceData.priceData.length >= 2
+          ) {
+            const prices = priceData.priceData.map(
+              (item: { price: number }) => item.price
+            );
+
             // Use the opening price (first price) and latest price for calculation
             const openPrice = prices[0];
             const latestPrice = prices[prices.length - 1];
-            
+
             const change = latestPrice - openPrice;
             const changePercent = (change / openPrice) * 100;
-            
+
             console.log("Calculated price change:", {
               openPrice,
               latestPrice,
               change,
-              changePercent
+              changePercent,
             });
-            
+
             setPriceChange(change);
             setPriceChangePercent(changePercent);
           } else {
@@ -961,13 +975,13 @@ const AnalysisDashboard = () => {
             setPriceChangePercent(0);
           }
         }
-        
+
         // Get current price immediately
         // First set the global ticker to ensure we get the right price
         await fetch(`http://localhost:5001/stock-info?ticker=${tickerState}`);
         const priceResponse = await fetch(`http://localhost:5001/stock-price`);
         const priceData = await priceResponse.json();
-        
+
         if (priceData.success) {
           setStockPrice(priceData.currentPrice);
         }
@@ -981,7 +995,7 @@ const AnalysisDashboard = () => {
 
     fetchStockInfo();
   }, [tickerState]);
-  
+
   useEffect(() => {
     const fetchPriceHistory = async () => {
       // If we already have prediction data for this ticker, don't reload it
@@ -990,7 +1004,7 @@ const AnalysisDashboard = () => {
         setIsLoadingGraph(false);
         return;
       }
-      
+
       setIsLoadingGraph(true);
       try {
         console.log(`Starting analysis for ticker: ${tickerState}`);
@@ -1006,7 +1020,9 @@ const AnalysisDashboard = () => {
               ticker: tickerState,
             }),
           }),
-          fetch(`http://localhost:5001/get-price-history?ticker=${tickerState}`),
+          fetch(
+            `http://localhost:5001/get-price-history?ticker=${tickerState}`
+          ),
         ]);
 
         const [analysisData, historyData] = await Promise.all([
@@ -1051,7 +1067,14 @@ const AnalysisDashboard = () => {
     };
 
     fetchPriceHistory();
-  }, [tickerState, predictionImage, currentTicker, setPredictionImage, setPriceHistoryImage, setCurrentTicker]);
+  }, [
+    tickerState,
+    predictionImage,
+    currentTicker,
+    setPredictionImage,
+    setPriceHistoryImage,
+    setCurrentTicker,
+  ]);
 
   useEffect(() => {
     const fetchTechnicalFundamental = async () => {
@@ -1184,612 +1207,649 @@ const AnalysisDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
-      <div className="flex-1">
-        <Header />
-        <main className="container mx-auto px-6 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-4 mb-2">
-                  <h1 className="text-3xl font-bold">{tickerState}</h1>
-                  <span className="text-gray-400">{stockName}</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleBookmarkToggle}
-                      className={`p-2 rounded-full bg-white/5 hover:bg-white/10 ${
-                        isInWatchlist(tickerState) ? "text-emerald-500" : ""
-                      }`}
-                    >
-                      <Bookmark className="w-5 h-5" />
-                    </button>
-                    <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
-                      <Share2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">
-                    ${stockPrice?.toFixed(2) || "0.00"}
-                  </span>
-                  <span className="flex items-center">
-                    {priceChange > 0 ? (
-                      <span className="flex items-center gap-1 text-green-500">
-                        <TrendingUp className="w-4 h-4" />
-                        +${Math.abs(priceChange).toFixed(2)} ({priceChangePercent.toFixed(2)}%)
-                      </span>
-                    ) : priceChange < 0 ? (
-                      <span className="flex items-center gap-1 text-red-500">
-                        <TrendingDown className="w-4 h-4" />
-                        -${Math.abs(priceChange).toFixed(2)} ({Math.abs(priceChangePercent).toFixed(2)}%)
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">$0.00 (0.00%)</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-              <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 flex items-center gap-2">
-                <Download className="w-4 h-4" /> Export Data
-              </button>
-            </div>
-
-            <div className="flex mt-8 h-[600px] bg-white/5 rounded-xl">
-              <div className="flex-1 p-6">
-                <Tabs defaultValue="history" className="h-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="history">Price History</TabsTrigger>
-                    <TabsTrigger value="prediction">Prediction</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="history" className="h-[calc(100%-40px)]">
-                    <div className="mb-4 flex gap-2">
-                      {["1D", "1W", "1M", "3M", "1Y", "ALL"].map((tf) => (
-                        <button
-                          key={tf}
-                          onClick={() => setSelectedTimeframe(tf)}
-                          className={`px-3 py-1 rounded ${
-                            selectedTimeframe === tf
-                              ? "bg-emerald-500"
-                              : "bg-white/5"
-                          }`}
-                        >
-                          {tf}
-                        </button>
-                      ))}
-                    </div>
-                    {isLoading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                      </div>
-                    ) : (
-                      <div className="h-[calc(100%-40px)]">
-                        <StockPriceChart
-                          data={stockPriceData}
-                          timeframe={selectedTimeframe}
-                        />
-                      </div>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="prediction" className="h-full">
-                    {isLoadingGraph ? (
-                      <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                        <p className="text-gray-400">
-                          Generating AI prediction...
-                        </p>
-                      </div>
-                    ) : error ? (
-                      <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <AlertTriangle className="w-8 h-8 text-red-500" />
-                        <p className="text-red-400">{error}</p>
-                        <button
-                          onClick={() => {
-                            setError(null);
-                            setIsLoadingGraph(true);
-                            // Retry prediction
-                            fetch(
-                              `http://localhost:5001/get-prediction?ticker=${tickerState}`
-                            )
-                              .then((res) => res.json())
-                              .then((data) => {
-                                if (data.success) {
-                                  setPredictionImage(data.image);
-                                  setStockPrice(data.current_price);
-                                } else {
-                                  throw new Error(
-                                    data.error || "Failed to load prediction"
-                                  );
-                                }
-                              })
-                              .catch((err) => setError(err.message))
-                              .finally(() => setIsLoadingGraph(false));
-                          }}
-                          className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
-                        >
-                          Retry
-                        </button>
-                      </div>
-                    ) : predictionImage ? (
-                      <img
-                        src={`data:image/png;base64,${predictionImage}`}
-                        alt="Price Prediction"
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">
-                        No prediction data available
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </div>
-              <Chatbot />
-            </div>
-          </motion.div>
-
-          <Tabs defaultValue="prediction" className="space-y-8">
-            <TabsList className="grid grid-cols-5 gap-2 bg-transparent">
-              {[
-                {
-                  value: "prediction",
-                  icon: <Brain className="w-4 h-4" />,
-                  label: "AI Prediction",
-                },
-                {
-                  value: "technical",
-                  icon: <LineChart className="w-4 h-4" />,
-                  label: "Technical",
-                },
-                {
-                  value: "fundamental",
-                  icon: <DollarSign className="w-4 h-4" />,
-                  label: "Fundamental",
-                },
-                {
-                  value: "sentiment",
-                  icon: <MessageSquare className="w-4 h-4" />,
-                  label: "Sentiment",
-                },
-                {
-                  value: "News",
-                  icon: <Activity className="w-4 h-4" />,
-                  label: "News",
-                },
-              ].map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="flex items-center gap-2 p-4 bg-white/5 hover:bg-white/10 data-[state=active]:bg-emerald-500"
-                >
-                  {tab.icon}
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            <TabsContent value="prediction">
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  {
-                    title: "Price Target",
-                    value: "$225.50",
-                    subtext: "+7.2% Upside",
-                  },
-                  {
-                    title: "Confidence",
-                    value: "85%",
-                    subtext: "High Confidence",
-                  },
-                  {
-                    title: "Risk Level",
-                    value: "Medium",
-                    subtext: "Moderate Volatility",
-                  },
-                ].map((metric, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <Card className="bg-white/5 border-gray-800">
-                      <CardHeader>
-                        <CardTitle className="text-gray-200">
-                          {metric.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-emerald-400">
-                          {metric.value}
-                        </div>
-                        <div className="text-sm text-gray-200">
-                          {metric.subtext}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="technical">
-              <div className="grid grid-cols-2 gap-6">
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Technical Indicators</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">RSI (14)</span>
-                        <span
-                          className={`font-bold ${
-                            technicalIndicators.rsi > 70
-                              ? "text-red-500"
-                              : technicalIndicators.rsi < 30
-                              ? "text-green-500"
-                              : "text-gray-200"
-                          }`}
-                        >
-                          {technicalIndicators.rsi}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">MACD</span>
-                        <span
-                          className={`font-bold ${
-                            technicalIndicators.macd > 0
-                              ? "text-green-500"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {technicalIndicators.macd}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="block mb-2 text-white">Bollinger Bands</span>
-                        <div className="space-y-2 pl-4">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-200">Upper</span>
-                            <span className="font-bold text-white">
-                              ${technicalIndicators.bollinger.upper}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-200">Middle</span>
-                            <span className="font-bold text-white">
-                              ${technicalIndicators.bollinger.middle}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-200">Lower</span>
-                            <span className="font-bold text-white">
-                              ${technicalIndicators.bollinger.lower}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Volume Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer>
-                      <BarChart data={mockData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="date" stroke="#FFFFFF" />
-                        <YAxis stroke="#FFFFFF" />
-                        <Tooltip
-                          contentStyle={{
-                            background: "#1F2937",
-                            border: "none",
-                            color: "#FFFFFF"
-                          }}
-                        />
-                        <Bar dataKey="volume" fill="#10B981" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="fundamental">
-              <div className="grid grid-cols-3 gap-6">
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Valuation Metrics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-white">P/E Ratio</span>
-                        <span className="font-bold text-white">
-                          {fundamentalData.peRatio}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white">P/B Ratio</span>
-                        <span className="font-bold text-white">
-                          {fundamentalData.pbRatio}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Liquidity Ratios</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-white">Quick Ratio</span>
-                        <span className="font-bold text-white">
-                          {fundamentalData.quickRatio}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white">Current Ratio</span>
-                        <span className="font-bold text-white">
-                          {fundamentalData.currentRatio}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Profitability</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-white">ROE</span>
-                        <span className="font-bold text-white">
-                          {(fundamentalData.returnOnEquity * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white">ROA</span>
-                        <span className="font-bold text-white">
-                          {(fundamentalData.returnOnAssets * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="sentiment">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-white">
-                      <BarChartIcon className="w-5 h-5" /> Sentiment
-                      Distribution
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer>
-                      <ComposedChart data={sentimentData}>
-                        <XAxis dataKey="period" stroke="#FFFFFF" />
-                        <YAxis stroke="#FFFFFF" />
-                        <Tooltip
-                          contentStyle={{
-                            background: "#1F2937",
-                            border: "none",
-                            color: "white",
-                          }}
-                        />
-                        <Bar
-                          dataKey="positive"
-                          fill="#10B981"
-                          stackId="sentiment"
-                        />
-                        <Bar
-                          dataKey="neutral"
-                          fill="#6B7280"
-                          stackId="sentiment"
-                        />
-                        <Bar
-                          dataKey="negative"
-                          fill="#EF4444"
-                          stackId="sentiment"
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="averageSentiment"
-                          stroke="#FBBF24"
-                          strokeWidth={2}
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">Sentiment Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {sentimentData.map((data, index) => (
-                        <div key={index} className="bg-white/10 p-4 rounded-lg">
-                          <div className="flex justify-between mb-2">
-                            <span className="font-medium text-white">{data.period}</span>
-                            <span className="text-emerald-400">
-                              {(data.averageSentiment * 100).toFixed(1)}%
-                              Positive
-                            </span>
-                          </div>
-                          <div className="flex space-x-4">
-                            <div className="flex-1">
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-white">Positive</span>
-                                <span className="text-green-500">
-                                  {data.positive}%
-                                </span>
-                              </div>
-                              <div className="h-2 bg-green-500/30 rounded-full">
-                                <div
-                                  className="h-full bg-green-500 rounded-full"
-                                  style={{ width: `${data.positive}%` }}
-                                />
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-white">Negative</span>
-                                <span className="text-red-500">
-                                  {data.negative}%
-                                </span>
-                              </div>
-                              <div className="h-2 bg-red-500/30 rounded-full">
-                                <div
-                                  className="h-full bg-red-500 rounded-full"
-                                  style={{ width: `${data.negative}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-200">
-                            Total Mentions: {data.totalMentions}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="News">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 space-y-6">
-                  {isLoadingNews ? (
-                    <div className="flex items-center justify-center h-40">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                    </div>
-                  ) : newsData.length === 0 ? (
-                    <Card className="bg-white/5 border-gray-800">
-                      <CardContent className="p-4">
-                        <div className="text-center text-white">
-                          No recent news available for {tickerState}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    newsData.map((news, i) => (
-                      <Card
-                        key={i}
-                        className={`bg-white/5 border-gray-800 hover:bg-white/10 transition-colors ${
-                          news.sentiment === "positive"
-                            ? "border-l-4 border-green-500"
-                            : news.sentiment === "negative"
-                            ? "border-l-4 border-red-500"
-                            : "border-l-4 border-gray-500"
+    <ProtectedAnalysis>
+      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
+        <div className="flex-1">
+          <Header />
+          <main className="container mx-auto px-6 py-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-4 mb-2">
+                    <h1 className="text-3xl font-bold">{tickerState}</h1>
+                    <span className="text-gray-400">{stockName}</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleBookmarkToggle}
+                        className={`p-2 rounded-full bg-white/5 hover:bg-white/10 ${
+                          isInWatchlist(tickerState) ? "text-emerald-500" : ""
                         }`}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-lg mb-1 flex justify-between items-start text-white">
-                                {news.title || "Untitled"}
-                                {news.url && (
-                                  <a
-                                    href={news.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-emerald-400 hover:text-emerald-300"
-                                  >
-                                    <ExternalLink className="w-4 h-4" />
-                                  </a>
-                                )}
-                              </h4>
-                              <p className="text-gray-200 mb-2">
-                                {news.summary || "No summary available"}
-                              </p>
-                              <div className="flex items-center justify-between text-sm text-gray-300">
-                                <div className="flex items-center gap-2">
-                                  <span>{news.source}</span>
-                                  <span>•</span>
-                                  <span>{news.time}</span>
-                                </div>
-                                <div
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    news.impact === "High"
-                                      ? "bg-red-500/20 text-red-400"
-                                      : news.impact === "Medium"
-                                      ? "bg-yellow-500/20 text-yellow-400"
-                                      : "bg-green-500/20 text-green-400"
-                                  }`}
-                                >
-                                  {news.impact} Impact
-                                </div>
-                              </div>
-                            </div>
+                        <Bookmark className="w-5 h-5" />
+                      </button>
+                      <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
+                        <Share2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold">
+                      ${stockPrice?.toFixed(2) || "0.00"}
+                    </span>
+                    <span className="flex items-center">
+                      {priceChange > 0 ? (
+                        <span className="flex items-center gap-1 text-green-500">
+                          <TrendingUp className="w-4 h-4" />
+                          +${Math.abs(priceChange).toFixed(2)} (
+                          {priceChangePercent.toFixed(2)}%)
+                        </span>
+                      ) : priceChange < 0 ? (
+                        <span className="flex items-center gap-1 text-red-500">
+                          <TrendingDown className="w-4 h-4" />
+                          -${Math.abs(priceChange).toFixed(2)} (
+                          {Math.abs(priceChangePercent).toFixed(2)}%)
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">$0.00 (0.00%)</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 flex items-center gap-2">
+                  <Download className="w-4 h-4" /> Export Data
+                </button>
+              </div>
+
+              <div className="flex mt-8 h-[600px] bg-white/5 rounded-xl">
+                <div className="flex-1 p-6">
+                  <Tabs defaultValue="history" className="h-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="history">Price History</TabsTrigger>
+                      <TabsTrigger value="prediction">Prediction</TabsTrigger>
+                    </TabsList>
+                    <TabsContent
+                      value="history"
+                      className="h-[calc(100%-40px)]"
+                    >
+                      <div className="mb-4 flex gap-2">
+                        {["1D", "1W", "1M", "3M", "1Y", "ALL"].map((tf) => (
+                          <button
+                            key={tf}
+                            onClick={() => setSelectedTimeframe(tf)}
+                            className={`px-3 py-1 rounded ${
+                              selectedTimeframe === tf
+                                ? "bg-emerald-500"
+                                : "bg-white/5"
+                            }`}
+                          >
+                            {tf}
+                          </button>
+                        ))}
+                      </div>
+                      {isLoading ? (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                        </div>
+                      ) : (
+                        <div className="h-[calc(100%-40px)]">
+                          <StockPriceChart
+                            data={stockPriceData}
+                            timeframe={selectedTimeframe}
+                          />
+                        </div>
+                      )}
+                    </TabsContent>
+                    <TabsContent value="prediction" className="h-full">
+                      {isLoadingGraph ? (
+                        <div className="flex flex-col items-center justify-center h-full space-y-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                          <p className="text-gray-400">
+                            Generating AI prediction...
+                          </p>
+                        </div>
+                      ) : error ? (
+                        <div className="flex flex-col items-center justify-center h-full space-y-4">
+                          <AlertTriangle className="w-8 h-8 text-red-500" />
+                          <p className="text-red-400">{error}</p>
+                          <button
+                            onClick={() => {
+                              setError(null);
+                              setIsLoadingGraph(true);
+                              // Retry prediction
+                              fetch(
+                                `http://localhost:5001/get-prediction?ticker=${tickerState}`
+                              )
+                                .then((res) => res.json())
+                                .then((data) => {
+                                  if (data.success) {
+                                    setPredictionImage(data.image);
+                                    setStockPrice(data.current_price);
+                                  } else {
+                                    throw new Error(
+                                      data.error || "Failed to load prediction"
+                                    );
+                                  }
+                                })
+                                .catch((err) => setError(err.message))
+                                .finally(() => setIsLoadingGraph(false));
+                            }}
+                            className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : predictionImage ? (
+                        <img
+                          src={`data:image/png;base64,${predictionImage}`}
+                          alt="Price Prediction"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                          No prediction data available
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
+                <Chatbot />
+              </div>
+            </motion.div>
+
+            <Tabs defaultValue="prediction" className="space-y-8">
+              <TabsList className="grid grid-cols-5 gap-2 bg-transparent">
+                {[
+                  {
+                    value: "prediction",
+                    icon: <Brain className="w-4 h-4" />,
+                    label: "AI Prediction",
+                  },
+                  {
+                    value: "technical",
+                    icon: <LineChart className="w-4 h-4" />,
+                    label: "Technical",
+                  },
+                  {
+                    value: "fundamental",
+                    icon: <DollarSign className="w-4 h-4" />,
+                    label: "Fundamental",
+                  },
+                  {
+                    value: "sentiment",
+                    icon: <MessageSquare className="w-4 h-4" />,
+                    label: "Sentiment",
+                  },
+                  {
+                    value: "News",
+                    icon: <Activity className="w-4 h-4" />,
+                    label: "News",
+                  },
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="flex items-center gap-2 p-4 bg-white/5 hover:bg-white/10 data-[state=active]:bg-emerald-500"
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <TabsContent value="prediction">
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    {
+                      title: "Price Target",
+                      value: "$225.50",
+                      subtext: "+7.2% Upside",
+                    },
+                    {
+                      title: "Confidence",
+                      value: "85%",
+                      subtext: "High Confidence",
+                    },
+                    {
+                      title: "Risk Level",
+                      value: "Medium",
+                      subtext: "Moderate Volatility",
+                    },
+                  ].map((metric, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <Card className="bg-white/5 border-gray-800">
+                        <CardHeader>
+                          <CardTitle className="text-gray-200">
+                            {metric.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-emerald-400">
+                            {metric.value}
+                          </div>
+                          <div className="text-sm text-gray-200">
+                            {metric.subtext}
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  )}
+                    </motion.div>
+                  ))}
                 </div>
+              </TabsContent>
 
-                <Card className="bg-white/5 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">News Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">Total News Items</span>
-                        <span className="font-bold text-white">{newsData.length}</span>
+              <TabsContent value="technical">
+                <div className="grid grid-cols-2 gap-6">
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Technical Indicators
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">RSI (14)</span>
+                          <span
+                            className={`font-bold ${
+                              technicalIndicators.rsi > 70
+                                ? "text-red-500"
+                                : technicalIndicators.rsi < 30
+                                ? "text-green-500"
+                                : "text-gray-200"
+                            }`}
+                          >
+                            {technicalIndicators.rsi}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">MACD</span>
+                          <span
+                            className={`font-bold ${
+                              technicalIndicators.macd > 0
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {technicalIndicators.macd}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block mb-2 text-white">
+                            Bollinger Bands
+                          </span>
+                          <div className="space-y-2 pl-4">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-200">
+                                Upper
+                              </span>
+                              <span className="font-bold text-white">
+                                ${technicalIndicators.bollinger.upper}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-200">
+                                Middle
+                              </span>
+                              <span className="font-bold text-white">
+                                ${technicalIndicators.bollinger.middle}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-200">
+                                Lower
+                              </span>
+                              <span className="font-bold text-white">
+                                ${technicalIndicators.bollinger.lower}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">Positive News</span>
-                        <span className="text-green-500 font-bold">
-                          {
-                            newsData.filter((n) => n.sentiment === "positive")
-                              .length
-                          }
-                        </span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Volume Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                      <ResponsiveContainer>
+                        <BarChart data={mockData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#374151"
+                          />
+                          <XAxis dataKey="date" stroke="#FFFFFF" />
+                          <YAxis stroke="#FFFFFF" />
+                          <Tooltip
+                            contentStyle={{
+                              background: "#1F2937",
+                              border: "none",
+                              color: "#FFFFFF",
+                            }}
+                          />
+                          <Bar dataKey="volume" fill="#10B981" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="fundamental">
+                <div className="grid grid-cols-3 gap-6">
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Valuation Metrics
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-white">P/E Ratio</span>
+                          <span className="font-bold text-white">
+                            {fundamentalData.peRatio}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white">P/B Ratio</span>
+                          <span className="font-bold text-white">
+                            {fundamentalData.pbRatio}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">Negative News</span>
-                        <span className="text-red-500 font-bold">
-                          {
-                            newsData.filter((n) => n.sentiment === "negative")
-                              .length
-                          }
-                        </span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Liquidity Ratios
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-white">Quick Ratio</span>
+                          <span className="font-bold text-white">
+                            {fundamentalData.quickRatio}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white">Current Ratio</span>
+                          <span className="font-bold text-white">
+                            {fundamentalData.currentRatio}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white">High Impact News</span>
-                        <span className="text-red-400 font-bold">
-                          {newsData.filter((n) => n.impact === "High").length}
-                        </span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Profitability
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-white">ROE</span>
+                          <span className="font-bold text-white">
+                            {(fundamentalData.returnOnEquity * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white">ROA</span>
+                          <span className="font-bold text-white">
+                            {(fundamentalData.returnOnAssets * 100).toFixed(1)}%
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </main>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="sentiment">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <BarChartIcon className="w-5 h-5" /> Sentiment
+                        Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                      <ResponsiveContainer>
+                        <ComposedChart data={sentimentData}>
+                          <XAxis dataKey="period" stroke="#FFFFFF" />
+                          <YAxis stroke="#FFFFFF" />
+                          <Tooltip
+                            contentStyle={{
+                              background: "#1F2937",
+                              border: "none",
+                              color: "white",
+                            }}
+                          />
+                          <Bar
+                            dataKey="positive"
+                            fill="#10B981"
+                            stackId="sentiment"
+                          />
+                          <Bar
+                            dataKey="neutral"
+                            fill="#6B7280"
+                            stackId="sentiment"
+                          />
+                          <Bar
+                            dataKey="negative"
+                            fill="#EF4444"
+                            stackId="sentiment"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="averageSentiment"
+                            stroke="#FBBF24"
+                            strokeWidth={2}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">
+                        Sentiment Overview
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {sentimentData.map((data, index) => (
+                          <div
+                            key={index}
+                            className="bg-white/10 p-4 rounded-lg"
+                          >
+                            <div className="flex justify-between mb-2">
+                              <span className="font-medium text-white">
+                                {data.period}
+                              </span>
+                              <span className="text-emerald-400">
+                                {(data.averageSentiment * 100).toFixed(1)}%
+                                Positive
+                              </span>
+                            </div>
+                            <div className="flex space-x-4">
+                              <div className="flex-1">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-white">Positive</span>
+                                  <span className="text-green-500">
+                                    {data.positive}%
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-green-500/30 rounded-full">
+                                  <div
+                                    className="h-full bg-green-500 rounded-full"
+                                    style={{ width: `${data.positive}%` }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-white">Negative</span>
+                                  <span className="text-red-500">
+                                    {data.negative}%
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-red-500/30 rounded-full">
+                                  <div
+                                    className="h-full bg-red-500 rounded-full"
+                                    style={{ width: `${data.negative}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-sm text-gray-200">
+                              Total Mentions: {data.totalMentions}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="News">
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2 space-y-6">
+                    {isLoadingNews ? (
+                      <div className="flex items-center justify-center h-40">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                      </div>
+                    ) : newsData.length === 0 ? (
+                      <Card className="bg-white/5 border-gray-800">
+                        <CardContent className="p-4">
+                          <div className="text-center text-white">
+                            No recent news available for {tickerState}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      newsData.map((news, i) => (
+                        <Card
+                          key={i}
+                          className={`bg-white/5 border-gray-800 hover:bg-white/10 transition-colors ${
+                            news.sentiment === "positive"
+                              ? "border-l-4 border-green-500"
+                              : news.sentiment === "negative"
+                              ? "border-l-4 border-red-500"
+                              : "border-l-4 border-gray-500"
+                          }`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-lg mb-1 flex justify-between items-start text-white">
+                                  {news.title || "Untitled"}
+                                  {news.url && (
+                                    <a
+                                      href={news.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-emerald-400 hover:text-emerald-300"
+                                    >
+                                      <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                  )}
+                                </h4>
+                                <p className="text-gray-200 mb-2">
+                                  {news.summary || "No summary available"}
+                                </p>
+                                <div className="flex items-center justify-between text-sm text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    <span>{news.source}</span>
+                                    <span>•</span>
+                                    <span>{news.time}</span>
+                                  </div>
+                                  <div
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      news.impact === "High"
+                                        ? "bg-red-500/20 text-red-400"
+                                        : news.impact === "Medium"
+                                        ? "bg-yellow-500/20 text-yellow-400"
+                                        : "bg-green-500/20 text-green-400"
+                                    }`}
+                                  >
+                                    {news.impact} Impact
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  <Card className="bg-white/5 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="text-white">News Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">Total News Items</span>
+                          <span className="font-bold text-white">
+                            {newsData.length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">Positive News</span>
+                          <span className="text-green-500 font-bold">
+                            {
+                              newsData.filter((n) => n.sentiment === "positive")
+                                .length
+                            }
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">Negative News</span>
+                          <span className="text-red-500 font-bold">
+                            {
+                              newsData.filter((n) => n.sentiment === "negative")
+                                .length
+                            }
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white">High Impact News</span>
+                          <span className="text-red-400 font-bold">
+                            {newsData.filter((n) => n.impact === "High").length}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedAnalysis>
   );
 };
 
