@@ -16,35 +16,49 @@ export const authService = {
     const user = testUsers.find(
       (u) => u.email === email && u.password === password
     );
-    
+
     if (!user) {
-      return { success: false, error: "Account does not exist or invalid credentials" };
+      return {
+        success: false,
+        error: "Account does not exist or invalid credentials",
+      };
     }
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       token: `fake-jwt-token-${user.userId}`,
-      userId: user.userId
+      userId: user.userId,
     };
   },
-  
+
   register: (email: string, password: string) => {
     // Check if user already exists
-    const existingUser = testUsers.find(u => u.email === email);
-    
+    const existingUser = testUsers.find((u) => u.email === email);
+
     if (existingUser) {
       return { success: false, error: "User already exists" };
     }
-    
+
     // Create new user with random userId
     const userId = `user${Date.now()}`;
     const newUser = { email, password, userId };
     testUsers.push(newUser);
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       token: `fake-jwt-token-${userId}`,
-      userId 
+      userId,
     };
-  }
+  },
+
+  isAuthenticated: () => {
+    const token = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId");
+    return !!token && !!userId;
+  },
+
+  logout: () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+  },
 };
