@@ -6,21 +6,24 @@ import Settings from "./Settings/setting";
 import Portfolio from "./Portfolio";
 import Watchlist from "./Watchlist";
 import { PredictionProvider } from "./components/context/PredictionContext";
+import { WatchlistProvider } from "./context/WatchlistContext";
 
 function App() {
   return (
     <PredictionProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/analysis" element={<AnalysisPage />} />
-          <Route path="/trade" element={<Trading />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/watchlist" element={<Watchlist />} />
-        </Routes>
-      </Router>
+      <WatchlistProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/analysis" element={<AnalysisPage />} />
+            <Route path="/trade" element={<Trading />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+          </Routes>
+        </Router>
+      </WatchlistProvider>
     </PredictionProvider>
   );
 }
