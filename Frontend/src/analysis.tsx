@@ -2,21 +2,25 @@ import React, { useState, useEffect, useRef } from "react";
 import Header   from "@/components/Header";
 import {
   Search,
-  Brain,
-  LineChart,
-  MessageSquare,
-  Activity,
-  DollarSign,
+  ArrowRight,
   Share2,
   Download,
-  AlertTriangle,
   ExternalLink,
   BarChart as BarChartIcon,
   X,
-  Bookmark
+  Bookmark,
+  TrendingUp,
+  TrendingDown,
+  Brain,
+  LineChart,
+  DollarSign,
+  MessageSquare,
+  Activity,
+  AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrediction } from "@/components/context/PredictionContext";
+import { useWatchlist } from "@/context/WatchlistContext";
 import {
   Line,
   XAxis,
@@ -765,15 +769,14 @@ const StockPriceChart = ({
 };
 
 const AnalysisDashboard = () => {
-  const { 
-    predictionImage, 
-    setPredictionImage, 
-    priceHistoryImage, 
-    setPriceHistoryImage,
-    currentTicker,
-    setCurrentTicker 
-  } = usePrediction();
-  
+  const [ticker, setTicker] = useState("AAPL");
+  const [stockName, setStockName] = useState("Apple Inc.");
+  const [stockPrice, setStockPrice] = useState<number | null>(null);
+  const [priceChange, setPriceChange] = useState<number>(0);
+  const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
+  const { predictionImage, setPredictionImage, priceHistoryImage, setPriceHistoryImage, currentTicker, setCurrentTicker } = usePrediction();
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+
   const [sentimentData, setSentimentData] = useState([
     {
       period: "Current",
@@ -829,11 +832,8 @@ const AnalysisDashboard = () => {
   const [activeTab, setActiveTab] = useState("prediction");
   const [isAlertSet, setIsAlertSet] = useState(false);
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [stockPrice, setStockPrice] = useState<number | null>(null);
   const [error, setError] = useState(null);
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
-  const [stockName, setStockName] = useState("");
-  const [priceChange, setPriceChange] = useState<string>("+0.00%");
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -905,7 +905,7 @@ const AnalysisDashboard = () => {
   );
 
   // Initialize ticker from URL params only if we don't have a currentTicker
-  const [ticker, setTicker] = useState(() => {
+  const [tickerState, setTickerState] = useState(() => {
     if (currentTicker) return currentTicker;
     const params = new URLSearchParams(window.location.search);
     return params.get("ticker") || "AAPL";
@@ -921,16 +921,50 @@ const AnalysisDashboard = () => {
       try {
         // Get company name using yfinance
         const info = await fetch(
-          `http://localhost:5001/stock-info?ticker=${ticker}`
+          `http://localhost:5001/stock-info?ticker=${tickerState}`
         );
         const infoData = await info.json();
         
         if (infoData.success) {
           setStockName(infoData.company_name);
-          setPriceChange(infoData.price_change);
+          
+          // Get price change data from stock-price-data endpoint
+          const priceDataResponse = await fetch(
+            `http://localhost:5001/stock-price-data?ticker=${tickerState}&timeframe=1D`
+          );
+          const priceData = await priceDataResponse.json();
+          
+          console.log("Price history data:", priceData);
+          
+          if (priceData.success && priceData.priceData && priceData.priceData.length >= 2) {
+            const prices = priceData.priceData.map((item: { price: number }) => item.price);
+            
+            // Use the opening price (first price) and latest price for calculation
+            const openPrice = prices[0];
+            const latestPrice = prices[prices.length - 1];
+            
+            const change = latestPrice - openPrice;
+            const changePercent = (change / openPrice) * 100;
+            
+            console.log("Calculated price change:", {
+              openPrice,
+              latestPrice,
+              change,
+              changePercent
+            });
+            
+            setPriceChange(change);
+            setPriceChangePercent(changePercent);
+          } else {
+            // If we can't get price history, set to 0
+            setPriceChange(0);
+            setPriceChangePercent(0);
+          }
         }
         
         // Get current price immediately
+        // First set the global ticker to ensure we get the right price
+        await fetch(`http://localhost:5001/stock-info?ticker=${tickerState}`);
         const priceResponse = await fetch(`http://localhost:5001/stock-price`);
         const priceData = await priceResponse.json();
         
@@ -946,13 +980,13 @@ const AnalysisDashboard = () => {
     };
 
     fetchStockInfo();
-  }, [ticker]);
-
+  }, [tickerState]);
+  
   useEffect(() => {
     const fetchPriceHistory = async () => {
       setIsLoadingGraph(true);
       try {
-        console.log(`Starting analysis for ticker: ${ticker}`);
+        console.log(`Starting analysis for ticker: ${tickerState}`);
 
         // Start both the analysis and fetching price history in parallel
         const [analysisResponse, historyResponse] = await Promise.all([
@@ -962,10 +996,10 @@ const AnalysisDashboard = () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              ticker: ticker,
+              ticker: tickerState,
             }),
           }),
-          fetch(`http://localhost:5001/get-price-history?ticker=${ticker}`),
+          fetch(`http://localhost:5001/get-price-history?ticker=${tickerState}`),
         ]);
 
         const [analysisData, historyData] = await Promise.all([
@@ -986,7 +1020,7 @@ const AnalysisDashboard = () => {
 
         // Fetch prediction immediately after analysis is complete
         const predictionResponse = await fetch(
-          `http://localhost:5001/get-prediction?ticker=${ticker}`
+          `http://localhost:5001/get-prediction?ticker=${tickerState}`
         );
         const predictionData = await predictionResponse.json();
 
@@ -1009,7 +1043,7 @@ const AnalysisDashboard = () => {
     };
 
     fetchPriceHistory();
-  }, [ticker]);
+  }, [tickerState]);
 
   useEffect(() => {
     const fetchTechnicalFundamental = async () => {
@@ -1017,7 +1051,7 @@ const AnalysisDashboard = () => {
         setIsLoading(true);
         // Pass the ticker as a query parameter
         const response = await fetch(
-          `http://localhost:5001/get-technical-fundamental?ticker=${ticker}`
+          `http://localhost:5001/get-technical-fundamental?ticker=${tickerState}`
         );
         const data = await response.json();
 
@@ -1036,17 +1070,17 @@ const AnalysisDashboard = () => {
       }
     };
 
-    if (ticker) {
+    if (tickerState) {
       fetchTechnicalFundamental();
     }
-  }, [ticker]);
+  }, [tickerState]);
 
   useEffect(() => {
     const fetchSentimentData = async () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          `http://localhost:5001/get-sentiment?ticker=${ticker}`
+          `http://localhost:5001/get-sentiment?ticker=${tickerState}`
         );
         const data = await response.json();
 
@@ -1067,10 +1101,10 @@ const AnalysisDashboard = () => {
       }
     };
 
-    if (ticker) {
+    if (tickerState) {
       fetchSentimentData();
     }
-  }, [ticker]);
+  }, [tickerState]);
 
   // Add this useEffect to fetch stock price data
   useEffect(() => {
@@ -1078,7 +1112,7 @@ const AnalysisDashboard = () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          `http://localhost:5001/stock-price-data?ticker=${ticker}&timeframe=${selectedTimeframe}`
+          `http://localhost:5001/stock-price-data?ticker=${tickerState}&timeframe=${selectedTimeframe}`
         );
         const data = await response.json();
 
@@ -1095,7 +1129,7 @@ const AnalysisDashboard = () => {
     };
 
     fetchStockPriceData();
-  }, [ticker, selectedTimeframe]);
+  }, [tickerState, selectedTimeframe]);
 
   // Add this useEffect for fetching news
   useEffect(() => {
@@ -1103,7 +1137,7 @@ const AnalysisDashboard = () => {
       setIsLoadingNews(true);
       try {
         const response = await fetch(
-          `http://localhost:5001/api/stock-news?ticker=${ticker}`
+          `http://localhost:5001/api/stock-news?ticker=${tickerState}`
         );
         const data = await response.json();
 
@@ -1121,16 +1155,25 @@ const AnalysisDashboard = () => {
       }
     };
 
-    if (ticker) {
+    if (tickerState) {
       fetchNews();
     }
-  }, [ticker]);
+  }, [tickerState]);
 
   const mockData = Array.from({ length: 30 }, (_, i) => ({
     date: `2024-${String(i + 1).padStart(2, "0")}-01`,
     price: Math.random() * 50 + 150,
     volume: Math.floor(Math.random() * 1000000),
   }));
+
+  // Function to handle bookmark toggle
+  const handleBookmarkToggle = () => {
+    if (isInWatchlist(tickerState)) {
+      removeFromWatchlist(tickerState);
+    } else {
+      addToWatchlist(tickerState);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
@@ -1145,10 +1188,15 @@ const AnalysisDashboard = () => {
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center gap-4 mb-2">
-                  <h1 className="text-3xl font-bold">{ticker}</h1>
+                  <h1 className="text-3xl font-bold">{tickerState}</h1>
                   <span className="text-gray-400">{stockName}</span>
                   <div className="flex gap-2">
-                    <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
+                    <button
+                      onClick={handleBookmarkToggle}
+                      className={`p-2 rounded-full bg-white/5 hover:bg-white/10 ${
+                        isInWatchlist(tickerState) ? "text-emerald-500" : ""
+                      }`}
+                    >
                       <Bookmark className="w-5 h-5" />
                     </button>
                     <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
@@ -1160,8 +1208,20 @@ const AnalysisDashboard = () => {
                   <span className="text-2xl font-bold">
                     ${stockPrice?.toFixed(2) || "0.00"}
                   </span>
-                  <span className="flex items-center text-emerald-400">
-                    {priceChange}
+                  <span className="flex items-center">
+                    {priceChange > 0 ? (
+                      <span className="flex items-center gap-1 text-green-500">
+                        <TrendingUp className="w-4 h-4" />
+                        +${Math.abs(priceChange).toFixed(2)} ({priceChangePercent.toFixed(2)}%)
+                      </span>
+                    ) : priceChange < 0 ? (
+                      <span className="flex items-center gap-1 text-red-500">
+                        <TrendingDown className="w-4 h-4" />
+                        -${Math.abs(priceChange).toFixed(2)} ({Math.abs(priceChangePercent).toFixed(2)}%)
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">$0.00 (0.00%)</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -1224,7 +1284,7 @@ const AnalysisDashboard = () => {
                             setIsLoadingGraph(true);
                             // Retry prediction
                             fetch(
-                              `http://localhost:5001/get-prediction?ticker=${ticker}`
+                              `http://localhost:5001/get-prediction?ticker=${tickerState}`
                             )
                               .then((res) => res.json())
                               .then((data) => {
@@ -1618,7 +1678,7 @@ const AnalysisDashboard = () => {
                     <Card className="bg-white/5 border-gray-800">
                       <CardContent className="p-4">
                         <div className="text-center text-white">
-                          No recent news available for {ticker}
+                          No recent news available for {tickerState}
                         </div>
                       </CardContent>
                     </Card>
