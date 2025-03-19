@@ -984,6 +984,13 @@ const AnalysisDashboard = () => {
   
   useEffect(() => {
     const fetchPriceHistory = async () => {
+      // If we already have prediction data for this ticker, don't reload it
+      if (predictionImage && currentTicker === ticker) {
+        console.log("Using cached prediction data for ticker:", ticker);
+        setIsLoadingGraph(false);
+        return;
+      }
+      
       setIsLoadingGraph(true);
       try {
         console.log(`Starting analysis for ticker: ${tickerState}`);
@@ -1031,6 +1038,7 @@ const AnalysisDashboard = () => {
         }
 
         setPredictionImage(predictionData.image);
+        setCurrentTicker(ticker); // Store the current ticker in context
         // Don't update price here as we've already fetched it
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
@@ -1043,7 +1051,7 @@ const AnalysisDashboard = () => {
     };
 
     fetchPriceHistory();
-  }, [tickerState]);
+  }, [tickerState, predictionImage, currentTicker, setPredictionImage, setPriceHistoryImage, setCurrentTicker]);
 
   useEffect(() => {
     const fetchTechnicalFundamental = async () => {
