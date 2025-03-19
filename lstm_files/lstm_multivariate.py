@@ -6,8 +6,9 @@ import yfinance as yf
 sns.set_style('whitegrid')
 import matplotlib.pyplot as plt
 plt.style.use("fivethirtyeight")
-
+import os
 import keras
+import locale
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from keras.layers import Dense, LSTM, Dropout
@@ -16,6 +17,11 @@ from keras.optimizers import Adam, SGD
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score
+
+
+# Set UTF-8 encoding for output
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 # Choose the number of features used the time steps for learning
 
@@ -26,7 +32,7 @@ STOCK = 'SBUX'
 start = '2017-01-01'
 end = '2025-01-01'
 
-# These are commented becaused already imported and saved for easy access
+# These are commented becaused already imported and saved for easy access
 #
 # df = yf.download('^VIX', 
 #                  start = start,
@@ -188,7 +194,9 @@ plt.legend(['Mean Squared Error','Mean Absolute Error'])
 plt.title("Losses")
 plt.xlabel("epochs")
 plt.ylabel("loss")
-plt.show()
+model1_loss_path = os.path.join(os.path.dirname(__file__), f'{STOCK}_model1_loss.png')
+plt.savefig(model1_loss_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 # Plotting the loss of MODEL 2
 plt.plot(history2.history["loss"])
@@ -196,18 +204,20 @@ plt.legend(['Mean Squared Error','Mean Absolute Error'])
 plt.title("Losses")
 plt.xlabel("epochs")
 plt.ylabel("loss")
-plt.show()
+model2_loss_path = os.path.join(os.path.dirname(__file__), f'{STOCK}_model2_loss.png')
+plt.savefig(model2_loss_path, bbox_inches='tight', dpi=300)
+plt.close()
 
 #inverse y_test scaling
 predictions = model_learned.predict(x_test)
 
 predictions = scaler.inverse_transform(np.concatenate([predictions, 
-                                                       np.zeros((predictions.shape[0], features-1))], 
+                                                       np.zeros((predictions.shape[0], FEATURES-1))], 
                                                        axis=1))[:, 0]
 
 # Inverse scale the true values
 y_test = scaler.inverse_transform(np.concatenate([y_test.reshape(-1, 1), 
-                                                  np.zeros((y_test.shape[0], features-1))], 
+                                                  np.zeros((y_test.shape[0], FEATURES-1))], 
                                                   axis=1))[:, 0]
 
 RMSE = np.sqrt(np.mean(( y_test - predictions )**2)).round(2)
@@ -216,16 +226,24 @@ RMSE
 test = close_predictions.iloc[train_size: , 0:1]
 test['Predicted Close'] = predictions
 
-plt.figure(figsize= (50, 15))
-plt.title('Close Stock Price Prediction', fontsize= 18)
-plt.xlabel('Date', fontsize= 10)
-plt.ylabel('Close Price', fontsize= 18)
-plt.plot(df['Close'], linewidth= 3)
-plt.plot(test["Predicted Close"], linewidth= 3)
+plt.figure(figsize=(50, 15))
+plt.title('Close Stock Price Prediction', fontsize=18)
+plt.xlabel('Date', fontsize=10)
+plt.ylabel('Close Price', fontsize=18)
+plt.plot(df['Close'], linewidth=3)
+plt.plot(test["Predicted Close"], linewidth=3)
 plt.legend(['Test Close', 'Predicted Close'])
+prediction_plot_path = os.path.join(os.path.dirname(__file__), f'{STOCK}_prediction_plot.png')
+plt.savefig(prediction_plot_path, bbox_inches='tight', dpi=300)
+plt.close()
+
+print(f"Plots saved as:")
+print(f"- Model 1 Loss: {model1_loss_path}")
+print(f"- Model 2 Loss: {model2_loss_path}")
+print(f"- Prediction Plot: {prediction_plot_path}")
 
 # CALCULATING THE AVERAGE DIFFERENCE BETWEEN CLOSING PRICE
-# AND PREDICTED CLOSING PRICE
+# AND PREDICTED CLOSING PRICE
 averages = np.array([])
 
 for i in range(test.shape[0]):
@@ -235,5 +253,9 @@ for i in range(test.shape[0]):
 
 average_var = np.average(averages)
 
+
+
 print("The average value that the price deviates by is: {average_var}"
       .format(average_var = average_var))
+
+
