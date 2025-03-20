@@ -12,7 +12,7 @@ import keras
 import locale
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
-from keras.layers import Dense, LSTM, Dropout
+from keras.layers import Input, Dense, LSTM, Dropout
 from keras.optimizers import Adam, SGD
 
 from sklearn.preprocessing import MinMaxScaler
@@ -150,7 +150,8 @@ x_test = np.reshape(x_test, (x_test.shape[0], TIMESTEPS, FEATURES))
 
 # MODEL 1 DEFINITION AND TRAINING
 model = Sequential([
-    LSTM(150, return_sequences= True, input_shape= (TIMESTEPS, FEATURES)),
+    Input(shape=(TIMESTEPS, FEATURES)),
+    LSTM(150, return_sequences= True),
     LSTM(64, return_sequences= False),
     Dense(32),
     Dense(16),
@@ -186,7 +187,7 @@ history = model.fit(x_train, y_train, epochs= 250, batch_size= 32 , callbacks= c
 
 model.summary()
 
-# Plotting the loss of MODEL 1
+# Plotting the loss of MODEL
 plt.plot(history.history["loss"])
 plt.legend(['Mean Squared Error','Mean Absolute Error'])
 plt.title("Losses")
