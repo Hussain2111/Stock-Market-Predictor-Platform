@@ -30,7 +30,7 @@ FEATURES = 6
 TIMESTEPS = 14
 STOCK = 'SBUX'
 
-start = '2017-01-01'
+start = '2015-01-01'
 end = '2025-01-01'
 
 # These are commented becaused already imported and saved for easy access
