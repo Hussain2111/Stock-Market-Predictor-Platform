@@ -1,4 +1,5 @@
 import math
+import datetime
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -33,20 +34,20 @@ start = '2017-01-01'
 end = '2025-01-01'
 
 # These are commented becaused already imported and saved for easy access
-#
-# df = yf.download('^VIX', 
-#                  start = start,
-#                  end = end,
-#                  multi_level_index = False)
 
-# df.to_csv('data/vix_dataset.csv')
+df = yf.download('^VIX', 
+                 start = start,
+                 end = end,
+                 multi_level_index = False)
 
-# df = yf.download('DX-Y.NYB', 
-#                  start = start,
-#                  end = end,
-#                  multi_level_index = False)
+df.to_csv('data/vix_dataset.csv')
 
-# df.to_csv('data/usdx_dataset.csv')
+df = yf.download('DX-Y.NYB', 
+                 start = start,
+                 end = end,
+                 multi_level_index = False)
+
+df.to_csv('data/usdx_dataset.csv')
 
 df = yf.download(STOCK, 
                  start = start,
@@ -96,7 +97,7 @@ df['EFFR'] = df['EFFR'].fillna(0)
 # plt.tight_layout()
 # plt.show()
 
-dataset = df[['Open', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
+dataset = df[['Open', 'High', 'Low', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
 close_predictions = df[['Close']]
 
 dataset = pd.DataFrame(dataset)
@@ -164,7 +165,7 @@ model.summary()
 
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
-history = model.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= callbacks )
+history = model.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= callbacks )
 
 # Saving the model weights and passsing to another model
 saved_weights = model.get_weights()
@@ -186,7 +187,7 @@ model.summary()
 
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
-history2 = model_learned.fit(x_train, y_train, epochs= 250, batch_size= 16 , callbacks= callbacks )
+history2 = model_learned.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= callbacks )
 
 # Plotting the loss of MODEL 1
 plt.plot(history.history["loss"])
@@ -253,9 +254,25 @@ for i in range(test.shape[0]):
 
 average_var = np.average(averages)
 
-
-
 print("The average value that the price deviates by is: {average_var}"
       .format(average_var = average_var))
 
+# Predict the price for the next day
+def predict_next_day():
+    # Getting the most recent TIMESTEPS days of data
+    recent_data = scaled_data[-TIMESTEPS:, :]
+    
+    # Reshaping into the format (samples, timesteps, features)
+    X_recent = recent_data.reshape(1, TIMESTEPS, FEATURES)
+    
+    # Prediction
+    next_day_scaled = model_learned.predict(X_recent)
+    
+    # Inverse transform to get actual price
+    inverse_pred = np.zeros((1, FEATURES))
+    inverse_pred[0, 0] = next_day_scaled[0, 0]
+    next_day_price = scaler.inverse_transform(inverse_pred)[0, 0]
+    
+    return next_day_price
 
+next_day_price = predict_next_day()
