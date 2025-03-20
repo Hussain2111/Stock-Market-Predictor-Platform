@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
+import ProtectedTrading from "./ProtectedTrading";
 import {
   LineChart,
   Line,
@@ -213,7 +214,7 @@ const Trading = () => {
     }
   };
 
-  return (
+  const tradingContent = (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
       <div className="flex-1 flex flex-col">
         {/* Top Navigation Bar */}
@@ -486,6 +487,8 @@ const Trading = () => {
       </div>
     </div>
   );
+
+  return <ProtectedTrading>{tradingContent}</ProtectedTrading>;
 };
 
 export default Trading;
