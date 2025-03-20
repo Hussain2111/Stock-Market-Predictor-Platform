@@ -26,7 +26,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Choose the number of features used the time steps for learning
 
-FEATURES = 6
+FEATURES = 8
 TIMESTEPS = 14
 STOCK = 'SBUX'
 
@@ -163,9 +163,28 @@ model.compile(optimizer= 'adam', loss= 'mse')
 
 model.summary()
 
+# METHOD FOR ADDING THE PROGRESS BAR
+from tqdm.auto import tqdm
+from tensorflow.keras.callbacks import Callback
+
+class TQDMCallback(Callback):
+    def on_train_begin(self, logs=None):
+        self.epochs = self.params['epochs']
+        self.progress_bar = tqdm(total=self.epochs, desc="Training Progress", unit="epoch")
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.progress_bar.update(1)
+        self.progress_bar.set_postfix(loss=logs.get('loss'), accuracy=logs.get('accuracy'))
+
+    def on_train_end(self, logs=None):
+        self.progress_bar.close()
+
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
 history = model.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= callbacks )
+
+# The method to use if you want to add the progress bar
+# history = model.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= [TQDMCallback()] )
 
 # Saving the model weights and passsing to another model
 saved_weights = model.get_weights()
