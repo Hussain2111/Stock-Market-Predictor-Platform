@@ -79,8 +79,6 @@ df['UMCSENT'] = umcsent_temp
 df['EFFR'] = effr_temp
 df = df.set_index('Date')
 
-df['EFFR'] = df['EFFR'].fillna(0)
-
 # NOTE: OPTIONAL PLOT TO CHECK ALL THE DATA IS PULLED ACCURATELY
 #
 # plt.figure(figsize=(15, 6))
