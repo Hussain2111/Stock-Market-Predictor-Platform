@@ -26,7 +26,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Choose the number of features used the time steps for learning
 
-FEATURES = 8
+FEATURES = 6
 TIMESTEPS = 14
 STOCK = 'SBUX'
 
@@ -97,7 +97,7 @@ df['EFFR'] = df['EFFR'].fillna(0)
 # plt.tight_layout()
 # plt.show()
 
-dataset = df[['Open', 'High', 'Low', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
+dataset = df[['Open', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
 close_predictions = df[['Close']]
 
 dataset = pd.DataFrame(dataset)
