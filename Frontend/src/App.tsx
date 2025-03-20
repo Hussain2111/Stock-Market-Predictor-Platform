@@ -8,6 +8,7 @@ import Watchlist from "./Watchlist";
 import { PredictionProvider } from "./components/context/PredictionContext";
 import { WatchlistProvider } from "./context/WatchlistContext";
 import ProtectedWatchlist from "./ProtectedWatchlist";
+import ProtectedPortfolio from "./ProtectedPortfolio";
 
 function App() {
   return (
@@ -20,7 +21,11 @@ function App() {
             <Route path="/analysis" element={<AnalysisPage />} />
             <Route path="/trade" element={<Trading />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/portfolio" element={
+              <ProtectedPortfolio>
+                <Portfolio />
+              </ProtectedPortfolio>
+            } />
             <Route path="/watchlist" element={
               <ProtectedWatchlist>
                 <Watchlist />
