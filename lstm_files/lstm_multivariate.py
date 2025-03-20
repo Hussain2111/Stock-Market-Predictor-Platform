@@ -97,7 +97,7 @@ df['EFFR'] = df['EFFR'].fillna(0)
 # plt.tight_layout()
 # plt.show()
 
-dataset = df[['Open', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
+dataset = df[['Close', 'vix', 'usdx', 'UNRATE', 'UMCSENT', 'EFFR']]
 close_predictions = df[['Close']]
 
 dataset = pd.DataFrame(dataset)
@@ -112,8 +112,8 @@ scaler = MinMaxScaler()
 scaled_data = scaler.fit_transform(data)
 scaled_close = scaler.fit_transform(close)
 
-# 80% to Train , 20% to Test
-train_size = int(len(data)*.80)
+# 90% to Train , 10% to Test
+train_size = int(len(data)*.90)
 test_size = len(data) - train_size
 
 print("Train Size :",train_size,"Test Size :",test_size)
@@ -181,32 +181,12 @@ class TQDMCallback(Callback):
 
 # Fitting the LSTM to the Training set
 callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
-history = model.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= callbacks )
+history = model.fit(x_train, y_train, epochs= 250, batch_size= 32 , callbacks= callbacks )
 
 # The method to use if you want to add the progress bar
 # history = model.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= [TQDMCallback()] )
 
-# Saving the model weights and passsing to another model
-saved_weights = model.get_weights()
-
-# MODEL 2 DEFINITION AND TRAINING
-model_learned = Sequential([
-    LSTM(150, return_sequences= True, input_shape= (TIMESTEPS, FEATURES)),
-    LSTM(64, return_sequences= False),
-    Dense(32),
-    Dense(16),
-    Dense(1)
-])
-
-model_learned.set_weights(saved_weights)
-
-model_learned.compile(optimizer= 'adam', loss= 'mse')
-
 model.summary()
-
-# Fitting the LSTM to the Training set
-callbacks = [EarlyStopping(monitor= 'loss', patience= 10 , restore_best_weights= True)]
-history2 = model_learned.fit(x_train, y_train, epochs= 100, batch_size= 16 , callbacks= callbacks )
 
 # Plotting the loss of MODEL 1
 plt.plot(history.history["loss"])
@@ -218,18 +198,8 @@ model1_loss_path = os.path.join(os.path.dirname(__file__), f'{STOCK}_model1_loss
 plt.savefig(model1_loss_path, bbox_inches='tight', dpi=300)
 plt.close()
 
-# Plotting the loss of MODEL 2
-plt.plot(history2.history["loss"])
-plt.legend(['Mean Squared Error','Mean Absolute Error'])
-plt.title("Losses")
-plt.xlabel("epochs")
-plt.ylabel("loss")
-model2_loss_path = os.path.join(os.path.dirname(__file__), f'{STOCK}_model2_loss.png')
-plt.savefig(model2_loss_path, bbox_inches='tight', dpi=300)
-plt.close()
-
 #inverse y_test scaling
-predictions = model_learned.predict(x_test)
+predictions = model.predict(x_test)
 
 predictions = scaler.inverse_transform(np.concatenate([predictions, 
                                                        np.zeros((predictions.shape[0], FEATURES-1))], 
@@ -259,7 +229,6 @@ plt.close()
 
 print(f"Plots saved as:")
 print(f"- Model 1 Loss: {model1_loss_path}")
-print(f"- Model 2 Loss: {model2_loss_path}")
 print(f"- Prediction Plot: {prediction_plot_path}")
 
 # CALCULATING THE AVERAGE DIFFERENCE BETWEEN CLOSING PRICE
@@ -285,7 +254,7 @@ def predict_next_day():
     X_recent = recent_data.reshape(1, TIMESTEPS, FEATURES)
     
     # Prediction
-    next_day_scaled = model_learned.predict(X_recent)
+    next_day_scaled = model.predict(X_recent)
     
     # Inverse transform to get actual price
     inverse_pred = np.zeros((1, FEATURES))
