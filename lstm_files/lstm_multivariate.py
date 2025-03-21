@@ -10,6 +10,7 @@ plt.style.use("fivethirtyeight")
 import os
 import keras
 import locale
+import json
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from keras.layers import Input, Dense, LSTM, Dropout
@@ -373,6 +374,46 @@ try:
     
     next_day_price = predict_next_day()
     print(f"Predicted price for the next trading day: ${next_day_price:.2f}")
+    
+    # Calculate the confidence based on RMSE relative to the price
+    avg_price = np.mean(y_test)
+    confidence_score = max(0, min(100, 100 - (RMSE / avg_price * 100)))
+    
+    # Determine risk level based on the deviation
+    if average_var / avg_price < 0.02:  # Less than 2% deviation
+        risk_level = "Low"
+        risk_description = "Low Volatility"
+    elif average_var / avg_price < 0.05:  # Less than 5% deviation
+        risk_level = "Medium"
+        risk_description = "Moderate Volatility"
+    else:
+        risk_level = "High"
+        risk_description = "High Volatility"
+    
+    # Calculate the price change percentage
+    price_change = next_day_price - df['Close'].iloc[-1]
+    price_change_percent = (price_change / df['Close'].iloc[-1]) * 100
+    price_change_text = f"{'+' if price_change >= 0 else ''}{price_change_percent:.2f}% {('Upside' if price_change >= 0 else 'Downside')}"
+    
+    # Save prediction info to JSON file for frontend to use
+    prediction_data = {
+        "next_day_price": float(next_day_price),
+        "average_deviation": float(average_var),
+        "confidence_score": float(confidence_score),
+        "risk_level": risk_level,
+        "risk_description": risk_description,
+        "price_change_percent": float(price_change_percent),
+        "price_change_text": price_change_text,
+        "rmse": float(RMSE),
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+    
+    # Save to a ticker-specific JSON file
+    prediction_json_path = os.path.join(current_dir, f'{STOCK}_prediction_data.json')
+    with open(prediction_json_path, 'w') as json_file:
+        json.dump(prediction_data, json_file)
+    
+    print(f"Prediction data saved to: {prediction_json_path}")
 
 except Exception as e:
     import traceback
