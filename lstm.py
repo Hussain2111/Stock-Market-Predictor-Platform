@@ -21,23 +21,24 @@ def init_lstm_routes(app):
             
             # Get the absolute path to lstm_files directory
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            lstm_script_path = os.path.join(current_dir, 'lstm_files', 'lstm_yfinance.py')
+            lstm_script_path = os.path.join(current_dir, 'lstm_files', 'lstm_multivariate.py')
+            
+            # Define file paths for multivariate model outputs based on ticker
+            model_loss_path = os.path.join(current_dir, 'lstm_files', f'{ticker}_model1_loss.png')
+            prediction_plot_path = os.path.join(current_dir, 'lstm_files', f'{ticker}_prediction_plot.png')
             
             # Remove existing plots if they exist
-            price_history_path = os.path.join(current_dir, 'lstm_files', 'price_history.png')
-            prediction_path = os.path.join(current_dir, 'lstm_files', 'prediction_plot.png')
-            
-            for path in [price_history_path, prediction_path]:
+            for path in [model_loss_path, prediction_plot_path]:
                 if os.path.exists(path):
                     os.remove(path)
                     print(f"Removed existing plot: {path}")
             
-            # Run the LSTM script with the ticker as argument
+            # Run the LSTM script with the ticker as a command line argument
             process = subprocess.run(
                 [sys.executable, lstm_script_path, ticker],
                 capture_output=True,
                 text=True,
-                encoding='utf-8',  # Specify UTF-8 encoding
+                encoding='utf-8',
                 check=False
             )
             
@@ -48,12 +49,12 @@ def init_lstm_routes(app):
             # Check for errors
             if process.returncode != 0:
                 return jsonify({
-                    'error': f'LSTM analysis failed: {process.stderr}',
+                    'error': f'LSTM multivariate analysis failed: {process.stderr}',
                     'success': False
                 }), 500
                 
             return jsonify({
-                'message': f'LSTM analysis completed for {ticker}',
+                'message': f'LSTM multivariate analysis completed for {ticker}',
                 'output': process.stdout,
                 'success': True
             })
