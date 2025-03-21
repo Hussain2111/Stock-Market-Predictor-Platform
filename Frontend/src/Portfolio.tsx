@@ -68,8 +68,8 @@ const Portfolio = () => {
       .then((data) => {
         if (data.success) {
           setProfitLoss(data.total_profit_loss);
-          setUnrealisedProfit(data.unrealisedProfit);
-          setRealisedProfit(data.realisedProfit);
+          setUnrealisedProfit(data.unrealized_profit);
+          setRealisedProfit(data.realized_profit);
           setProfitLossPercentage(data.profit_loss_percentage);
         }
       })
@@ -213,11 +213,11 @@ const Portfolio = () => {
             {isHovered && (
               <div className="mt-4 text-sm">
                 <p>
-                  Unrealized Profit: $
-                  {Math.abs(unrealisedProfit || 0).toFixed(2)}
+                  Unrealized Profit / Loss: $
+                  {(unrealisedProfit || 0).toFixed(2)}
                 </p>
                 <p>
-                  Realized Profit: ${Math.abs(realisedProfit || 0).toFixed(2)}
+                  Realized Profit / Loss: ${(realisedProfit || 0).toFixed(2)}
                 </p>
               </div>
             )}
