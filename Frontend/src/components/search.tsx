@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // SearchOverlay Component
 const SearchOverlay = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       // Check if focus is in an input field or textarea
       const target = e.target as HTMLElement;
       const isInputFocused =
@@ -59,10 +62,19 @@ const SearchOverlay = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add search logic here
-    setIsOpen(false); // Close after search
+    if (searchQuery.trim()) {
+      // Store the ticker in localStorage
+      localStorage.setItem("currentTicker", searchQuery.trim().toUpperCase());
+
+      // Navigate to analysis page with the ticker
+      navigate(`/analysis?ticker=${searchQuery.trim().toUpperCase()}`);
+
+      // Reset the search field and close overlay
+      setSearchQuery("");
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -104,10 +116,12 @@ const SearchOverlay = () => {
                 <form onSubmit={handleSubmit} className="relative">
                   <input
                     type="text"
-                    placeholder="Search... (⌘K)"
+                    placeholder="Search stock ticker... (⌘K)"
                     className="w-full px-4 py-4 pr-12 text-lg border-emerald-200 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-700 text-gray-900"
                     autoFocus
                     ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   {/* Close Button */}
                   <button
