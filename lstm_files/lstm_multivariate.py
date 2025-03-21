@@ -221,17 +221,70 @@ try:
     model.compile(optimizer='adam', loss='mse')
     model.summary()
     
-    # Fitting the LSTM to the Training set
-    callbacks = [EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)]
+    # Determine if we're running as a subprocess from Flask or directly
+    # If we're called from the Flask app, there will be more than 2 command line arguments
+    # or we can check if we're running in a subprocess by looking at environment variables
+    is_subprocess = False
+
+    # Check if the parent process ID is not the same as the init process (1)
+    # or if specific environment variables from Flask are present
+    import os
+    if "FLASK_APP" in os.environ or "FLASK_ENV" in os.environ:
+        is_subprocess = True
     
+    # Alternatively, check for parent process type (if on Unix systems)
+    if hasattr(os, 'getppid') and os.getppid() != 1:
+        try:
+            with open(f'/proc/{os.getppid()}/cmdline', 'r') as f:
+                parent_cmd = f.read()
+                if 'python' in parent_cmd and any(x in parent_cmd for x in ['flask', 'app.py']):
+                    is_subprocess = True
+        except (FileNotFoundError, PermissionError):
+            # If we can't read the parent process info, assume it might be a subprocess
+            pass
+    
+    # METHOD FOR ADDING THE PROGRESS BAR
+    callbacks_list = [EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)]
+    
+    # Add TQDM callback if running directly, not as a subprocess
+    use_tqdm = not is_subprocess
+    
+    if use_tqdm:
+        try:
+            from tqdm.auto import tqdm
+            from tensorflow.keras.callbacks import Callback
+            
+            class TQDMCallback(Callback):
+                def on_train_begin(self, logs=None):
+                    self.epochs = self.params['epochs']
+                    self.progress_bar = tqdm(total=self.epochs, desc="Training Progress", unit="epoch")
+                
+                def on_epoch_end(self, epoch, logs=None):
+                    self.progress_bar.update(1)
+                    self.progress_bar.set_postfix(loss=logs.get('loss', 0))
+                
+                def on_train_end(self, logs=None):
+                    self.progress_bar.close()
+            
+            callbacks_list.append(TQDMCallback())
+            print("Using TQDM progress bar for training visualization...")
+            verbose_level = 0  # No verbose output when using TQDM
+        except ImportError:
+            print("TQDM not available, falling back to standard progress display...")
+            verbose_level = 1  # Standard progress bar
+    else:
+        print("Running as subprocess, using standard progress display...")
+        verbose_level = 1  # Standard progress bar
+    
+    # Fitting the LSTM to the Training set
     print("Training model...")
     history = model.fit(
         x_train, 
         y_train, 
         epochs=100,  # Reduced from 250 for faster execution
         batch_size=32, 
-        callbacks=callbacks,
-        verbose=1
+        callbacks=callbacks_list,
+        verbose=verbose_level
     )
     
     model.summary()
