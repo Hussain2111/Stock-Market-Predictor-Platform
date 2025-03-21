@@ -27,6 +27,7 @@ chatbot_service = ChatbotService()
 client = MongoClient("mongodb+srv://uas4:AlphaCentauri1206@stockdb.gupsk.mongodb.net/?retryWrites=true&w=majority&appName=stockdb")  # Update if using a remote DB
 db = client["trading_app"]
 investments_collection = db["investments"]
+sales_collection = db["sold_stocks"]
 
 @app.route('/stock-price', methods=['GET'])
 def get_stock_price():
@@ -800,6 +801,7 @@ def sell_stock():
         data = request.json
         ticker = data.get("ticker")
         user_id = data.get("user_id")
+        sell_price = float(data.get("currentPrice"))
         quantity = data.get("quantity", 1)  # Default to 1 if quantity is not provided
 
         if not ticker or not user_id:
@@ -826,9 +828,24 @@ def sell_stock():
         
         # Delete the specified number of stocks (oldest first)
         stocks_to_sell = matching_stocks[:quantity]
+        total_profit = 0
         deleted_count = 0
         
         for stock in stocks_to_sell:
+            price_bought = stock["priceBought"]
+            profit = sell_price - price_bought  # Profit per share
+            total_profit += profit
+
+            # Add sale record to sales_collection
+            sales_collection.insert_one({
+                "user_id": user_id,
+                "ticker": ticker,
+                "price_bought": price_bought,
+                "sell_price": sell_price,
+                "profit": profit,
+                "date_sold": datetime.utcnow()
+            })
+            
             result = investments_collection.delete_one({"_id": stock["_id"]})
             if result.deleted_count > 0:
                 deleted_count += 1
@@ -916,11 +933,15 @@ def profit_or_loss():
         if not user_id:
             return jsonify({"success": False, "error": "Missing user_id"}), 400
 
-        # Fetch all stocks owned by the user from MongoDB
-        stocks = list(investments_collection.find({"user_id": (user_id)}))
+        # Fetch all currently owned stocks
+        stocks = list(investments_collection.find({"user_id": user_id}))
 
-        if not stocks:
-            return jsonify({"success": False, "error": "No stocks found for user"}), 404
+        # Fetch realized profits from sold stocks
+        realized_profits = list(sales_collection.find({"user_id": user_id}))
+        total_realized_profit = sum(sale["profit"] for sale in realized_profits)
+
+        if not stocks and not realized_profits:
+            return jsonify({"success": False, "error": "No data found for user"}), 404
 
         total_cost = 0
         total_current_value = 0
@@ -931,7 +952,7 @@ def profit_or_loss():
             price_bought = stock["priceBought"]  # Initial purchase price
             current_price = stock["currentPrice"]  # Current market price
 
-            investment = price_bought  # Since we store one record per stock purchase
+            investment = price_bought
             current_value = current_price
             profit_loss = current_value - investment
             profit_loss_percentage = (profit_loss / investment) * 100 if investment > 0 else 0
@@ -947,15 +968,22 @@ def profit_or_loss():
                 "profit_loss_percentage": round(profit_loss_percentage, 2)
             })
 
-        # Calculate overall profit/loss
-        overall_profit_loss = total_current_value - total_cost
-        overall_profit_loss_percentage = (overall_profit_loss / total_cost) * 100 if total_cost > 0 else 0
+        # Calculate unrealized profit/loss
+        overall_unrealized_profit = total_current_value - total_cost
+
+        # Total profit = realized profit + unrealized profit
+        overall_profit_loss = overall_unrealized_profit + total_realized_profit
+        overall_profit_loss_percentage = (
+            (overall_profit_loss / (total_cost if total_cost > 0 else 1)) * 100
+        )
 
         return jsonify({
             "success": True,
             "total_investment": total_cost,
             "current_value": total_current_value,
-            "profit_loss": overall_profit_loss,
+            "realized_profit": total_realized_profit,
+            "unrealized_profit": overall_unrealized_profit,
+            "total_profit_loss": overall_profit_loss,
             "profit_loss_percentage": round(overall_profit_loss_percentage, 2),
             "stocks": stock_results
         })

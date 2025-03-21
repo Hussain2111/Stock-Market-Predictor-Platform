@@ -49,7 +49,13 @@ export default function HomePage() {
   const [trendingStocks, setTrendingStocks] = useState<Stock[]>([
     { symbol: "NVDA", name: "NVIDIA", change: "", price: "", isLoading: true },
     { symbol: "AAPL", name: "Apple", change: "", price: "", isLoading: true },
-    { symbol: "MSFT", name: "Microsoft", change: "", price: "", isLoading: true },
+    {
+      symbol: "MSFT",
+      name: "Microsoft",
+      change: "",
+      price: "",
+      isLoading: true,
+    },
     { symbol: "META", name: "Meta", change: "", price: "", isLoading: true },
   ]);
 
@@ -70,7 +76,7 @@ export default function HomePage() {
     // Clear authentication data from localStorage
     localStorage.removeItem("authToken");
     localStorage.removeItem("userId");
-    
+
     // Update logged in state
     setIsLoggedIn(false);
   };
@@ -78,39 +84,49 @@ export default function HomePage() {
   // Function to fetch stock data from Yahoo Finance
   const fetchStockData = async () => {
     try {
-      const stockSymbols = trendingStocks.map(stock => stock.symbol).join(",");
-      const response = await fetch(`http://localhost:5001/api/stocks?symbols=${stockSymbols}`);
-      
+      const stockSymbols = trendingStocks
+        .map((stock) => stock.symbol)
+        .join(",");
+      const response = await fetch(
+        `http://localhost:5001/api/stocks?symbols=${stockSymbols}`
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch stock data');
+        throw new Error("Failed to fetch stock data");
       }
-      
+
       const data = await response.json();
-      
+
       if (data && data.stocks) {
-        const updatedStocks = trendingStocks.map(stock => {
-          const stockData = data.stocks.find((s: any) => s.symbol === stock.symbol);
+        const updatedStocks = trendingStocks.map((stock) => {
+          const stockData = data.stocks.find(
+            (s: any) => s.symbol === stock.symbol
+          );
           if (stockData) {
             const priceValue = parseFloat(stockData.regularMarketPrice);
-            const changePercent = parseFloat(stockData.regularMarketChangePercent);
-            
+            const changePercent = parseFloat(
+              stockData.regularMarketChangePercent
+            );
+
             return {
               ...stock,
               price: `$${priceValue.toFixed(2)}`,
-              change: `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`,
+              change: `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(
+                2
+              )}%`,
               isLoading: false,
             };
           }
           return stock;
         });
-        
+
         setTrendingStocks(updatedStocks);
       }
     } catch (error) {
       console.error("Error fetching stock data:", error);
       // Set isLoading to false even on error to show placeholder data
-      setTrendingStocks(prevStocks => 
-        prevStocks.map(stock => ({ ...stock, isLoading: false }))
+      setTrendingStocks((prevStocks) =>
+        prevStocks.map((stock) => ({ ...stock, isLoading: false }))
       );
     }
   };
@@ -120,7 +136,7 @@ export default function HomePage() {
     fetchStockData();
     // Refresh stock data every 5 minutes (300000 ms)
     const intervalId = setInterval(fetchStockData, 300000);
-    
+
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
@@ -130,7 +146,7 @@ export default function HomePage() {
       try {
         // Navigate to analysis page first
         window.location.href = `/analysis?ticker=${ticker}`;
-        
+
         // Only run LSTM if we don't have predictions for this ticker
         if (currentTicker !== ticker) {
           const response = await fetch("http://localhost:5001/run-lstm", {
@@ -222,14 +238,13 @@ export default function HomePage() {
     handleAnalysis(searchQuery);
   };
 
-  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white">
       <AnimatePresence>
         {showAuthModal && (
-          <AuthModal 
-            isOpen={showAuthModal} 
-            onClose={() => setShowAuthModal(false)} 
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
           />
         )}
       </AnimatePresence>
@@ -245,7 +260,7 @@ export default function HomePage() {
           <img src={logo} alt="Logo" className="h-20 w-26 w-auto" />
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
-              <button 
+              <button
                 onClick={handleLogout}
                 className="px-4 py-2 border border-gray-700 rounded-lg font-medium hover:bg-white/5 transition-colors"
               >
@@ -262,7 +277,6 @@ export default function HomePage() {
           </div>
         </div>
       </header>
-
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center border-b border-gray-800 pt-20">
@@ -304,7 +318,10 @@ export default function HomePage() {
             </form>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-8 py-4 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+              >
                 Start Free Trial
               </button>
               <button className="px-8 py-4 border border-gray-700 rounded-lg font-medium hover:bg-white/5 transition-colors">
@@ -425,7 +442,13 @@ export default function HomePage() {
                   {stock.isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
                   ) : (
-                    <span className={`${parseFloat(stock.change) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span
+                      className={`${
+                        parseFloat(stock.change) >= 0
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                      }`}
+                    >
                       {stock.change}
                     </span>
                   )}

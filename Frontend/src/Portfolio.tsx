@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
+import { useNavigate } from "react-router-dom";
+
 import {
   DollarSign,
   ArrowUp,
@@ -27,12 +29,16 @@ const Portfolio = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock[] | null>(null);
   const [profitLoss, setProfitLoss] = useState<number | null>(null);
+  const [unrealisedProfit, setUnrealisedProfit] = useState<number | null>(null);
+  const [realisedProfit, setRealisedProfit] = useState<number | null>(null);
   const [profitLossPercentage, setProfitLossPercentage] = useState<
     number | null
   >(null);
   const [stockProfits, setStockProfits] = useState<{ [key: string]: number }>(
     {}
   );
+  const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     // Fetch portfolio data
@@ -61,7 +67,9 @@ const Portfolio = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setProfitLoss(data.profit_loss);
+          setProfitLoss(data.total_profit_loss);
+          setUnrealisedProfit(data.unrealized_profit);
+          setRealisedProfit(data.realized_profit);
           setProfitLossPercentage(data.profit_loss_percentage);
         }
       })
@@ -106,37 +114,6 @@ const Portfolio = () => {
   const closeModal = () => {
     setModalIsOpen(false);
     setSelectedStock(null);
-  };
-
-  // Function to handle the sell action
-  const sellStock = (ticker: string) => {
-    fetch("http://localhost:5001/sell-stock", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        user_id: "uzair",
-        ticker: ticker,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          // Successfully sold 1 stock, update portfolio
-          const updatedPortfolio = portfolio.map((stock) =>
-            stock.ticker === ticker
-              ? { ...stock, quantity: stock.quantity - 1 }
-              : stock
-          );
-          setPortfolio(updatedPortfolio);
-          setSelectedStock(null);
-          setModalIsOpen(false);
-        } else {
-          alert("Error selling the stock!");
-        }
-      })
-      .catch((error) => console.error("Error selling stock:", error));
   };
 
   return (
@@ -224,12 +201,26 @@ const Portfolio = () => {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, type: "spring" }}
+            onMouseEnter={() => setIsHovered(true)} // On hover, show detailed info
+            onMouseLeave={() => setIsHovered(false)} // On mouse leave, show only total profit/loss
           >
             {profitLoss >= 0 ? "📈 Profit" : "📉 Loss"}: $
             {Math.abs(profitLoss).toFixed(2)}
             <span className="ml-2 text-sm">
               ({profitLossPercentage?.toFixed(2)}%)
             </span>
+            {/* Show unrealized and realized profit when hovered */}
+            {isHovered && (
+              <div className="mt-4 text-sm">
+                <p>
+                  Unrealized Profit / Loss: $
+                  {(unrealisedProfit || 0).toFixed(2)}
+                </p>
+                <p>
+                  Realized Profit / Loss: ${(realisedProfit || 0).toFixed(2)}
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </main>
@@ -299,7 +290,7 @@ const Portfolio = () => {
           <button
             onClick={() =>
               selectedStock && selectedStock.length > 0
-                ? sellStock(selectedStock[0].ticker)
+                ? navigate(`/trade/${selectedStock[0].ticker}`)
                 : null
             }
             className="bg-red-500 text-white py-3 px-8 rounded-lg hover:bg-red-600 transition-colors mr-4"
@@ -309,7 +300,7 @@ const Portfolio = () => {
               selectedStock[0].quantity <= 0
             }
           >
-            Sell 1 Stock
+            Buy / Sell
           </button>
           <button
             onClick={closeModal}

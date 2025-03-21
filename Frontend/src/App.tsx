@@ -21,21 +21,31 @@ function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/analysis" element={<AnalysisPage />} />
             <Route path="/trade" element={<Trading />} />
-            <Route path="/settings" element={
-              <ProtectedSettings>
-                <Settings />
-              </ProtectedSettings>
-            } />
-            <Route path="/portfolio" element={
-              <ProtectedPortfolio>
-                <Portfolio />
-              </ProtectedPortfolio>
-            } />
-            <Route path="/watchlist" element={
-              <ProtectedWatchlist>
-                <Watchlist />
-              </ProtectedWatchlist>
-            } />
+            <Route path="/trade/:ticker" element={<Trading />} />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedSettings>
+                  <Settings />
+                </ProtectedSettings>
+              }
+            />
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedPortfolio>
+                  <Portfolio />
+                </ProtectedPortfolio>
+              }
+            />
+            <Route
+              path="/watchlist"
+              element={
+                <ProtectedWatchlist>
+                  <Watchlist />
+                </ProtectedWatchlist>
+              }
+            />
           </Routes>
         </Router>
       </WatchlistProvider>

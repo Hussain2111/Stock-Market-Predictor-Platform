@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import ProtectedTrading from "./ProtectedTrading";
+import { useParams } from "react-router-dom";
+
 import {
   LineChart,
   Line,
@@ -74,6 +76,7 @@ const searchStocks = async (
 };
 
 const Trading = () => {
+  const { ticker } = useParams<{ ticker?: string }>();
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<
     Array<{ symbol: string; name: string; exchange: string }>
@@ -90,6 +93,13 @@ const Trading = () => {
   const [showQuantityPopup, setShowQuantityPopup] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
+
+  useEffect(() => {
+    if (ticker) {
+      // Set selected stock when the URL includes a ticker
+      setSelectedStock(ticker);
+    }
+  }, [ticker]);
 
   // Fetch stock data when selected stock or time period changes
   useEffect(() => {
@@ -224,7 +234,7 @@ const Trading = () => {
         <div className="flex flex-1">
           {/* Sidebar */}
           <div className="w-1/6 bg-gray-800/50 p-4">
-            <h2 className="text-lg font-bold mb-4">Recent Stocks</h2>
+            <h2 className="text-lg font-bold mb-4">ALGORITHMS</h2>
             <ul>
               {savedStocks.map((stock, index) => (
                 <li
