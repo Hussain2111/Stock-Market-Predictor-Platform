@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import ProtectedTrading from "./ProtectedTrading";
+import { useParams } from "react-router-dom";
+
 import {
   LineChart,
   Line,
@@ -74,6 +76,7 @@ const searchStocks = async (
 };
 
 const Trading = () => {
+  const { ticker } = useParams<{ ticker?: string }>();
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<
     Array<{ symbol: string; name: string; exchange: string }>
@@ -90,6 +93,13 @@ const Trading = () => {
   const [showQuantityPopup, setShowQuantityPopup] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
+
+  useEffect(() => {
+    if (ticker) {
+      // Set selected stock when the URL includes a ticker
+      setSelectedStock(ticker);
+    }
+  }, [ticker]);
 
   // Fetch stock data when selected stock or time period changes
   useEffect(() => {

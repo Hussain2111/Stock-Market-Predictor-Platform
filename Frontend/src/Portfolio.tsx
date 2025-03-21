@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
+import { useNavigate } from "react-router-dom";
+
 import {
   DollarSign,
   ArrowUp,
@@ -33,6 +35,7 @@ const Portfolio = () => {
   const [stockProfits, setStockProfits] = useState<{ [key: string]: number }>(
     {}
   );
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch portfolio data
@@ -299,7 +302,7 @@ const Portfolio = () => {
           <button
             onClick={() =>
               selectedStock && selectedStock.length > 0
-                ? sellStock(selectedStock[0].ticker)
+                ? navigate(`/trade/${selectedStock[0].ticker}`)
                 : null
             }
             className="bg-red-500 text-white py-3 px-8 rounded-lg hover:bg-red-600 transition-colors mr-4"
@@ -309,7 +312,7 @@ const Portfolio = () => {
               selectedStock[0].quantity <= 0
             }
           >
-            Sell 1 Stock
+            Buy / Sell
           </button>
           <button
             onClick={closeModal}
