@@ -770,8 +770,12 @@ const StockPriceChart = ({
 };
 
 const AnalysisDashboard = () => {
-  const [ticker, setTicker] = useState("AAPL");
-  const [stockName, setStockName] = useState("Apple Inc.");
+  const [ticker, setTicker] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTicker = params.get("ticker");
+    return urlTicker || localStorage.getItem("currentTicker") || "AAPL";
+  });
+  const [stockName, setStockName] = useState("");
   const [stockPrice, setStockPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
   const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
@@ -914,12 +918,40 @@ const AnalysisDashboard = () => {
     </motion.div>
   );
 
-  // Initialize ticker from URL params only if we don't have a currentTicker
+  // Initialize ticker from URL params or use currentTicker from context
   const [tickerState, setTickerState] = useState(() => {
-    if (currentTicker) return currentTicker;
     const params = new URLSearchParams(window.location.search);
-    return params.get("ticker") || "AAPL";
+    const urlTicker = params.get("ticker");
+
+    // Order of priority: URL param > currentTicker from context > default "AAPL"
+    return urlTicker || currentTicker || "AAPL";
   });
+
+  // Update URL when ticker changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (tickerState && tickerState !== params.get("ticker")) {
+      params.set("ticker", tickerState);
+      window.history.replaceState(
+        {},
+        "",
+        `${window.location.pathname}?${params.toString()}`
+      );
+
+      // Keep the current ticker in context
+      setCurrentTicker(tickerState);
+      // Also update the display ticker
+      setTicker(tickerState);
+    }
+  }, [tickerState, setCurrentTicker]);
+
+  // Also update tickerState when currentTicker changes (from context)
+  useEffect(() => {
+    if (currentTicker && currentTicker !== tickerState) {
+      setTickerState(currentTicker);
+      setTicker(currentTicker);
+    }
+  }, [currentTicker]);
 
   // Separate useEffect to fetch stock info and price immediately
   useEffect(() => {
@@ -1215,6 +1247,11 @@ const AnalysisDashboard = () => {
       addToWatchlist(tickerState);
     }
   };
+
+  // Add this useEffect to update the document title with the current ticker
+  useEffect(() => {
+    document.title = `${tickerState} - Stock Analysis`;
+  }, [tickerState]);
 
   return (
     <ProtectedAnalysis>
