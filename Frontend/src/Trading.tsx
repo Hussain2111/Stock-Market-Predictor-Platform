@@ -234,7 +234,7 @@ const Trading = () => {
         <div className="flex flex-1">
           {/* Sidebar */}
           <div className="w-1/6 bg-gray-800/50 p-4">
-            <h2 className="text-lg font-bold mb-4">Recent Stocks</h2>
+            <h2 className="text-lg font-bold mb-4">ALGORITHMS</h2>
             <ul>
               {savedStocks.map((stock, index) => (
                 <li
