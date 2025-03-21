@@ -57,7 +57,7 @@ const SearchOverlay = () => {
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       // Check if focus is in an input field or textarea
       const target = e.target as HTMLElement;
       const isInputFocused =
@@ -108,7 +108,7 @@ const SearchOverlay = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Add search logic here
     setIsOpen(false); // Close after search
@@ -782,6 +782,8 @@ const AnalysisDashboard = () => {
     setPriceHistoryImage,
     currentTicker,
     setCurrentTicker,
+    predictionData,
+    setPredictionData,
   } = usePrediction();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
@@ -840,7 +842,7 @@ const AnalysisDashboard = () => {
   const [activeTab, setActiveTab] = useState("prediction");
   const [isAlertSet, setIsAlertSet] = useState(false);
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1055,7 +1057,15 @@ const AnalysisDashboard = () => {
 
         setPredictionImage(predictionData.image);
         setCurrentTicker(ticker); // Store the current ticker in context
-        // Don't update price here as we've already fetched it
+
+        // Save prediction data if available
+        if (predictionData.prediction_data) {
+          setPredictionData(predictionData.prediction_data);
+          console.log(
+            "Updated prediction data:",
+            predictionData.prediction_data
+          );
+        }
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
         const errorMessage =
@@ -1405,18 +1415,30 @@ const AnalysisDashboard = () => {
                   {[
                     {
                       title: "Price Target",
-                      value: "$225.50",
-                      subtext: "+7.2% Upside",
+                      value: `$${
+                        predictionData.next_day_price?.toFixed(2) || "0.00"
+                      }`,
+                      subtext:
+                        predictionData.price_change_text || "0.00% Change",
                     },
                     {
                       title: "Confidence",
-                      value: "85%",
-                      subtext: "High Confidence",
+                      value: `${
+                        predictionData.confidence_score?.toFixed(0) || "0"
+                      }%`,
+                      subtext:
+                        predictionData.confidence_score > 80
+                          ? "High Confidence"
+                          : predictionData.confidence_score > 60
+                          ? "Medium Confidence"
+                          : "Low Confidence",
                     },
                     {
                       title: "Risk Level",
-                      value: "Medium",
-                      subtext: "Moderate Volatility",
+                      value: predictionData.risk_level || "Medium",
+                      subtext:
+                        predictionData.risk_description ||
+                        "Moderate Volatility",
                     },
                   ].map((metric, i) => (
                     <motion.div
