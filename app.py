@@ -63,8 +63,16 @@ def get_stock_price():
 @app.route('/get-price-history', methods=['GET'])
 def get_price_history():
     try:
-        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', 'price_history.png')
-        print(f"Looking for image at: {image_path}")  # Debug log
+        ticker = app.config.get('GLOBAL_TICKER')
+        if not ticker:
+            return jsonify({
+                'error': 'No ticker has been set yet',
+                'success': False
+            }), 400
+            
+        # Use the model loss plot as the price history visualization
+        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_model1_loss.png')
+        print(f"Looking for image at: {image_path}")
         
         if not os.path.exists(image_path):
             print(f"Image not found at: {image_path}")
@@ -77,7 +85,7 @@ def get_price_history():
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
             
         # Get current price
-        stock = yf.Ticker(app.config['GLOBAL_TICKER'])
+        stock = yf.Ticker(ticker)
         current_price = stock.fast_info['lastPrice']
             
         return jsonify({
@@ -86,7 +94,7 @@ def get_price_history():
             'success': True
         })
     except Exception as e:
-        print(f"Error serving price history plot: {str(e)}")  # Debug logging
+        print(f"Error serving price history plot: {str(e)}")
         return jsonify({
             'error': str(e),
             'success': False
@@ -95,7 +103,15 @@ def get_price_history():
 @app.route('/get-prediction', methods=['GET'])
 def get_prediction():
     try:
-        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', 'prediction_plot.png')
+        ticker = app.config.get('GLOBAL_TICKER')
+        if not ticker:
+            return jsonify({
+                'error': 'No ticker has been set yet',
+                'success': False
+            }), 400
+            
+        # Use the ticker-specific prediction plot filename
+        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_prediction_plot.png')
         print(f"Looking for prediction plot at: {image_path}")
         
         if not os.path.exists(image_path):
@@ -109,7 +125,7 @@ def get_prediction():
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
             
         # Get current price
-        stock = yf.Ticker(app.config['GLOBAL_TICKER'])
+        stock = yf.Ticker(ticker)
         current_price = stock.info.get('regularMarketPrice', 0)
             
         return jsonify({
