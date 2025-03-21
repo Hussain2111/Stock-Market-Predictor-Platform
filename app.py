@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from textblob import TextBlob
 import logging
+import json
 
 app = create_app()
 
@@ -127,10 +128,22 @@ def get_prediction():
         # Get current price
         stock = yf.Ticker(ticker)
         current_price = stock.info.get('regularMarketPrice', 0)
+        
+        # Load prediction data from JSON file if it exists
+        prediction_data = {}
+        json_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_prediction_data.json')
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r') as json_file:
+                    prediction_data = json.load(json_file)
+                print(f"Loaded prediction data from {json_path}")
+            except Exception as e:
+                print(f"Error loading prediction data: {str(e)}")
             
         return jsonify({
             'image': encoded_image,
             'current_price': round(current_price, 2) if current_price else 0,
+            'prediction_data': prediction_data,
             'success': True
         })
     except Exception as e:
@@ -297,7 +310,6 @@ def get_sentiment():
         sentiment_result = response['message']['content']
         
         # Parse the JSON response
-        import json
         import re
         
         # Extract the JSON part from the response
