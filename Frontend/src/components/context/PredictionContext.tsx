@@ -46,7 +46,10 @@ export function PredictionProvider({
   const [priceHistoryImage, setPriceHistoryImage] = useState<string | null>(
     null
   );
-  const [currentTicker, setCurrentTicker] = useState<string | null>(null);
+  const [currentTicker, setCurrentTicker] = useState<string | null>(() => {
+    // Initialize from localStorage if available
+    return localStorage.getItem("currentTicker") || null;
+  });
   const [predictionData, setPredictionData] = useState<PredictionData>(
     defaultPredictionData
   );
@@ -67,6 +70,13 @@ export function PredictionProvider({
   useEffect(() => {
     localStorage.setItem("predictionData", JSON.stringify(predictionData));
   }, [predictionData]);
+
+  // Save currentTicker to localStorage when it changes
+  useEffect(() => {
+    if (currentTicker) {
+      localStorage.setItem("currentTicker", currentTicker);
+    }
+  }, [currentTicker]);
 
   return (
     <PredictionContext.Provider
