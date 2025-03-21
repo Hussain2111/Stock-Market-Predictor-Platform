@@ -64,7 +64,7 @@ const Portfolio = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setProfitLoss(data.profit_loss);
+          setProfitLoss(data.total_profit_loss);
           setProfitLossPercentage(data.profit_loss_percentage);
         }
       })
