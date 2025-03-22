@@ -7,6 +7,10 @@ def init_lstm_routes(app):
     @app.route('/run-lstm', methods=['POST'])
     def run_lstm():
         try:
+            # Force UTF-8 encoding for stdout/stderr
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace') 
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            
             data = request.get_json()
             ticker = data.get('ticker')
             
@@ -54,8 +58,7 @@ def init_lstm_routes(app):
                 }), 500
                 
             return jsonify({
-                'message': f'LSTM multivariate analysis completed for {ticker}',
-                'output': process.stdout,
+                'message': 'LSTM analysis completed successfully',
                 'success': True
             })
             
