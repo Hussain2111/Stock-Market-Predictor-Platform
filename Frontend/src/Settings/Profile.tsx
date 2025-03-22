@@ -1,6 +1,13 @@
 import { motion } from "framer-motion";
-import { UserProfile } from "./data";
 import { useRef } from "react";
+
+// Define the UserProfile interface
+interface UserProfile {
+  avatar: string;
+  name: string;
+  email: string;
+  phone: string;
+}
 
 interface ProfileProps {
   activeTab: string;
