@@ -39,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import ProtectedAnalysis from "./ProtectedAnalysis";
+import { addAnalysisNotification } from "./utils/notificationService";
 
 interface NewsItem {
   title: string;
@@ -1098,6 +1099,9 @@ const AnalysisDashboard = () => {
             predictionData.prediction_data
           );
         }
+        
+        // Add analysis notification when a stock has been analyzed
+        addAnalysisNotification(tickerState);
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
         const errorMessage =
