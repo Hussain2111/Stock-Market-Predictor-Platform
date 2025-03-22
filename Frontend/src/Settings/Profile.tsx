@@ -9,6 +9,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string; // Make phone optional as we'll be removing it
+  joined?: string; // Add joined property and make it optional
 }
 
 interface ProfileProps {
