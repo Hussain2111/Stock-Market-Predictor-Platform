@@ -1043,8 +1043,8 @@ const AnalysisDashboard = () => {
     predictionImage,
     currentTicker,
     setPredictionImage,
-    setPriceHistoryImage,
     setCurrentTicker,
+    ticker,
   ]);
 
   useEffect(() => {
@@ -1116,50 +1116,69 @@ const AnalysisDashboard = () => {
         const response = await fetch(
           `http://localhost:5001/stock-price-data?ticker=${tickerState}&timeframe=${selectedTimeframe}`
         );
+
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (data.success) {
-          setStockPriceData(data.priceData);
+          setStockPriceData(data.priceData || []);
         } else {
           console.error("Failed to fetch stock price data:", data.error);
+          // Show a more user-friendly error
+          setError(data.error || "Could not load price data");
         }
       } catch (error) {
         console.error("Error fetching stock price data:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to load price data"
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStockPriceData();
+    if (tickerState) {
+      fetchStockPriceData();
+    }
   }, [tickerState, selectedTimeframe]);
 
   // Add this useEffect for fetching news
   useEffect(() => {
     const fetchNews = async () => {
+      if (!tickerState) return;
+
       setIsLoadingNews(true);
+      setError(null); // Clear any previous errors
+
       try {
         const response = await fetch(
           `http://localhost:5001/api/stock-news?ticker=${tickerState}`
         );
+
+        if (!response.ok) {
+          throw new Error(`News API returned status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        console.log("Received news data:", data); // Debug log
-
         if (data.success) {
-          setNewsData(data.news);
+          setNewsData(data.news || []);
         } else {
           console.error("Failed to fetch news:", data.error);
+          // Don't show error to user as news is not critical
         }
       } catch (error) {
         console.error("Error fetching news:", error);
+        // Don't show error to user as news is not critical
       } finally {
         setIsLoadingNews(false);
       }
     };
 
-    if (tickerState) {
-      fetchNews();
-    }
+    fetchNews();
   }, [tickerState]);
 
   // Add a memory leak prevention for cleanup
