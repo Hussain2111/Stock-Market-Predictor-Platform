@@ -33,6 +33,7 @@ export const authService = {
         // Store authentication data in localStorage
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('userEmail', email);
         if (data.fullName) {
           localStorage.setItem('fullName', data.fullName);
         }
@@ -64,6 +65,7 @@ export const authService = {
         // Store authentication data in localStorage
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('userEmail', email);
         if (data.fullName) {
           localStorage.setItem('fullName', data.fullName);
         }
@@ -89,6 +91,7 @@ export const authService = {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('fullName');
+    localStorage.removeItem('userEmail');
   },
 
   // Get the authentication token
@@ -104,6 +107,11 @@ export const authService = {
   // Get user's full name
   getFullName(): string | null {
     return localStorage.getItem('fullName');
+  },
+
+  // Get user's email
+  getUserEmail(): string | null {
+    return localStorage.getItem('userEmail');
   },
 
   // Check server status
