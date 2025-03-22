@@ -27,6 +27,7 @@ alembic>=1.7.7
 # API authentication
 PyJWT>=2.2.0  # Note the capitalization (not jwt)
 
+
 # AI models
 ollama>=0.1.6
 
@@ -41,3 +42,4 @@ httpx>=0.23.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 tk>=0.1.0  # For GUI components
+
