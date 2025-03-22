@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./sidebar";
 import Profile from "./Profile";
 import Subscriptions from "./Subscriptions";
@@ -8,21 +8,14 @@ import Security from "./security";
 import Header from "../components/Header";
 import {AnimatePresence} from "framer-motion";
 import AuthModal from "../components/AuthModal";
-
+import { Notification, getNotifications } from "../utils/notificationService";
+import defaultAvatar from "./defaultpic.jpg";
 
 interface Subscription {
   plan: string;
   price: string;
   features: string[];
   current: boolean;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
-  read: boolean;
 }
 
 interface AnalysisHistory {
@@ -41,29 +34,27 @@ const Settings = () => {
     "MSFT",
     "GOOGL",
   ]);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "Analysis Complete",
-      message: "Your NVDA stock prediction analysis is ready to view.",
-      date: "2h ago",
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Market Alert",
-      message: "Unusual trading volume detected for AAPL.",
-      date: "Yesterday",
-      read: true,
-    },
-    {
-      id: "3",
-      title: "Account Updated",
-      message: "Your account settings have been successfully updated.",
-      date: "3 days ago",
-      read: true,
-    },
-  ]);
+  // Now fetching notifications from our notification service
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Load notifications from localStorage when component mounts
+  useEffect(() => {
+    const storedNotifications = getNotifications();
+    if (storedNotifications.length === 0) {
+      // If no notifications exist yet, add some default ones
+      setNotifications([
+        {
+          id: "1",
+          title: "Welcome to Stock Analyzer",
+          message: "Start analyzing stocks to see your analysis history here.",
+          date: "Just now",
+          read: false,
+        }
+      ]);
+    } else {
+      setNotifications(storedNotifications);
+    }
+  }, []);
 
   const [analysisHistory] = useState<AnalysisHistory[]>([
     {
@@ -136,11 +127,10 @@ const Settings = () => {
   ]);
 
   const [userProfile, setUserProfile] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    phone: "+1 (555) 123-4567",
-    joined: "January 2025",
-    avatar: "/api/placeholder/100/100",
+    name: "User",
+    email: "",
+    joined: "2023",
+    avatar: defaultAvatar,
   });
 
   const [preferences, setPreferences] = useState({
