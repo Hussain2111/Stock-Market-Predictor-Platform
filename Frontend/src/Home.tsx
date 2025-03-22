@@ -280,12 +280,12 @@ const [showDemoModal, setShowDemoModal] = useState(false);
           <X className="w-5 h-5" />
         </button>
         <iframe
-          className="w-full aspect-video"
-          src="https://www.youtube.com/watch?v=dQw4w9WgXcQ" // Replace this URL with your actual demo video later
-          title="Demo Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+  className="w-full aspect-video"
+  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0"
+  title="Demo Video"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+/>
       </motion.div>
     </motion.div>
   )}
