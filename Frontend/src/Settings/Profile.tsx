@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { authService } from "../authService";
 
 // Define the UserProfile interface
 interface UserProfile {
@@ -16,11 +17,23 @@ interface ProfileProps {
 }
 
 const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
-
-    // Reference to the file input element
+  // Reference to the file input element
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Handle file selection
+  // Add useEffect to fetch user email when component mounts
+  useEffect(() => {
+    // Get user email from localStorage using authService
+    const userEmail = authService.getUserEmail();
+    
+    if (userEmail && userEmail !== userProfile.email) {
+      setUserProfile({
+        ...userProfile,
+        email: userEmail
+      });
+    }
+  }, [userProfile, setUserProfile]);
+
+  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -38,6 +51,7 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
   return (
     <>
       {activeTab === "profile" && (
