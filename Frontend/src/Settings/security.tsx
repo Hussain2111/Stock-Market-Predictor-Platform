@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 interface Preferences {
     emailAlerts: boolean;
     pushNotifications: boolean;
     smsAlerts: boolean;
-    twoFactorAuth: boolean;
     darkMode: boolean;
     autoRefresh: boolean;
     defaultTimeframe: string;
@@ -18,6 +18,52 @@ interface PreferencesProps {
 }
 
 const Security = ({activeTab, preferences, setPreferences}: PreferencesProps) => {
+    const [browserInfo, setBrowserInfo] = useState("");
+    const [currentDateTime, setCurrentDateTime] = useState("");
+    const [ipAddress, setIpAddress] = useState("192.168.1.1"); // Default IP
+
+    useEffect(() => {
+        // Get browser information
+        const userAgent = navigator.userAgent;
+        let browserName = "Unknown Browser";
+        let osName = "Unknown OS";
+        
+        // Detect browser
+        if (userAgent.indexOf("Chrome") > -1) {
+            browserName = "Chrome";
+        } else if (userAgent.indexOf("Safari") > -1) {
+            browserName = "Safari";
+        } else if (userAgent.indexOf("Firefox") > -1) {
+            browserName = "Firefox";
+        } else if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1) {
+            browserName = "Internet Explorer";
+        } else if (userAgent.indexOf("Edge") > -1) {
+            browserName = "Edge";
+        }
+        
+        // Detect OS
+        if (userAgent.indexOf("Win") > -1) {
+            osName = "Windows";
+        } else if (userAgent.indexOf("Mac") > -1) {
+            osName = "MacOS";
+        } else if (userAgent.indexOf("Linux") > -1) {
+            osName = "Linux";
+        } else if (userAgent.indexOf("Android") > -1) {
+            osName = "Android";
+        } else if (userAgent.indexOf("iPhone") > -1 || userAgent.indexOf("iPad") > -1) {
+            osName = "iOS";
+        }
+        
+        setBrowserInfo(`${browserName} on ${osName}`);
+        
+        // Format current date and time
+        const now = new Date();
+        setCurrentDateTime(now.toLocaleString());
+        
+        // In a real app, you would fetch the IP address from an API
+        // For demonstration, we're using a placeholder IP
+    }, []);
+
     return (
         <>
         {activeTab === "security" && (
@@ -29,43 +75,17 @@ const Security = ({activeTab, preferences, setPreferences}: PreferencesProps) =>
                   <h2 className="text-2xl font-bold mb-6">Security Settings</h2>
 
                   <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">
-                          Two-Factor Authentication
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          Add an extra layer of security to your account
-                        </div>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={preferences.twoFactorAuth}
-                          onChange={() =>
-                            setPreferences({
-                              ...preferences,
-                              twoFactorAuth: !preferences.twoFactorAuth,
-                            })
-                          }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-emerald-500"></div>
-                        <div className="absolute w-4 h-4 bg-white rounded-full left-1 top-1 peer-checked:left-6 transition-all"></div>
-                      </label>
-                    </div>
-
                     <div className="border-t border-gray-700 pt-6">
-                      <h3 className="font-semibold mb-4">Login Sessions</h3>
+                      <h3 className="font-semibold mb-4">Current Login Session</h3>
                       <div className="space-y-4">
                         <div className="p-4 rounded-lg bg-white/5 flex justify-between items-center">
                           <div>
                             <div className="font-medium">Current Session</div>
                             <div className="text-sm text-gray-400">
-                              Chrome on MacOS • IP: 192.168.1.1
+                              {browserInfo} • IP: {ipAddress}
                             </div>
                             <div className="text-xs text-emerald-400 mt-1">
-                              Active Now
+                              Login Time: {currentDateTime}
                             </div>
                           </div>
                           <div>
@@ -74,27 +94,8 @@ const Security = ({activeTab, preferences, setPreferences}: PreferencesProps) =>
                             </button>
                           </div>
                         </div>
-
-                        <div className="p-4 rounded-lg bg-white/5 flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">Previous Session</div>
-                            <div className="text-sm text-gray-400">
-                              Safari on iOS • IP: 192.168.1.2
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              2 days ago
-                            </div>
-                          </div>
-                          <div>
-                            <button className="text-red-400 hover:text-red-300">
-                              Revoke
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     </div>
-
-                    
 
                     <div className="border-t border-gray-700 pt-6">
                       <h3 className="font-semibold mb-4 text-red-400">

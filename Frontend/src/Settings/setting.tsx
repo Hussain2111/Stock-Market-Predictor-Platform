@@ -137,7 +137,6 @@ const Settings = () => {
     emailAlerts: true,
     pushNotifications: true,
     smsAlerts: false,
-    twoFactorAuth: true,
     darkMode: true,
     autoRefresh: true,
     defaultTimeframe: "3m",
