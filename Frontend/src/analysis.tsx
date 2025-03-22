@@ -962,7 +962,7 @@ const AnalysisDashboard = () => {
   }, [tickerState]);
 
   useEffect(() => {
-    const fetchPriceHistory = async () => {
+    const fetchPriceHistory = async (retryCount = 0) => {
       // If we already have prediction data for this ticker, don't reload it
       if (predictionImage && currentTicker === ticker) {
         console.log("Using cached prediction data for ticker:", ticker);
@@ -971,39 +971,26 @@ const AnalysisDashboard = () => {
       }
 
       setIsLoadingGraph(true);
+
       try {
         console.log(`Starting analysis for ticker: ${tickerState}`);
 
-        // Start both the analysis and fetching price history in parallel
-        const [analysisResponse, historyResponse] = await Promise.all([
-          fetch("http://localhost:5001/run-lstm", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ticker: tickerState,
-            }),
+        // Make the request to run LSTM
+        const analysisResponse = await fetch("http://localhost:5001/run-lstm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ticker: tickerState,
           }),
-          fetch(
-            `http://localhost:5001/get-price-history?ticker=${tickerState}`
-          ),
-        ]);
+        });
 
-        const [analysisData, historyData] = await Promise.all([
-          analysisResponse.json(),
-          historyResponse.json(),
-        ]);
-
+        const analysisData = await analysisResponse.json();
         console.log("Analysis response:", analysisData);
-        console.log("History response:", historyData);
 
         if (!analysisData.success) {
           throw new Error(analysisData.error || "Analysis failed");
-        }
-
-        if (historyData.success) {
-          setPriceHistoryImage(historyData.image);
         }
 
         // Fetch prediction immediately after analysis is complete
@@ -1036,6 +1023,14 @@ const AnalysisDashboard = () => {
         console.error("Error in fetchPriceHistory:", error);
         const errorMessage =
           error instanceof Error ? error.message : "An unknown error occurred";
+
+        // Automatically retry once for encoding errors
+        if (errorMessage.includes("charmap") && retryCount < 1) {
+          console.log("Encoding error detected, retrying...");
+          setTimeout(() => fetchPriceHistory(retryCount + 1), 1000);
+          return;
+        }
+
         setError(errorMessage);
       } finally {
         setIsLoadingGraph(false);
