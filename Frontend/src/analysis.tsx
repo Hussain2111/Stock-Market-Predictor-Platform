@@ -183,12 +183,12 @@ interface Message {
   isBot: boolean;
 }
 
-const Chatbot = () => {
+const Chatbot = ({ currentTicker }: { currentTicker: string }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hello! I can help you analyze this stock. What would you like to know?",
+      text: `Hello! I can help you analyze ${currentTicker}. What would you like to know?`,
       isBot: true,
     },
   ]);
@@ -278,7 +278,7 @@ const Chatbot = () => {
         },
         body: JSON.stringify({
           message,
-          symbol: "AAPL",
+          symbol: currentTicker,
           userId: "user123",
         }),
       });
@@ -770,15 +770,7 @@ const StockPriceChart = ({
 };
 
 const AnalysisDashboard = () => {
-  const [ticker, setTicker] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlTicker = params.get("ticker");
-    return urlTicker || localStorage.getItem("currentTicker") || "AAPL";
-  });
-  const [stockName, setStockName] = useState("");
-  const [stockPrice, setStockPrice] = useState<number | null>(null);
-  const [priceChange, setPriceChange] = useState<number>(0);
-  const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
+  // First, extract all hooks and context values
   const {
     predictionImage,
     setPredictionImage,
@@ -791,6 +783,38 @@ const AnalysisDashboard = () => {
   } = usePrediction();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
+  // Then define your state variables
+  const [ticker, setTicker] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTicker = params.get("ticker");
+    const initialTicker =
+      urlTicker || localStorage.getItem("currentTicker") || "AAPL";
+    localStorage.setItem("currentTicker", initialTicker);
+    return initialTicker;
+  });
+
+  const tickerState = ticker;
+
+  // Now your useEffect hooks can safely use all variables
+  useEffect(() => {
+    const currentParams = new URLSearchParams(window.location.search);
+    if (currentParams.get("ticker") !== ticker) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("ticker", ticker);
+      window.history.pushState({}, "", newUrl.toString());
+    }
+  }, [ticker]);
+
+  useEffect(() => {
+    localStorage.setItem("currentTicker", ticker);
+    setCurrentTicker(ticker);
+  }, [ticker, setCurrentTicker]);
+
+  // Rest of your state declarations
+  const [stockName, setStockName] = useState("");
+  const [stockPrice, setStockPrice] = useState<number | null>(null);
+  const [priceChange, setPriceChange] = useState<number>(0);
+  const [priceChangePercent, setPriceChangePercent] = useState<number>(0);
   const [sentimentData, setSentimentData] = useState([
     {
       period: "Current",
@@ -917,41 +941,6 @@ const AnalysisDashboard = () => {
       </div>
     </motion.div>
   );
-
-  // Initialize ticker from URL params or use currentTicker from context
-  const [tickerState, setTickerState] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlTicker = params.get("ticker");
-
-    // Order of priority: URL param > currentTicker from context > default "AAPL"
-    return urlTicker || currentTicker || "AAPL";
-  });
-
-  // Update URL when ticker changes
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (tickerState && tickerState !== params.get("ticker")) {
-      params.set("ticker", tickerState);
-      window.history.replaceState(
-        {},
-        "",
-        `${window.location.pathname}?${params.toString()}`
-      );
-
-      // Keep the current ticker in context
-      setCurrentTicker(tickerState);
-      // Also update the display ticker
-      setTicker(tickerState);
-    }
-  }, [tickerState, setCurrentTicker]);
-
-  // Also update tickerState when currentTicker changes (from context)
-  useEffect(() => {
-    if (currentTicker && currentTicker !== tickerState) {
-      setTickerState(currentTicker);
-      setTicker(currentTicker);
-    }
-  }, [currentTicker]);
 
   // Separate useEffect to fetch stock info and price immediately
   useEffect(() => {
@@ -1253,6 +1242,16 @@ const AnalysisDashboard = () => {
     document.title = `${tickerState} - Stock Analysis`;
   }, [tickerState]);
 
+  // Add this near the top of the component
+  useEffect(() => {
+    console.log("Current ticker value:", ticker);
+    console.log(
+      "URL params:",
+      new URLSearchParams(window.location.search).toString()
+    );
+    console.log("localStorage ticker:", localStorage.getItem("currentTicker"));
+  }, [ticker]);
+
   return (
     <ProtectedAnalysis>
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#111827] text-white flex">
@@ -1403,7 +1402,7 @@ const AnalysisDashboard = () => {
                     </TabsContent>
                   </Tabs>
                 </div>
-                <Chatbot />
+                <Chatbot currentTicker={tickerState} />
               </div>
             </motion.div>
 

@@ -144,11 +144,17 @@ export default function HomePage() {
   const handleAnalysis = async (ticker: string) => {
     if (ticker) {
       try {
-        // Navigate to analysis page first
-        window.location.href = `/analysis?ticker=${ticker}`;
+        console.log("Home page - Setting ticker:", ticker);
+        // Store the ticker in localStorage before navigation
+        localStorage.setItem("currentTicker", ticker);
 
+        // Navigate to analysis page
+        window.location.href = `/analysis?ticker=${encodeURIComponent(ticker)}`;
+
+        // Note: The code below won't execute immediately due to the page navigation above
         // Only run LSTM if we don't have predictions for this ticker
         if (currentTicker !== ticker) {
+          // This code will likely not run due to the page navigation above
           const response = await fetch("http://localhost:5001/run-lstm", {
             method: "POST",
             headers: {
