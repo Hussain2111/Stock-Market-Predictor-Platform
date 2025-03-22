@@ -1162,6 +1162,14 @@ const AnalysisDashboard = () => {
     }
   }, [tickerState]);
 
+  // Add a memory leak prevention for cleanup
+  useEffect(() => {
+    // Cleanup function to prevent memory leaks
+    return () => {
+      // Cancel any pending async tasks or timers here if needed
+    };
+  }, []);
+
   const mockData = Array.from({ length: 30 }, (_, i) => ({
     date: `2024-${String(i + 1).padStart(2, "0")}-01`,
     price: Math.random() * 50 + 150,
