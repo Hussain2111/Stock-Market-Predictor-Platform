@@ -11,6 +11,7 @@ interface AuthModalProps {
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
   });
@@ -24,7 +25,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -34,10 +35,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       if (isLogin) {
         // Use authService for login
-        result = authService.login(formData.email, formData.password);
+        result = await authService.login(formData.email, formData.password);
       } else {
         // Use authService for registration
-        result = authService.register(formData.email, formData.password);
+        result = await authService.register(
+          formData.fullName,
+          formData.email, 
+          formData.password
+        );
       }
 
       if (result.success) {
@@ -49,9 +54,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         onClose();
         window.location.reload();
       } else {
-        setError(result.error || "Authentication failed");
+        setError(result.error || result.message || "Authentication failed");
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
       setError("An error occurred during authentication");
     } finally {
       setLoading(false);
@@ -85,6 +91,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         )}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {!isLogin && (
+            <input
+              type="text"
+              name="fullName"
+              placeholder="Full Name"
+              value={formData.fullName}
+              onChange={handleChange}
+              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
+              required
+            />
+          )}
           <input
             type="email"
             name="email"
