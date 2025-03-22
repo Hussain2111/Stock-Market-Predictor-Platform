@@ -3,13 +3,7 @@ import Header from "./components/Header";
 import { useNavigate } from "react-router-dom";
 import { authService } from "./authService";
 
-import {
-  DollarSign,
-  ArrowUp,
-  ArrowDown,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import Modal from "react-modal";
 import { motion } from "framer-motion";
 
@@ -49,15 +43,15 @@ const Portfolio = () => {
   useEffect(() => {
     // Check if user is logged in
     if (!userId || !authToken) {
-      navigate('/');
+      navigate("/");
       return;
     }
 
     // Fetch portfolio data
     fetch(`http://localhost:5001/portfolio?user_id=${userId}`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
+        Authorization: `Bearer ${authToken}`,
+      },
     })
       .then((res) => {
         if (!res.ok) {
@@ -89,7 +83,7 @@ const Portfolio = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${authToken}`
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify({ user_id: userId }),
     })
@@ -117,11 +111,14 @@ const Portfolio = () => {
   const fetchStockProfit = (ticker: string) => {
     if (!userId || !authToken) return;
 
-    fetch(`http://localhost:5001/stock-profit?user_id=${userId}&ticker=${ticker}`, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`
+    fetch(
+      `http://localhost:5001/stock-profit?user_id=${userId}&ticker=${ticker}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-    })
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error(`Failed to fetch stock profit: ${res.status}`);
@@ -148,8 +145,8 @@ const Portfolio = () => {
       `http://localhost:5001/individual-stock?user_id=${userId}&ticker=${ticker}`,
       {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       }
     )
       .then((res) => {

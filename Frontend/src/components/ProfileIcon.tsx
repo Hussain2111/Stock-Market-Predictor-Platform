@@ -1,25 +1,35 @@
 import { useState, useRef, useEffect } from 'react';
 import { Settings, Bell, History, LogOut, Bookmark, LineChart, Wallet, HelpCircle, Star, List } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import defaultAvatar from '../Settings/defaultpic.jpg';
+import { authService } from '../authService';
+
+interface UserProfile {
+  name: string;
+  email: string;
+  avatar: string;
+  plan: string;
+  analysesRemaining: number;
+}
 
 const ProfileIcon = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex@example.com',
-    avatar: '/api/placeholder/100/100',
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: 'User',
+    email: '',
+    avatar: defaultAvatar,
     plan: 'Free',
     analysesRemaining: 3
   });
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // Fetch user profile data here
     fetchUserData();
 
     // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -30,28 +40,50 @@ const ProfileIcon = () => {
     };
   }, []);
 
-  // Fetch user data function (mock)
+  // Fetch user data function
   const fetchUserData = async () => {
-    // In a real app, you would fetch from an API
-    // For now we'll use mock data
-    setUserProfile({
-      name: 'Alex Johnson',
-      email: 'alex@example.com',
-      avatar: '/api/placeholder/100/100',
-      plan: 'Free',
-      analysesRemaining: 3
-    });
+    // Get user email from localStorage
+    const userEmail = authService.getUserEmail();
+    
+    if (userEmail) {
+      // Extract username from email (everything before @)
+      const atIndex = userEmail.indexOf('@');
+      let username = userEmail;
+      if (atIndex !== -1) {
+        username = userEmail.substring(0, atIndex);
+        username = username.charAt(0).toUpperCase() + username.slice(1);
+      }
+      
+      setUserProfile({
+        name: username,
+        email: userEmail,
+        avatar: defaultAvatar,
+        plan: 'Free',
+        analysesRemaining: 3
+      });
+    } else {
+      // If no user is logged in, use defaults
+      setUserProfile({
+        name: 'Guest',
+        email: '',
+        avatar: defaultAvatar,
+        plan: 'Free',
+        analysesRemaining: 3
+      });
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('fullName');
     // Redirect to login page or home page
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   // Get background color based on plan
-  const getPlanBadgeColor = (plan) => {
+  const getPlanBadgeColor = (plan: string) => {
     switch (plan) {
       case 'Professional':
         return 'bg-purple-500';
@@ -89,24 +121,13 @@ const ProfileIcon = () => {
             </div>
             
             {/* Plan information */}
-            <div className="mt-3 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className={`px-2 py-1 text-xs rounded-full ${getPlanBadgeColor(userProfile.plan)} text-white`}>
-                  {userProfile.plan} Plan
-                </span>
-                <Link 
-                  to="/settings/subscriptions" 
-                  className="text-xs text-emerald-500 hover:text-emerald-400"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Upgrade
-                </Link>
-              </div>
-              {userProfile.plan === 'Free' && (
-                <div className="text-xs text-gray-400">
-                  {userProfile.analysesRemaining} analyses remaining today
-                </div>
-              )}
+            <div className="mt-3 flex items-center justify-between">
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getPlanBadgeColor(userProfile.plan)}`}>
+                {userProfile.plan} Plan
+              </span>
+              <span className="text-xs text-gray-400">
+                {userProfile.analysesRemaining} analyses remaining
+              </span>
             </div>
           </div>
           

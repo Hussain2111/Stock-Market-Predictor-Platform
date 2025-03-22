@@ -8,8 +8,9 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
-
 import { Link } from "react-router-dom";
+import defaultAvatar from "./defaultpic.jpg";
+import { authService } from "../authService";
 
 interface Notification {
     id: string;
@@ -17,18 +18,14 @@ interface Notification {
     message: string;
     date: string;
     read: boolean;
-  }
+}
 
-
-  interface SidebarProps {
+interface SidebarProps {
     activeTab: string;
     setActiveTab: React.Dispatch<React.SetStateAction<string>>;
-  }
+}
 
 const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
-    
-
-    //const [activeTab, setActiveTab] = useState("profile");
     const [notifications] = useState<Notification[]>([
         {
           id: "1",
@@ -54,13 +51,26 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
       ]);
 
       const [userProfile] = useState({
-        name: "Alex Johnson",
-        email: "alex@example.com",
-        phone: "+1 (555) 123-4567",
-        joined: "January 2025",
-        avatar: "/api/placeholder/100/100",
+        name: "User",
+        email: "",
+        joined: "2023",
+        avatar: defaultAvatar,
       });
-    
+
+      // Try to get user's email and name
+      const userEmail = authService.getUserEmail();
+      
+      // Extract username from email if available
+      if (userEmail) {
+        const atIndex = userEmail.indexOf('@');
+        if (atIndex !== -1) {
+          // Extract username part of email
+          const username = userEmail.substring(0, atIndex);
+          // Capitalize first letter
+          userProfile.name = username.charAt(0).toUpperCase() + username.slice(1);
+          userProfile.email = userEmail;
+        }
+      }
 
     return (
         <div className="lg:w-1/4">
@@ -69,7 +79,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                 <img
                   src={userProfile.avatar}
                   alt="Profile"
-                  className="w-16 h-16 rounded-full border-2 border-emerald-500"
+                  className="w-16 h-16 rounded-full border-2 border-emerald-500 object-cover"
                 />
                 <div>
                   <div className="font-bold text-lg">{userProfile.name}</div>
@@ -120,12 +130,12 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                 >
                   <span className="flex items-center">
                     <Bell className="w-5 h-5 mr-3" />
-                    Notifications
-                    {notifications.some((n) => !n.read) && (
-                      <span className="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {notifications.filter((n) => !n.read).length}
-                      </span>
-                    )}
+                    <div className="flex items-center">
+                      Notifications
+                      {notifications.some((n) => !n.read) && (
+                        <span className="ml-2 w-2 h-2 rounded-full bg-red-500"></span>
+                      )}
+                    </div>
                   </span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -140,7 +150,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                 >
                   <span className="flex items-center">
                     <History className="w-5 h-5 mr-3" />
-                    Analysis History
+                    History
                   </span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -160,18 +170,17 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                <div className="pt-4 mt-4 border-t border-gray-700">
-                  <Link to="/" className="mr-10">
-                    <button className="w-full flex items-center text-red-400 hover:text-red-300 p-3 rounded-lg hover:bg-white/10 transition-colors">
-                      <LogOut className="w-5 h-5 mr-3" />
-                      Logout
-                    </button>
-                  </Link>
-                </div>
+                <Link
+                  to="/"
+                  className="mt-6 w-full flex items-center text-red-500 hover:text-red-400 p-3"
+                >
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </Link>
               </nav>
             </div>
           </div>
-    )
-}
+    );
+};
 
 export default Sidebar;

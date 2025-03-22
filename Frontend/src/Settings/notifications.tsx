@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import { X, RefreshCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { 
+  Notification, 
+  getNotifications, 
+  markAllNotificationsAsRead, 
+  removeNotification,
+  saveNotifications
+} from '../utils/notificationService';
 
 interface NotificationsProps {
   activeTab: string;
@@ -16,13 +16,38 @@ interface NotificationsProps {
 }
 
 const Notifications = ({ activeTab, notifications, setNotifications }: NotificationsProps) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Load notifications from localStorage when component mounts or becomes active
+  useEffect(() => {
+    if (activeTab === "notifications") {
+      refreshNotifications();
+    }
+  }, [activeTab]);
+
+  // Function to refresh notifications
+  const refreshNotifications = () => {
+    setIsRefreshing(true);
+    const storedNotifications = getNotifications();
+    setNotifications(storedNotifications);
+    
+    // Simulate loading for better UX
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 500);
+  };
+
+  // Function to mark all notifications as read
   const markAllAsRead = () => {
+    markAllNotificationsAsRead();
     setNotifications(
       notifications.map((notification) => ({ ...notification, read: true }))
     );
   };
 
-  const removeNotification = (id: string) => {
+  // Function to remove a notification
+  const handleRemoveNotification = (id: string) => {
+    removeNotification(id);
     setNotifications(
       notifications.filter((notification) => notification.id !== id)
     );
@@ -38,11 +63,20 @@ const Notifications = ({ activeTab, notifications, setNotifications }: Notificat
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Notifications</h2>
-            <button 
-              onClick={markAllAsRead}
-              className="text-emerald-400 hover:text-emerald-300">
-              Mark all as read
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={refreshNotifications}
+                disabled={isRefreshing}
+                className="text-gray-400 hover:text-white flex items-center gap-1">
+                <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+              <button 
+                onClick={markAllAsRead}
+                className="text-emerald-400 hover:text-emerald-300">
+                Mark all as read
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -69,7 +103,7 @@ const Notifications = ({ activeTab, notifications, setNotifications }: Notificat
                     </div>
                   </div>
                   <button
-                    onClick={() => removeNotification(notification.id)}
+                    onClick={() => handleRemoveNotification(notification.id)}
                     className="text-gray-500 hover:text-gray-300"
                   >
                     <X className="w-5 h-5" />
