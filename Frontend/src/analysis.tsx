@@ -1244,9 +1244,6 @@ const AnalysisDashboard = () => {
                       >
                         <Bookmark className="w-5 h-5" />
                       </button>
-                      <button className="p-2 rounded-full bg-white/5 hover:bg-white/10">
-                        <Share2 className="w-5 h-5" />
-                      </button>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -1272,9 +1269,6 @@ const AnalysisDashboard = () => {
                     </span>
                   </div>
                 </div>
-                <button className="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export Data
-                </button>
               </div>
 
               <div className="flex mt-8 h-[600px] bg-white/5 rounded-xl">
