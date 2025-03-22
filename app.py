@@ -13,8 +13,22 @@ import numpy as np
 from textblob import TextBlob
 import logging
 import json
+# Fix JWT imports - use PyJWT instead of plain jwt
+try:
+    import jwt as pyjwt
+except ImportError:
+    print("PyJWT not installed, trying to install...")
+    import pip
+    pip.main(['install', 'PyJWT'])
+    import jwt as pyjwt
+from functools import wraps
+from bson import ObjectId
+from flask_cors import CORS
 
 app = create_app()
+
+# Configure CORS
+CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"]}})
 
 # Initialize LSTM routes
 init_lstm_routes(app)
@@ -22,12 +36,75 @@ init_lstm_routes(app)
 # Initialize chatbot service
 chatbot_service = ChatbotService()
 
-# Initialise the mongodb connection
-# MongoDB connection
-client = MongoClient("mongodb+srv://uas4:AlphaCentauri1206@stockdb.gupsk.mongodb.net/?retryWrites=true&w=majority&appName=stockdb")  # Update if using a remote DB
+# MongoDB connection - using the same DB as the login server
+client = MongoClient("mongodb+srv://shayaanpk:QBlvNkoTYFQbXsq1@clusterlogin.mioes.mongodb.net/trading_app?retryWrites=true&w=majority&appName=ClusterLogin")
 db = client["trading_app"]
 investments_collection = db["investments"]
 sales_collection = db["sold_stocks"]
+users_collection = db["users"] # For auth token verification
+
+# JWT Secret key for verifying tokens
+JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback_secret_key_for_development')
+
+# Authentication decorator
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Get the token from the headers
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            
+        if not token:
+            return jsonify({
+                'error': 'Token is missing',
+                'success': False
+            }), 401
+            
+        try:
+            # Decode the token using PyJWT
+            payload = pyjwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+            user_id = payload['userId']
+            
+            # MongoDB IDs are ObjectIds, try to convert
+            try:
+                user_obj_id = ObjectId(user_id)
+                # Verify the user exists
+                user = users_collection.find_one({'_id': user_obj_id})
+            except:
+                # If conversion fails or user doesn't exist, try with string ID
+                user = users_collection.find_one({'_id': user_id})
+            
+            if not user:
+                return jsonify({
+                    'error': 'Invalid token, user not found',
+                    'success': False
+                }), 401
+                
+            # Add user_id to kwargs
+            kwargs['user_id'] = user_id
+            
+        except pyjwt.exceptions.ExpiredSignatureError:
+            return jsonify({
+                'error': 'Token has expired',
+                'success': False
+            }), 401
+        except pyjwt.exceptions.InvalidTokenError:
+            return jsonify({
+                'error': 'Invalid token',
+                'success': False
+            }), 401
+        except Exception as e:
+            return jsonify({
+                'error': f'Token verification error: {str(e)}',
+                'success': False
+            }), 401
+            
+        return f(*args, **kwargs)
+    return decorated
 
 @app.route('/stock-price', methods=['GET'])
 def get_stock_price():
@@ -754,13 +831,20 @@ def get_multiple_stocks():
         }), 500
 
 @app.route('/buy-stock', methods=['POST'])
-def buy_stock():
+@token_required
+def buy_stock(user_id=None):
     try:
         data = request.get_json()
-        user_id = data.get('user_id')
+        request_user_id = data.get('user_id')
         ticker = data.get('ticker')
         currentPrice = data.get('currentPrice')
         quantity = data.get('quantity', 1)  # Default to 1 if quantity is not provided
+        
+        # Verify the user_id in the request matches the authenticated user
+        if user_id != request_user_id:
+            return jsonify({
+                "error": "Unauthorized: User ID mismatch", 
+                "success": False}), 401
         
         if not all([user_id, ticker, currentPrice]):
             return jsonify({
@@ -796,13 +880,20 @@ def buy_stock():
         return jsonify({"error": str(e), "success": False}), 500
     
 @app.route('/sell-stock', methods=['POST'])
-def sell_stock():
+@token_required
+def sell_stock(user_id=None):
     try:
         data = request.json
+        request_user_id = data.get("user_id")
         ticker = data.get("ticker")
-        user_id = data.get("user_id")
         sell_price = float(data.get("currentPrice"))
         quantity = data.get("quantity", 1)  # Default to 1 if quantity is not provided
+
+        # Verify the user_id in the request matches the authenticated user
+        if user_id != request_user_id:
+            return jsonify({
+                "error": "Unauthorized: User ID mismatch", 
+                "success": False}), 401
 
         if not ticker or not user_id:
             return jsonify({"success": False, "error": "Missing ticker or user ID"})
@@ -862,9 +953,17 @@ def sell_stock():
             "error": str(e)}), 500
         
 @app.route('/portfolio', methods=['GET'])
-def get_portfolio():
+@token_required
+def get_portfolio(user_id=None):
     try:
-        user_id = request.args.get("user_id")
+        request_user_id = request.args.get("user_id")
+        
+        # Verify the user_id in the request matches the authenticated user
+        if user_id != request_user_id:
+            return jsonify({
+                "error": "Unauthorized: User ID mismatch", 
+                "success": False}), 401
+        
         if not user_id:
             return jsonify({"success": False, "error": "User ID required"}), 400
 
@@ -893,17 +992,24 @@ def get_portfolio():
         # Execute the aggregation pipeline
         stocks = list(investments_collection.aggregate(pipeline))
         
-        return jsonify(stocks)
+        return jsonify({"success": True, "stocks": stocks})
     
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/individual-stock', methods=['GET'])
-def get_individual_stock():
+@token_required
+def get_individual_stock(user_id=None):
     try:
         # Extract user_id and ticker from the query parameters
-        user_id = request.args.get("user_id")
+        request_user_id = request.args.get("user_id")
         ticker = request.args.get("ticker")
+        
+        # Verify the user_id in the request matches the authenticated user
+        if user_id != request_user_id:
+            return jsonify({
+                "error": "Unauthorized: User ID mismatch", 
+                "success": False}), 401
         
         if not user_id or not ticker:
             return jsonify({"success": False, "error": "User ID and Ticker are required"}), 400

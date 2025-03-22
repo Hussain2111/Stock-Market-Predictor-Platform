@@ -187,13 +187,21 @@ const Trading = () => {
     }
 
     try {
+      // Get the user ID from localStorage instead of hardcoded value
+      const userId = localStorage.getItem('userId');
+      
+      if (!userId) {
+        alert("You must be logged in to make transactions.");
+        return;
+      }
+
       const endpoint =
         transactionType === "buy"
           ? "http://localhost:5001/buy-stock"
           : "http://localhost:5001/sell-stock";
 
       const payload = {
-        user_id: "uzair", // Replace with actual user ID
+        user_id: userId, // Use the actual user ID from auth
         ticker: selectedStock,
         currentPrice: stockData.currentPrice,
         quantity: quantity,
@@ -203,15 +211,22 @@ const Trading = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('authToken')}` // Add auth token
         },
         body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${transactionType} stock`);
+      }
 
       const data = await response.json();
       if (data.success) {
         setShowQuantityPopup(false);
         setShowAnimation(true);
         setTimeout(() => setShowAnimation(false), 2000);
+        alert(`Successfully ${transactionType === "buy" ? "purchased" : "sold"} ${quantity} shares of ${selectedStock}`);
       } else {
         alert(
           `Error ${transactionType === "buy" ? "buying" : "selling"} stock: ${
@@ -221,6 +236,7 @@ const Trading = () => {
       }
     } catch (error) {
       console.error("Error:", error);
+      alert(`Transaction failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
