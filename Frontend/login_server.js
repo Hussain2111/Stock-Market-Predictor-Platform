@@ -22,27 +22,48 @@ console.log(`Looking for .env file at: ${envPath}`);
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
-// Log environment variables (for debugging)
-console.log('MongoDB URI:', process.env.MONGODB_URI);
-console.log('JWT Secret:', process.env.JWT_SECRET ? 'Set' : 'Not set');
+// MongoDB connection string
+const MONGODB_URI = 'mongodb+srv://shayaanpk:QBlvNkoTYFQbXsq1@clusterlogin.mioes.mongodb.net/trading_app?retryWrites=true&w=majority&appName=ClusterLogin';
 
-// Connect to MongoDB with fallback
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/stockapp';
+// Flag to track MongoDB connection status
+let isMongoConnected = false;
 
-// If we're still not getting the MongoDB URI from the environment, use this hardcoded one
-if (!process.env.MONGODB_URI) {
-  console.log('Using hardcoded MongoDB URI as fallback');
-  mongoose.connect('mongodb+srv://syedalihussain2107:y2j%2Fsucks@stockdb.naacu.mongodb.net/?retryWrites=true&w=majority&appName=stockdb')
-    .then(() => console.log('Connected to MongoDB using hardcoded URI'))
-    .catch(err => console.error('MongoDB connection error with hardcoded URI:', err));
-} else {
-  mongoose.connect(MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
-}
+// Connect to MongoDB
+console.log('Attempting to connect to MongoDB...');
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => {
+  console.log('Connected to MongoDB successfully');
+  isMongoConnected = true;
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  console.log('Server will continue but database operations will not be available');
+});
+
+// Define MongoDB connection events
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+  isMongoConnected = false;
+});
+
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connection established');
+  isMongoConnected = true;
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB connection disconnected');
+  isMongoConnected = false;
+});
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -57,6 +78,14 @@ const User = mongoose.model('User', userSchema);
 // Register route
 app.post('/api/auth/register', async (req, res) => {
   try {
+    // Check MongoDB connection
+    if (!isMongoConnected) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Database connection unavailable. Please try again later.' 
+      });
+    }
+
     const { fullName, email, password } = req.body;
     
     // Check if user already exists
@@ -88,18 +117,27 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      userId: newUser._id
+      userId: newUser._id,
+      fullName: newUser.fullName
     });
     
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 });
 
 // Login route
 app.post('/api/auth/login', async (req, res) => {
   try {
+    // Check MongoDB connection
+    if (!isMongoConnected) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Database connection unavailable. Please try again later.' 
+      });
+    }
+
     const { email, password } = req.body;
     
     // Find user by email
@@ -130,8 +168,16 @@ app.post('/api/auth/login', async (req, res) => {
     
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error during login' });
   }
+});
+
+// MongoDB connection status endpoint
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+    mongoConnected: isMongoConnected,
+    message: isMongoConnected ? 'MongoDB is connected' : 'MongoDB is not connected'
+  });
 });
 
 // Simple test route
@@ -148,5 +194,5 @@ app.get('/api/debug/env', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = 5004;
+app.listen(PORT, () => console.log(`Auth server running on port ${PORT}`));
