@@ -322,6 +322,18 @@ export default function HomePage() {
                 </button>
               </div>
             </form>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-8 py-4 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+              >
+                Start Free Trial
+              </button>
+              <button className="px-8 py-4 border border-gray-700 rounded-lg font-medium hover:bg-white/5 transition-colors">
+                Watch Demo
+              </button>
+            </div>
           </motion.div>
         </div>
       </section>
