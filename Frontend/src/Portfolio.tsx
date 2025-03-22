@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import { useNavigate } from "react-router-dom";
+import { authService } from "./authService";
 
 import {
   DollarSign,
@@ -39,32 +40,65 @@ const Portfolio = () => {
   );
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get the authenticated user ID and token
+  const userId = authService.getUserId();
+  const authToken = authService.getToken();
 
   useEffect(() => {
+    // Check if user is logged in
+    if (!userId || !authToken) {
+      navigate('/');
+      return;
+    }
+
     // Fetch portfolio data
-    fetch("http://localhost:5001/portfolio?user_id=uzair")
-      .then((res) => res.json())
+    fetch(`http://localhost:5001/portfolio?user_id=${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch portfolio: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        setPortfolio(data);
+        if (data.success && data.stocks) {
+          setPortfolio(data.stocks);
 
-        // After getting portfolio data, fetch profit for each stock
-        data.forEach((stock: Stock) => {
-          fetchStockProfit(stock.ticker);
-        });
-
+          // After getting portfolio data, fetch profit for each stock
+          data.stocks.forEach((stock: Stock) => {
+            fetchStockProfit(stock.ticker);
+          });
+        } else {
+          setPortfolio([]);
+        }
         setLoading(false);
       })
-      .catch((error) => console.error("Error fetching portfolio:", error));
+      .catch((error) => {
+        console.error("Error fetching portfolio:", error);
+        setError("Failed to load portfolio data");
+        setLoading(false);
+      });
 
     // Fetch overall Profit/Loss
     fetch("http://localhost:5001/profit-or-loss", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`
       },
-      body: JSON.stringify({ user_id: "uzair" }),
+      body: JSON.stringify({ user_id: userId }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch profit/loss: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.success) {
           setProfitLoss(data.total_profit_loss);
@@ -73,13 +107,27 @@ const Portfolio = () => {
           setProfitLossPercentage(data.profit_loss_percentage);
         }
       })
-      .catch((error) => console.error("Error fetching profit/loss:", error));
-  }, []);
+      .catch((error) => {
+        console.error("Error fetching profit/loss:", error);
+        setError("Failed to load profit/loss data");
+      });
+  }, [userId, authToken, navigate]);
 
   // Function to fetch profit for a specific stock
   const fetchStockProfit = (ticker: string) => {
-    fetch(`http://localhost:5001/stock-profit?user_id=uzair&ticker=${ticker}`)
-      .then((res) => res.json())
+    if (!userId || !authToken) return;
+
+    fetch(`http://localhost:5001/stock-profit?user_id=${userId}&ticker=${ticker}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch stock profit: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.success) {
           setStockProfits((prevProfits) => ({
@@ -94,10 +142,22 @@ const Portfolio = () => {
   };
 
   const openModal = (ticker: string) => {
+    if (!userId || !authToken) return;
+
     fetch(
-      `http://localhost:5001/individual-stock?user_id=uzair&ticker=${ticker}`
+      `http://localhost:5001/individual-stock?user_id=${userId}&ticker=${ticker}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      }
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch stock details: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.success) {
           setSelectedStock(data.stocks);
@@ -106,9 +166,10 @@ const Portfolio = () => {
         }
         setModalIsOpen(true);
       })
-      .catch((error) =>
-        console.error("Error fetching individual stocks:", error)
-      );
+      .catch((error) => {
+        console.error("Error fetching individual stocks:", error);
+        setError("Failed to load stock details");
+      });
   };
 
   const closeModal = () => {
@@ -124,6 +185,12 @@ const Portfolio = () => {
       {/* Portfolio Content */}
       <main className="flex-1 px-6 py-10 relative">
         <h1 className="text-3xl font-bold text-center mb-6">Your Portfolio</h1>
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg mb-6 text-center">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <p className="text-center text-gray-400">Loading portfolio...</p>
