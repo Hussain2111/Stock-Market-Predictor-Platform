@@ -1,64 +1,120 @@
-interface User {
-  email: string;
-  password: string;
-  userId: string;
+interface AuthResponse {
+  success: boolean;
+  token?: string;
+  userId?: string;
+  fullName?: string;
+  error?: string;
+  message?: string;
 }
 
-// Test users
-const testUsers: User[] = [
-  { email: "test@example.com", password: "password123", userId: "user1" },
-  { email: "admin@example.com", password: "admin123", userId: "user2" },
-  { email: "demo@example.com", password: "demo123", userId: "user3" },
-];
+interface UserRegisterData {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
+// API base URL - this should match your login server URL
+const API_BASE_URL = 'http://localhost:5004/api/auth';
 
 export const authService = {
-  login: (email: string, password: string) => {
-    const user = testUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (!user) {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store authentication data in localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userId', data.userId);
+        if (data.fullName) {
+          localStorage.setItem('fullName', data.fullName);
+        }
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
       return {
         success: false,
-        error: "Account does not exist or invalid credentials",
+        error: 'Network error or server unavailable',
       };
     }
-
-    return {
-      success: true,
-      token: `fake-jwt-token-${user.userId}`,
-      userId: user.userId,
-    };
   },
 
-  register: (email: string, password: string) => {
-    // Check if user already exists
-    const existingUser = testUsers.find((u) => u.email === email);
-
-    if (existingUser) {
-      return { success: false, error: "User already exists" };
+  async register(fullName: string, email: string, password: string): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fullName, email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store authentication data in localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userId', data.userId);
+        if (data.fullName) {
+          localStorage.setItem('fullName', data.fullName);
+        }
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return {
+        success: false,
+        error: 'Network error or server unavailable',
+      };
     }
-
-    // Create new user with random userId
-    const userId = `user${Date.now()}`;
-    const newUser = { email, password, userId };
-    testUsers.push(newUser);
-
-    return {
-      success: true,
-      token: `fake-jwt-token-${userId}`,
-      userId,
-    };
   },
 
-  isAuthenticated: () => {
-    const token = localStorage.getItem("authToken");
-    const userId = localStorage.getItem("userId");
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
     return !!token && !!userId;
   },
 
-  logout: () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
+  logout(): void {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('fullName');
   },
+
+  // Get the authentication token
+  getToken(): string | null {
+    return localStorage.getItem('authToken');
+  },
+
+  // Get the user ID
+  getUserId(): string | null {
+    return localStorage.getItem('userId');
+  },
+
+  // Get user's full name
+  getFullName(): string | null {
+    return localStorage.getItem('fullName');
+  },
+
+  // Check server status
+  async checkServerStatus(): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/status`);
+      const data = await response.json();
+      return data.mongoConnected;
+    } catch (error) {
+      console.error('Server status check error:', error);
+      return false;
+    }
+  }
 };
