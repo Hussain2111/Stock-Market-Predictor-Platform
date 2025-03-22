@@ -356,10 +356,10 @@ const Chatbot = ({ currentTicker }: { currentTicker: string }) => {
     // Format volume
     response = response.replace(/Volume: (\d+)/g, (match, vol) => {
       const value = parseInt(vol);
-      if (value >= 1e12) return `Volume: ${(value / 1e12).toFixed(2)}T`;
-      if (value >= 1e9) return `Volume: ${(value / 1e9).toFixed(2)}B`;
+      if (value >= 1e9) return `Volume: ${(value / 1e9).toFixed(2)}T`;
       if (value >= 1e6) return `Volume: ${(value / 1e6).toFixed(2)}M`;
-      return `Volume: ${value.toLocaleString()}`;
+      if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+      return value.toString();
     });
 
     // Format percentages
@@ -490,9 +490,6 @@ interface StockPriceData {
   date: string;
   price: number;
   volume: number;
-  ma20: number | null; // Allow null values
-  ma50: number | null;
-  ma200: number | null;
 }
 
 // Add this new component for the stock price chart
@@ -507,18 +504,10 @@ const StockPriceChart = ({
     "line"
   );
   const [showVolume, setShowVolume] = useState(true);
-  const [showMA, setShowMA] = useState({
-    ma20: true,
-    ma50: true,
-    ma200: false,
-  });
 
   // Filter out any invalid data points
   const validData = data.map((point) => ({
     ...point,
-    ma20: point.ma20 || null,
-    ma50: point.ma50 || null,
-    ma200: point.ma200 || null,
     volume: point.volume || 0,
     price: point.price || 0,
   }));
@@ -553,24 +542,6 @@ const StockPriceChart = ({
               className="text-emerald-500"
             />
             Volume
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={showMA.ma20}
-              onChange={(e) => setShowMA({ ...showMA, ma20: e.target.checked })}
-              className="text-emerald-500"
-            />
-            MA20
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={showMA.ma50}
-              onChange={(e) => setShowMA({ ...showMA, ma50: e.target.checked })}
-              className="text-emerald-500"
-            />
-            MA50
           </label>
         </div>
       </div>
@@ -708,32 +679,6 @@ const StockPriceChart = ({
               />
             )}
 
-            {/* Moving Averages with improved visibility */}
-            {showMA.ma20 && (
-              <Line
-                type="monotone"
-                dataKey="ma20"
-                stroke="#60A5FA"
-                dot={false}
-                strokeWidth={1.5}
-                yAxisId="price"
-                connectNulls={true}
-                strokeDasharray="3 3"
-              />
-            )}
-            {showMA.ma50 && (
-              <Line
-                type="monotone"
-                dataKey="ma50"
-                stroke="#F59E0B"
-                dot={false}
-                strokeWidth={1.5}
-                yAxisId="price"
-                connectNulls={true}
-                strokeDasharray="3 3"
-              />
-            )}
-
             {/* Volume Bars with improved styling */}
             {showVolume && (
               <Bar
@@ -752,10 +697,6 @@ const StockPriceChart = ({
                 switch (value) {
                   case "price":
                     return "Price";
-                  case "ma20":
-                    return "MA20";
-                  case "ma50":
-                    return "MA50";
                   case "volume":
                     return "Volume";
                   default:
@@ -1088,7 +1029,7 @@ const AnalysisDashboard = () => {
             predictionData.prediction_data
           );
         }
-        
+
         // Add analysis notification when a stock has been analyzed
         addAnalysisNotification(tickerState);
       } catch (error) {
