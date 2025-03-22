@@ -1,26 +1,43 @@
+# Core data processing and visualization
 matplotlib>=3.7.1
 numpy>=1.24.3
-ollama>=0.1.6
-pypdf>=3.17.1
-tk>=0.1.0
 pandas>=2.0.0
-yfinance>=0.2.36
-requests>=2.31.0
-python-dotenv>=1.0.0
-fastapi>=0.68.0
-uvicorn>=0.15.0
-sqlalchemy>=1.4.23
-pydantic>=1.8.2
-alembic>=1.7.7
-pytest>=7.1.1
-httpx>=0.23.0
-flask>=2.0.1
-flask-cors>=3.0.10
 seaborn>=0.11.0
+
+# Machine learning
 tensorflow>=2.5.0
 scikit-learn>=0.24.0
+
+# Stock data and APIs
+yfinance>=0.2.36
 newsdataapi
 textblob
+
+# Web framework and API
+flask>=2.0.1
+flask-cors>=3.0.10
+fastapi>=0.68.0
+uvicorn>=0.15.0
+
+# Database
 pymongo>=4.6.0
-jwt>=2.2.0
-pyJWT>=2.2.0
+sqlalchemy>=1.4.23
+alembic>=1.7.7
+
+# API authentication
+PyJWT>=2.2.0  # Note the capitalization (not jwt)
+
+# AI models
+ollama>=0.1.6
+
+# PDF processing
+pypdf>=3.17.1
+
+# Testing
+pytest>=7.1.1
+httpx>=0.23.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+tk>=0.1.0  # For GUI components
