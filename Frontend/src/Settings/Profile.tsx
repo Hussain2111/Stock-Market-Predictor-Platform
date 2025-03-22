@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { authService } from "../authService";
+import defaultAvatar from "./defaultpic.jpg";
 
 // Define the UserProfile interface
 interface UserProfile {
   avatar: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string; // Make phone optional as we'll be removing it
 }
 
 interface ProfileProps {
@@ -20,15 +21,37 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
   // Reference to the file input element
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Extract username from email (everything before @)
+  const extractUsername = (email: string): string => {
+    const atIndex = email.indexOf('@');
+    if (atIndex !== -1) {
+      // Return the part before @ and capitalize first letter
+      const username = email.substring(0, atIndex);
+      return username.charAt(0).toUpperCase() + username.slice(1);
+    }
+    return email;
+  };
+
   // Add useEffect to fetch user email when component mounts
   useEffect(() => {
     // Get user email from localStorage using authService
     const userEmail = authService.getUserEmail();
     
     if (userEmail && userEmail !== userProfile.email) {
+      // Extract username from email
+      const username = extractUsername(userEmail);
+      
       setUserProfile({
         ...userProfile,
-        email: userEmail
+        email: userEmail,
+        name: username, // Set name based on email
+        avatar: userProfile.avatar || defaultAvatar // Set default avatar if not present
+      });
+    } else if (!userProfile.avatar) {
+      // Ensure default avatar is set even if email doesn't change
+      setUserProfile({
+        ...userProfile,
+        avatar: defaultAvatar
       });
     }
   }, [userProfile, setUserProfile]);
@@ -67,17 +90,11 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
             {/* Profile Avatar Section with Properly Centered Content */}
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="md:w-1/3 flex justify-center md:justify-start">
-                {userProfile.avatar ? (
-                  <img
-                    src={userProfile.avatar}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full border-2 border-emerald-500 object-cover"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full border-2 border-emerald-500 flex items-center justify-center bg-gray-800 text-emerald-500">
-                    <span className="text-xl">Profile</span>
-                  </div>
-                )}
+                <img
+                  src={userProfile.avatar || defaultAvatar}
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full border-2 border-emerald-500 object-cover"
+                />
               </div>
               <div className="md:w-2/3">
                 {/* Hidden file input */}
@@ -91,6 +108,7 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
                 {/* Button that triggers the hidden file input */}
                 <button 
                   onClick={handleUploadClick}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm"
                 >
                   Upload New Photo
                 </button>
@@ -125,22 +143,6 @@ const Profile = ({ activeTab, userProfile, setUserProfile }: ProfileProps) => {
                     setUserProfile({
                       ...userProfile,
                       email: e.target.value,
-                    })
-                  }
-                  className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-400 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={userProfile.phone}
-                  onChange={(e) =>
-                    setUserProfile({
-                      ...userProfile,
-                      phone: e.target.value,
                     })
                   }
                   className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
