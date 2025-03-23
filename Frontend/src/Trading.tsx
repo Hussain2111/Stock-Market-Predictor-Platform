@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import ProtectedTrading from "./ProtectedTrading";
 import { useParams } from "react-router-dom";
+import AlgorithmRunner from "./components/AlgorithmRunner";
 
 import {
   LineChart,
@@ -93,6 +94,9 @@ const Trading = () => {
   const [showQuantityPopup, setShowQuantityPopup] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [transactionType, setTransactionType] = useState<"buy" | "sell">("buy");
+
+  // New state for showing/hiding algorithm section
+  const [showAlgorithms, setShowAlgorithms] = useState(false);
 
   useEffect(() => {
     if (ticker) {
@@ -188,8 +192,8 @@ const Trading = () => {
 
     try {
       // Get the user ID from localStorage instead of hardcoded value
-      const userId = localStorage.getItem('userId');
-      
+      const userId = localStorage.getItem("userId");
+
       if (!userId) {
         alert("You must be logged in to make transactions.");
         return;
@@ -211,14 +215,16 @@ const Trading = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('authToken')}` // Add auth token
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Add auth token
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${transactionType} stock`);
+        throw new Error(
+          errorData.error || `Failed to ${transactionType} stock`
+        );
       }
 
       const data = await response.json();
@@ -226,7 +232,11 @@ const Trading = () => {
         setShowQuantityPopup(false);
         setShowAnimation(true);
         setTimeout(() => setShowAnimation(false), 2000);
-        alert(`Successfully ${transactionType === "buy" ? "purchased" : "sold"} ${quantity} shares of ${selectedStock}`);
+        alert(
+          `Successfully ${
+            transactionType === "buy" ? "purchased" : "sold"
+          } ${quantity} shares of ${selectedStock}`
+        );
       } else {
         alert(
           `Error ${transactionType === "buy" ? "buying" : "selling"} stock: ${
@@ -236,7 +246,11 @@ const Trading = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert(`Transaction failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      alert(
+        `Transaction failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -250,7 +264,7 @@ const Trading = () => {
         <div className="flex flex-1">
           {/* Sidebar */}
           <div className="w-1/6 bg-gray-800/50 p-4">
-            <h2 className="text-lg font-bold mb-4">ALGORITHMS</h2>
+            <h2 className="text-lg font-bold mb-4">Recent Stocks</h2>
             <ul>
               {savedStocks.map((stock, index) => (
                 <li
@@ -430,7 +444,23 @@ const Trading = () => {
               >
                 Sell
               </button>
+              {/* New button to toggle algorithm section */}
+              <button
+                onClick={() => setShowAlgorithms(!showAlgorithms)}
+                className="ml-auto bg-blue-500 px-8 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors"
+              >
+                {showAlgorithms ? "Hide Algorithms" : "Show Algorithms"}
+              </button>
             </div>
+            {/* Algorithm Runner Component */}
+            {showAlgorithms && stockData && (
+              <AlgorithmRunner
+                stockData={stockData}
+                symbol={selectedStock}
+                timePeriod={timePeriod}
+              />
+            )}
+
             {/* Quantity Modal Popup */}
             {showQuantityPopup && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
