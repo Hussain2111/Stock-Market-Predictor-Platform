@@ -130,9 +130,11 @@ const Watchlist = () => {
     const fetchIndividualStock = async (ticker: string): Promise<StockData> => {
       try {
         // Get basic stock info
-            const infoResponse = await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
-            const infoData = await infoResponse.json();
-            
+        const infoResponse = await fetch(
+          `http://localhost:5001/stock-info?ticker=${ticker}`
+        );
+        const infoData = await infoResponse.json();
+
             // Get current price - need to set the global ticker first
             await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
             const priceResponse = await fetch(`http://localhost:5001/stock-price?ticker=${ticker}`);
