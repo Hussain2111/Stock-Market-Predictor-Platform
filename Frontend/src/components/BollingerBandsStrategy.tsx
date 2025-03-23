@@ -29,7 +29,7 @@ export const runBollingerBandsStrategy = (
     const upperBand = upper[i];
 
     // Buy signal: Price touches or goes below lower band
-    if (!inPosition && price <= lowerBand) {
+    if (lowerBand != null && !inPosition && price <= lowerBand) {
       shares = Math.floor(capital / price);
       capital -= shares * price;
       inPosition = true;
@@ -42,7 +42,7 @@ export const runBollingerBandsStrategy = (
       });
     }
     // Sell signal: Price touches or goes above upper band
-    else if (inPosition && price >= upperBand) {
+    else if (upperBand != null && inPosition && price >= upperBand) {
       capital += shares * price;
 
       trades.push({
