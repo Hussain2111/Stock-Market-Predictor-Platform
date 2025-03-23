@@ -20,7 +20,11 @@ interface StockData {
 }
 
 const Watchlist = () => {
-  const { watchlist, removeFromWatchlist } = useWatchlist();
+  const {
+    watchlist,
+    removeFromWatchlist,
+    loading: watchlistLoading,
+  } = useWatchlist();
   const [stocksData, setStocksData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -35,9 +39,94 @@ const Watchlist = () => {
 
       try {
         setLoading(true);
-        const stocksPromises = watchlist.map(async ticker => {
-          try {
-            // Get basic stock info
+
+        // Join all tickers and fetch them in a batch for efficiency
+        const tickers = watchlist.join(",");
+        const batchResponse = await fetch(
+          `http://localhost:5001/api/stocks?symbols=${tickers}`
+        );
+
+        if (!batchResponse.ok) {
+          throw new Error("Failed to fetch stock data in batch");
+        }
+
+        const batchData = await batchResponse.json();
+
+        if (
+          !batchData ||
+          !batchData.stocks ||
+          !Array.isArray(batchData.stocks)
+        ) {
+          throw new Error("Invalid response format from stocks API");
+        }
+
+        console.log("Batch data received:", batchData);
+
+        // Map the watchlist to stock data
+        const results = watchlist.map((ticker) => {
+          // Find matching stock in batch data
+          const stockData = batchData.stocks.find(
+            (s: any) => s.symbol === ticker || s.symbol === ticker.toUpperCase()
+          );
+
+          if (stockData) {
+            const currentPrice = parseFloat(stockData.regularMarketPrice || 0);
+
+            // Use the actual change values from Yahoo Finance API instead of calculating them
+            // These values are more reliable than our calculations and already account for daily changes
+            const priceChange = parseFloat(stockData.regularMarketChange || 0);
+            const percentChange = parseFloat(
+              stockData.regularMarketChangePercent || 0
+            );
+
+            console.log(`${ticker} batch data:`, {
+              currentPrice,
+              priceChange,
+              percentChange,
+              // Log the raw values to debug
+              rawPriceChange: stockData.regularMarketChange,
+              rawPercentChange: stockData.regularMarketChangePercent,
+            });
+
+            return {
+              ticker,
+              companyName: stockData.longName || stockData.shortName || ticker,
+              currentPrice,
+              priceChange,
+              percentChange,
+            };
+          } else {
+            console.warn(`No data found for ${ticker} in batch response`);
+            // Fallback to individual fetch if stock not found in batch
+            return fetchIndividualStock(ticker);
+          }
+        });
+
+        // Resolve any promises from individual fetches
+        const resolvedResults = await Promise.all(results);
+        setStocksData(resolvedResults);
+      } catch (error) {
+        console.error("Error fetching watchlist data:", error);
+
+        // Fallback to fetching stocks individually if batch fetch fails
+        try {
+          const individualPromises = watchlist.map((ticker) =>
+            fetchIndividualStock(ticker)
+          );
+          const individualResults = await Promise.all(individualPromises);
+          setStocksData(individualResults);
+        } catch (fallbackError) {
+          console.error("Error fetching individual stock data:", fallbackError);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Function to fetch a single stock's data
+    const fetchIndividualStock = async (ticker: string): Promise<StockData> => {
+      try {
+        // Get basic stock info
             const infoResponse = await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
             const infoData = await infoResponse.json();
             
