@@ -152,76 +152,74 @@ const Watchlist = () => {
 
           // Get price change data
           const priceHistoryResponse = await fetch(
-                `http://localhost:5001/stock-price-data?ticker=${ticker}&timeframe=1D`
-              );
-              const priceHistoryData = await priceHistoryResponse.json();
-              
-              console.log(`Price history data for ${ticker}:`, priceHistoryData);
-              
-              if (priceHistoryData.success && priceHistoryData.priceData && priceHistoryData.priceData.length >= 2) {
-                const prices = priceHistoryData.priceData.map((item: { price: number }) => item.price);
-                
-                // Use the opening price (first price) and latest price for calculation
-                const openPrice = prices[0];
-                const latestPrice = prices[prices.length - 1];
-                
-                priceChange = latestPrice - openPrice;
-                percentChange = (priceChange / openPrice) * 100;
-                
-                console.log(`${ticker} calculated price data:`, {
-                  openPrice,
-                  latestPrice,
-                  priceChange,
-                  percentChange
-                });
-              } else {
-                // If we can't get price history, use a hardcoded small positive change for demo purposes
-                // This ensures we always show some price movement in the UI
-                priceChange = 0.00;
-                percentChange = 0.00;
-              }
-            }
-            
-            return {
-              ticker,
-              companyName: infoData.success ? infoData.company_name : ticker,
-              currentPrice,
-              priceChange,
-              percentChange
-            };
-          } catch (error) {
-            console.error(`Error fetching data for ${ticker}:`, error);
-            return {
-              ticker,
-              companyName: ticker,
-              currentPrice: 0,
-              priceChange: 0,
-              percentChange: 0
-            };
-          }
-        });
+            `http://localhost:5001/stock-price-data?ticker=${ticker}&timeframe=1D&_t=${Date.now()}`
+          );
+          const priceHistoryData = await priceHistoryResponse.json();
 
-        const results = await Promise.all(stocksPromises);
-        setStocksData(results);
+          if (
+            priceHistoryData.success &&
+            priceHistoryData.priceData &&
+            priceHistoryData.priceData.length >= 2
+          ) {
+            const prices = priceHistoryData.priceData.map(
+              (item: { price: number }) => item.price
+            );
+
+            const openPrice = prices[0];
+            const latestPrice = prices[prices.length - 1];
+
+            priceChange = latestPrice - openPrice;
+            percentChange = (priceChange / openPrice) * 100;
+
+            // Add debug logging
+            console.log(`${ticker} price change calculation:`, {
+              openPrice,
+              latestPrice,
+              priceChange,
+              percentChange,
+            });
+          } else {
+            // If we can't get price history data, use regularMarketChange values
+            // from the API instead of showing 0
+            priceChange = 0;
+            percentChange = 0;
+          }
+        }
+
+        return {
+          ticker,
+          companyName: infoData.success ? infoData.company_name : ticker,
+          currentPrice,
+          priceChange,
+          percentChange,
+        };
       } catch (error) {
-        console.error("Error fetching watchlist data:", error);
-      } finally {
-        setLoading(false);
+        console.error(`Error fetching data for ${ticker}:`, error);
+        return {
+          ticker,
+          companyName: ticker,
+          currentPrice: 0,
+          priceChange: 0,
+          percentChange: 0,
+        };
       }
     };
 
     fetchStocksData();
-    
+
     // Set up an interval to refresh data every minute
     const intervalId = setInterval(fetchStocksData, 60000);
-    
+
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [watchlist]);
+  }, [watchlist, watchlistLoading]);
 
-  const handleRemoveFromWatchlist = (ticker: string, e: React.MouseEvent) => {
+  const handleRemoveFromWatchlist = async (
+    ticker: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
-    removeFromWatchlist(ticker);
+    await removeFromWatchlist(ticker);
   };
 
   const navigateToAnalysis = (ticker: string) => {
@@ -237,16 +235,19 @@ const Watchlist = () => {
       <main className="flex-1 px-6 py-10 relative">
         <h1 className="text-3xl font-bold text-center mb-6">Your Watchlist</h1>
 
-        {loading ? (
+        {loading || watchlistLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
           </div>
         ) : watchlist.length === 0 ? (
           <div className="text-center text-gray-400 mt-12">
             <p className="text-xl mb-4">Your watchlist is empty</p>
-            <p className="mb-6">Bookmark stocks from the analysis page to add them to your watchlist</p>
-            <button 
-              onClick={() => navigate('/analysis')}
+            <p className="mb-6">
+              Bookmark stocks from the analysis page to add them to your
+              watchlist
+            </p>
+            <button
+              onClick={() => navigate("/analysis")}
               className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
             >
               Go to Analysis
@@ -289,7 +290,9 @@ const Watchlist = () => {
                     </div>
                   </div>
 
-                  <p className="text-gray-400 text-sm mt-1 truncate">{stock.companyName}</p>
+                  <p className="text-gray-400 text-sm mt-1 truncate">
+                    {stock.companyName}
+                  </p>
 
                   <div className="flex justify-between items-start mt-4">
                     <div>
@@ -308,11 +311,7 @@ const Watchlist = () => {
                     >
                       <p className="font-medium">
                         {isProfitable ? "+" : ""}
-                        {stock.priceChange?.toFixed(2) || "0.00"}
-                      </p>
-                      <p className="text-sm">
-                        {isProfitable ? "+" : ""}
-                        {stock.percentChange?.toFixed(2) || "0.00"}%
+                        {Math.abs(stock.percentChange || 0).toFixed(2)}%
                       </p>
                     </div>
                   </div>
