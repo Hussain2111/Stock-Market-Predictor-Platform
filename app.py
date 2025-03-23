@@ -1123,5 +1123,172 @@ def stock_profit():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/api/user/current', methods=['GET'])
+def get_current_user():
+    token = request.cookies.get('token')
+    
+    if not token:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        # Decode the token to get the user_id
+        data = pyjwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        user_id = data['userId']
+        
+        # Get user from database
+        try:
+            user_obj_id = ObjectId(user_id)
+            user = users_collection.find_one({'_id': user_obj_id})
+        except:
+            # If conversion fails, try with string ID
+            user = users_collection.find_one({'_id': user_id})
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Don't send password back to client
+        user.pop('password', None)
+        # Convert ObjectId to string if it's an ObjectId
+        if isinstance(user['_id'], ObjectId):
+            user['_id'] = str(user['_id'])
+        
+        return jsonify({
+            'success': True, 
+            'user': user
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 401
+
+@app.route('/api/watchlist', methods=['GET'])
+@token_required
+def get_watchlist(user_id=None):
+    try:
+        # Find user document
+        try:
+            user_obj_id = ObjectId(user_id)
+            user = users_collection.find_one({'_id': user_obj_id})
+        except:
+            # If conversion fails, try with string ID
+            user = users_collection.find_one({'_id': user_id})
+        
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        # Get watchlist from user document or create an empty one if it doesn't exist
+        watchlist = user.get('watchlist', [])
+        
+        return jsonify({
+            'success': True,
+            'watchlist': watchlist
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/watchlist/add', methods=['POST'])
+@token_required
+def add_to_watchlist(user_id=None):
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker')
+        
+        if not ticker:
+            return jsonify({'success': False, 'message': 'Ticker is required'}), 400
+        
+        # Standardize ticker (uppercase to avoid duplicates)
+        ticker = ticker.upper()
+        
+        try:
+            # Try to convert user_id to ObjectId if it's a string
+            user_obj_id = ObjectId(user_id)
+            
+            # Add ticker to watchlist if not already there
+            result = users_collection.update_one(
+                {'_id': user_obj_id, 'watchlist': {'$ne': ticker}},
+                {'$push': {'watchlist': ticker}}
+            )
+        except:
+            # If ObjectId conversion fails, use the string ID
+            result = users_collection.update_one(
+                {'_id': user_id, 'watchlist': {'$ne': ticker}},
+                {'$push': {'watchlist': ticker}}
+            )
+        
+        if result.modified_count == 0:
+            # Ticker might already be in watchlist or user not found
+            # Check if user exists
+            try:
+                user = users_collection.find_one({'_id': ObjectId(user_id)})
+            except:
+                user = users_collection.find_one({'_id': user_id})
+                
+            if not user:
+                return jsonify({'success': False, 'message': 'User not found'}), 404
+            
+            # Ticker is already in watchlist - this is not an error
+            return jsonify({
+                'success': True,
+                'message': 'Ticker is already in watchlist'
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Added {ticker} to watchlist'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/watchlist/remove', methods=['DELETE'])
+@token_required
+def remove_from_watchlist(user_id=None):
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker')
+        
+        if not ticker:
+            return jsonify({'success': False, 'message': 'Ticker is required'}), 400
+        
+        # Standardize ticker (uppercase for consistency)
+        ticker = ticker.upper()
+        
+        try:
+            # Try to convert user_id to ObjectId if it's a string
+            user_obj_id = ObjectId(user_id)
+            
+            # Remove ticker from watchlist
+            result = users_collection.update_one(
+                {'_id': user_obj_id},
+                {'$pull': {'watchlist': ticker}}
+            )
+        except:
+            # If ObjectId conversion fails, use the string ID
+            result = users_collection.update_one(
+                {'_id': user_id},
+                {'$pull': {'watchlist': ticker}}
+            )
+        
+        if result.modified_count == 0:
+            # User might not have this ticker or user not found
+            # Check if user exists
+            try:
+                user = users_collection.find_one({'_id': ObjectId(user_id)})
+            except:
+                user = users_collection.find_one({'_id': user_id})
+                
+            if not user:
+                return jsonify({'success': False, 'message': 'User not found'}), 404
+                
+            # Ticker not in watchlist - not an error, just informational
+            return jsonify({
+                'success': True,
+                'message': 'Ticker was not in watchlist'
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Removed {ticker} from watchlist'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
