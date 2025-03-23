@@ -14,7 +14,7 @@ export const calculateSMA = (data: number[], period: number): number[] => {
     }
     result.push(sum / period);
   }
-  return result;
+  return result.filter((value) => value !== null) as number[];
 };
 
 export const calculateRSI = (data: number[], period: number): number[] => {
@@ -56,7 +56,7 @@ export const calculateRSI = (data: number[], period: number): number[] => {
     }
   }
 
-  return result;
+  return result.filter((value) => value !== null) as number[];
 };
 
 export const calculateEMA = (data: number[], period: number): number[] => {
@@ -94,7 +94,7 @@ export const calculateBollingerBands = (
   data: number[],
   period: number,
   stdDevMultiplier: number
-): { sma: number[]; upper: number[]; lower: number[] } => {
+): { sma: number[]; upper: (number | null)[]; lower: (number | null)[] } => {
   const sma = calculateSMA(data, period);
   const upper = [];
   const lower = [];
