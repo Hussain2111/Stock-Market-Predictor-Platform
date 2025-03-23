@@ -19,7 +19,7 @@ import {
   ReferenceLine,
 } from "recharts";
 
-// Main component
+// Algorithms runner handler
 const AlgorithmRunner: React.FC<AlgorithmRunnerProps> = ({
   stockData,
   timePeriod,
