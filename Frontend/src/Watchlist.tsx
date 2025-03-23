@@ -135,22 +135,23 @@ const Watchlist = () => {
         );
         const infoData = await infoResponse.json();
 
-            // Get current price - need to set the global ticker first
-            await fetch(`http://localhost:5001/stock-info?ticker=${ticker}`);
-            const priceResponse = await fetch(`http://localhost:5001/stock-price?ticker=${ticker}`);
-            const priceData = await priceResponse.json();
-            
-            console.log(`Price data for ${ticker}:`, priceData);
-            
-            let currentPrice = 0;
-            let priceChange = 0;
-            let percentChange = 0;
-            
-            if (priceData.success) {
-              currentPrice = priceData.currentPrice || 0;
-              
-              // Get price change data from stock-price-data endpoint
-              const priceHistoryResponse = await fetch(
+        // Important: Create a fresh request for each ticker to prevent caching issues
+        const priceResponse = await fetch(
+          `http://localhost:5001/stock-price?ticker=${ticker}&_t=${Date.now()}`
+        );
+        const priceData = await priceResponse.json();
+
+        console.log(`Individual price data for ${ticker}:`, priceData);
+
+        let currentPrice = 0;
+        let priceChange = 0;
+        let percentChange = 0;
+
+        if (priceData.success) {
+          currentPrice = priceData.currentPrice || 0;
+
+          // Get price change data
+          const priceHistoryResponse = await fetch(
                 `http://localhost:5001/stock-price-data?ticker=${ticker}&timeframe=1D`
               );
               const priceHistoryData = await priceHistoryResponse.json();
