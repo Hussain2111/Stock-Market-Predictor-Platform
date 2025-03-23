@@ -30,6 +30,9 @@ const Watchlist = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only start fetching stock data once the watchlist has been loaded
+    if (watchlistLoading) return;
+
     const fetchStocksData = async () => {
       if (watchlist.length === 0) {
         setStocksData([]);
