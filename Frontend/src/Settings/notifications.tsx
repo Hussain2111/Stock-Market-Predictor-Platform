@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
-import { X, RefreshCcw } from 'lucide-react';
+import { X, RefreshCcw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { 
   Notification, 
   getNotifications, 
   markAllNotificationsAsRead, 
   removeNotification,
-  saveNotifications
+  saveNotifications,
+  clearAllNotifications
 } from '../utils/notificationService';
 
 interface NotificationsProps {
@@ -53,6 +54,12 @@ const Notifications = ({ activeTab, notifications, setNotifications }: Notificat
     );
   };
 
+  // Function to clear all notifications
+  const handleClearAll = () => {
+    clearAllNotifications();
+    setNotifications([]);
+  };
+
   return (
     <>
       {activeTab === "notifications" && (
@@ -75,6 +82,12 @@ const Notifications = ({ activeTab, notifications, setNotifications }: Notificat
                 onClick={markAllAsRead}
                 className="text-emerald-400 hover:text-emerald-300">
                 Mark all as read
+              </button>
+              <button 
+                onClick={handleClearAll}
+                className="text-red-500 hover:text-red-400 flex items-center gap-1">
+                <Trash2 className="w-4 h-4" />
+                <span>Clear All</span>
               </button>
             </div>
           </div>
