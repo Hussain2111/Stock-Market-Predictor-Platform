@@ -8,7 +8,7 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import defaultAvatar from "./defaultpic.jpg";
 import { authService } from "../authService";
 
@@ -57,6 +57,8 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
         avatar: defaultAvatar,
       });
 
+      const navigate = useNavigate();
+
       // Try to get user's email and name
       const userEmail = authService.getUserEmail();
       
@@ -71,6 +73,11 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           userProfile.email = userEmail;
         }
       }
+
+    const handleLogout = () => {
+      authService.logout();
+      navigate('/');
+    };
 
     return (
         <div className="lg:w-1/4">
@@ -170,13 +177,13 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                <Link
-                  to="/"
+                <button
+                  onClick={handleLogout}
                   className="mt-6 w-full flex items-center text-red-500 hover:text-red-400 p-3"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   Logout
-                </Link>
+                </button>
               </nav>
             </div>
           </div>
