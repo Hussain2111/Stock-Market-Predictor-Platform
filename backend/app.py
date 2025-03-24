@@ -1307,7 +1307,7 @@ def delete_user():
             }), 400
         
         # Verify user exists in MongoDB
-        user_collection = mongo.db.users
+        user_collection = client.db.users
         user = user_collection.find_one({'_id': ObjectId(user_id)})
         
         if not user:
@@ -1319,15 +1319,15 @@ def delete_user():
         # Verify password - assuming passwords are stored with bcrypt
         if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             # Delete user's watchlist
-            watchlist_collection = mongo.db.watchlists
+            watchlist_collection = client.db.watchlists
             watchlist_collection.delete_many({'userId': user_id})
             
             # Delete user's portfolio
-            portfolio_collection = mongo.db.portfolios 
+            portfolio_collection = client.db.portfolios 
             portfolio_collection.delete_many({'userId': user_id})
             
             # Delete user's analysis history
-            history_collection = mongo.db.analysis_history
+            history_collection = client.db.analysis_history
             history_collection.delete_many({'userId': user_id})
             
             # Delete any other user data
