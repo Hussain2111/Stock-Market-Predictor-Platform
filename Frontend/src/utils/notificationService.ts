@@ -87,4 +87,9 @@ export const removeNotification = (id: string): void => {
   const filteredNotifications = notifications.filter(notification => notification.id !== id);
   
   saveNotifications(filteredNotifications);
+};
+
+// Clear all notifications
+export const clearAllNotifications = (): void => {
+  saveNotifications([]);
 }; 
