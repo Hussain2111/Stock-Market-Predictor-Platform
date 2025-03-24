@@ -42,4 +42,4 @@ httpx>=0.23.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 tk>=0.1.0  # For GUI components
-
+bcrypt>=3.2.0

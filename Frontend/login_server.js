@@ -23,9 +23,10 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: '*',  // Allow all origins
+  origin: 'http://localhost:5173',  // Specific origin instead of wildcard '*'
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true  // Allow credentials
 }));
 app.use(express.json());
 
@@ -169,6 +170,95 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
+  }
+});
+
+// Handle preflight OPTIONS requests for the delete endpoint
+app.options('/api/user/delete', cors());
+
+// Delete user account
+app.delete('/api/user/delete', async (req, res) => {
+  try {
+    // Check MongoDB connection
+    if (!isMongoConnected) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Database connection unavailable. Please try again later.' 
+      });
+    }
+
+    const { userId, password } = req.body;
+    
+    if (!userId || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID and password are required' 
+      });
+    }
+    
+    // Log the received data for debugging
+    console.log('Received deletion request for userId:', userId);
+    
+    // Find user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid password' 
+      });
+    }
+    
+    // Delete user-related data
+    
+    // 1. Delete watchlist data - Assuming there's a Watchlist model
+    try {
+      const Watchlist = mongoose.model('Watchlist');
+      await Watchlist.deleteMany({ userId: userId });
+    } catch (error) {
+      console.log('No Watchlist model found or error deleting watchlist data', error);
+    }
+    
+    // 2. Delete portfolio data - Assuming there's a Portfolio model
+    try {
+      const Portfolio = mongoose.model('Portfolio');
+      await Portfolio.deleteMany({ userId: userId });
+    } catch (error) {
+      console.log('No Portfolio model found or error deleting portfolio data', error);
+    }
+    
+    // 3. Delete analysis history - Assuming there's an AnalysisHistory model
+    try {
+      const AnalysisHistory = mongoose.model('AnalysisHistory');
+      await AnalysisHistory.deleteMany({ userId: userId });
+    } catch (error) {
+      console.log('No AnalysisHistory model found or error deleting analysis history', error);
+    }
+    
+    // 4. Delete any other user-related data...
+    
+    // Finally, delete the user
+    await User.findByIdAndDelete(userId);
+    
+    res.json({ 
+      success: true, 
+      message: 'User account and all related data successfully deleted' 
+    });
+    
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during account deletion' 
+    });
   }
 });
 

@@ -40,6 +40,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import ProtectedAnalysis from "./ProtectedAnalysis";
 import { addAnalysisNotification } from "./utils/notificationService";
+import { addToAnalysisHistory } from "./Settings/history";
 
 interface NewsItem {
   title: string;
@@ -1019,6 +1020,12 @@ const AnalysisDashboard = () => {
 
         // Add analysis notification when a stock has been analyzed
         addAnalysisNotification(tickerState);
+
+        // After successful analysis, add to history
+        if (tickerState) {
+          console.log(`Analysis completed for ${tickerState}, adding to history`);
+          addToAnalysisHistory(tickerState);
+        }
       } catch (error) {
         console.error("Error in fetchPriceHistory:", error);
         const errorMessage =
