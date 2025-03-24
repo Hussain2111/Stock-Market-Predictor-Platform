@@ -146,6 +146,31 @@ const History = ({ activeTab }: HistoryProps) => {
     navigate(`/analysis?ticker=${ticker}`);
   };
 
+  // Add function to clear analysis history
+  const clearHistory = () => {
+    try {
+      // Get existing notifications
+      const storedNotifications = localStorage.getItem("notifications");
+      
+      if (storedNotifications) {
+        const notifications: Notification[] = JSON.parse(storedNotifications);
+        
+        // Filter out analysis-type notifications
+        const filteredNotifications = notifications.filter(
+          notification => notification.type !== 'analysis'
+        );
+        
+        // Save filtered notifications back to localStorage
+        localStorage.setItem("notifications", JSON.stringify(filteredNotifications));
+        
+        // Update state to reflect empty history
+        setAnalysisHistory([]);
+      }
+    } catch (error) {
+      console.error("Error clearing analysis history:", error);
+    }
+  };
+
   return (
     <>
       {activeTab === "history" && (
@@ -156,6 +181,12 @@ const History = ({ activeTab }: HistoryProps) => {
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Analysis History</h2>
+            <button 
+              onClick={clearHistory}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Clear History
+            </button>
           </div>
 
           <div className="overflow-x-auto">
