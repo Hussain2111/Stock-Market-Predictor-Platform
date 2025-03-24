@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Settings, Bell, History, LogOut, Bookmark, LineChart, Wallet, HelpCircle, Star, List } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Settings, History, LogOut, Bookmark, LineChart, Wallet, Star, List } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import defaultAvatar from '../Settings/defaultpic.jpg';
 import { authService } from '../authService';
 
@@ -8,7 +8,6 @@ interface UserProfile {
   name: string;
   email: string;
   avatar: string;
-  plan: string;
   analysesRemaining: number;
 }
 
@@ -18,10 +17,10 @@ const ProfileIcon = () => {
     name: 'User',
     email: '',
     avatar: defaultAvatar,
-    plan: 'Free',
     analysesRemaining: 3
   });
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch user profile data here
@@ -58,7 +57,6 @@ const ProfileIcon = () => {
         name: username,
         email: userEmail,
         avatar: defaultAvatar,
-        plan: 'Free',
         analysesRemaining: 3
       });
     } else {
@@ -67,7 +65,6 @@ const ProfileIcon = () => {
         name: 'Guest',
         email: '',
         avatar: defaultAvatar,
-        plan: 'Free',
         analysesRemaining: 3
       });
     }
@@ -82,17 +79,9 @@ const ProfileIcon = () => {
     window.location.href = '/';
   };
 
-  // Get background color based on plan
-  const getPlanBadgeColor = (plan: string) => {
-    switch (plan) {
-      case 'Professional':
-        return 'bg-purple-500';
-      case 'Trader':
-        return 'bg-blue-500';
-      case 'Free':
-      default:
-        return 'bg-emerald-500';
-    }
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setIsOpen(false);
   };
 
   return (
@@ -104,7 +93,6 @@ const ProfileIcon = () => {
         <div className="w-8 h-8 rounded-full overflow-hidden">
           <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
         </div>
-    {/* <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} /> */}
       </button>
 
       {isOpen && (
@@ -119,98 +107,63 @@ const ProfileIcon = () => {
                 <p className="text-sm text-gray-400">{userProfile.email}</p>
               </div>
             </div>
-            
-            {/* Plan information */}
-            <div className="mt-3 flex items-center justify-between">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${getPlanBadgeColor(userProfile.plan)}`}>
-                {userProfile.plan} Plan
-              </span>
-              <span className="text-xs text-gray-400">
-                {userProfile.analysesRemaining} analyses remaining
-              </span>
-            </div>
           </div>
           
           {/* Quick Actions */}
           <div className="grid grid-cols-3 gap-1 p-2 border-b border-gray-800">
-            <Link
-              to="/analysis"
-              onClick={() => setIsOpen(false)}
+            <button
+              onClick={() => handleNavigation('/analysis')}
               className="flex flex-col items-center p-2 rounded hover:bg-gray-800 transition-colors"
             >
               <LineChart className="w-5 h-5 text-emerald-500 mb-1" />
               <span className="text-xs text-gray-300">Analysis</span>
-            </Link>
-            <Link
-              to="/watchlist"
-              onClick={() => setIsOpen(false)}
+            </button>
+            <button
+              onClick={() => handleNavigation('/watchlist')}
               className="flex flex-col items-center p-2 rounded hover:bg-gray-800 transition-colors"
             >
               <Star className="w-5 h-5 text-emerald-500 mb-1" />
               <span className="text-xs text-gray-300">Watchlist</span>
-            </Link>
-            <Link
-              to="/portfolio"
-              onClick={() => setIsOpen(false)}
+            </button>
+            <button
+              onClick={() => handleNavigation('/portfolio')}
               className="flex flex-col items-center p-2 rounded hover:bg-gray-800 transition-colors"
             >
               <Wallet className="w-5 h-5 text-emerald-500 mb-1" />
               <span className="text-xs text-gray-300">Portfolio</span>
-            </Link>
+            </button>
           </div>
           
           {/* Menu Items */}
           <div className="py-2">
-            <Link 
-              to="/settings"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
+            <button 
+              onClick={() => handleNavigation('/settings')}
+              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors w-full text-left"
             >
               <Settings className="w-5 h-5 text-gray-400" />
               <span>Settings</span>
-            </Link>
-            <Link 
-              to="/notifications"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
-            >
-              <Bell className="w-5 h-5 text-gray-400" />
-              <span>Notifications</span>
-              {/* Optional notification counter */}
-              <span className="ml-auto bg-emerald-500 text-white text-xs rounded-full px-1.5 py-0.5">2</span>
-            </Link>
-            <Link 
-              to="/history"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
+            </button>
+            <button
+              onClick={() => handleNavigation('/')}
+              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors w-full text-left"
             >
               <History className="w-5 h-5 text-gray-400" />
-              <span>Analysis History</span>
-            </Link>
-            <Link 
-              to="/saved-reports"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
+              <span>Home</span>
+            </button>
+            <button
+              onClick={() => handleNavigation('/portfolio')}
+              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors w-full text-left"
             >
               <Bookmark className="w-5 h-5 text-gray-400" />
-              <span>Saved Reports</span>
-            </Link>
-            <Link 
-              to="/preferences"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
+              <span>Portfolio</span>
+            </button>
+            <button 
+              onClick={() => handleNavigation('/trade')}
+              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors w-full text-left"
             >
               <List className="w-5 h-5 text-gray-400" />
-              <span>Preferences</span>
-            </Link>
-            <Link 
-              to="/help"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-800 transition-colors"
-            >
-              <HelpCircle className="w-5 h-5 text-gray-400" />
-              <span>Help & Support</span>
-            </Link>
+              <span>Trade</span>
+            </button>
             <div className="border-t border-gray-800 mt-2 pt-2">
               <button
                 onClick={handleLogout}
