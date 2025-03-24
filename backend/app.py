@@ -331,7 +331,7 @@ def get_sentiment():
         import ollama
         
         # Get news data from two sources
-        api = NewsDataApiClient(apikey='pub_67694630073f7b1a43688748fde40ddfd74bf')
+        api = NewsDataApiClient(apikey='pub_7612951604fff11aae1d24db4468942511332')
         news_data = ""
         
         # Get the news response from newsdata api
