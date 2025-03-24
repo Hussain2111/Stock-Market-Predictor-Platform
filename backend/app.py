@@ -25,6 +25,8 @@ from functools import wraps
 from bson import ObjectId
 from flask_cors import CORS
 import sys
+import bcrypt
+from bson.objectid import ObjectId
 
 app = create_app()
 
@@ -1289,6 +1291,67 @@ def remove_from_watchlist(user_id=None):
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+# User deletion endpoint
+@app.route('/api/user/delete', methods=['DELETE'])
+def delete_user():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        password = data.get('password')
+        
+        if not user_id or not password:
+            return jsonify({
+                'success': False,
+                'message': 'User ID and password are required'
+            }), 400
+        
+        # Verify user exists in MongoDB
+        user_collection = mongo.db.users
+        user = user_collection.find_one({'_id': ObjectId(user_id)})
+        
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'User not found'
+            }), 404
+        
+        # Verify password - assuming passwords are stored with bcrypt
+        if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+            # Delete user's watchlist
+            watchlist_collection = mongo.db.watchlists
+            watchlist_collection.delete_many({'userId': user_id})
+            
+            # Delete user's portfolio
+            portfolio_collection = mongo.db.portfolios 
+            portfolio_collection.delete_many({'userId': user_id})
+            
+            # Delete user's analysis history
+            history_collection = mongo.db.analysis_history
+            history_collection.delete_many({'userId': user_id})
+            
+            # Delete any other user data
+            # ...
+            
+            # Finally delete the user
+            user_collection.delete_one({'_id': ObjectId(user_id)})
+            
+            return jsonify({
+                'success': True,
+                'message': 'User account and related data deleted successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid password'
+            }), 401
+            
+    except Exception as e:
+        print(f"Error deleting user: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting user: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
