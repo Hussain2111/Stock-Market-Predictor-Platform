@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, TrendingUp, Shield, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { authService } from "./authService";
 
@@ -40,7 +40,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         // Use authService for registration
         result = await authService.register(
           formData.fullName,
-          formData.email, 
+          formData.email,
           formData.password
         );
       }
@@ -73,69 +73,99 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
     >
-      <div className="bg-[#111827] rounded-xl p-8 w-full max-w-md relative">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-white"
-        >
-          <X className="w-5 h-5" />
-        </button>
-        <h2 className="text-2xl font-bold mb-6">
-          {isLogin ? "Login" : "Sign Up"}
-        </h2>
+      <div className="bg-gradient-to-b from-[#111827] to-[#0c111b] rounded-xl w-full max-w-md relative overflow-hidden">
+        {/* Visual accent - green line at top */}
+        <div className="h-1 bg-emerald-500 w-full"></div>
 
-        {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-4">
-            {error}
+        <div className="p-8">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center mb-6">
+            {isLogin ? (
+              <User className="w-6 h-6 text-emerald-500 mr-3" />
+            ) : (
+              <Shield className="w-6 h-6 text-emerald-500 mr-3" />
+            )}
+            <h2 className="text-2xl font-bold text-white">
+              {isLogin ? "Welcome Back" : "Create Account"}
+            </h2>
           </div>
-        )}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {!isLogin && (
+          {error && (
+            <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {!isLogin && (
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Full Name"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none text-white"
+                required
+              />
+            )}
             <input
-              type="text"
-              name="fullName"
-              placeholder="Full Name"
-              value={formData.fullName}
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
+              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none text-white"
               required
             />
-          )}
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none"
-            required
-          />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-3 rounded-lg bg-black/20 border border-gray-700 focus:border-emerald-500 outline-none text-white"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center"
+            >
+              {loading ? (
+                "Processing..."
+              ) : (
+                <>
+                  {isLogin ? "Login" : "Create Account"}
+                  <TrendingUp className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </button>
+          </form>
+
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-emerald-500 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50"
+            onClick={() => setIsLogin(!isLogin)}
+            className="mt-4 text-sm text-white hover:text-emerald-400 transition-colors"
           >
-            {loading ? "Processing..." : isLogin ? "Login" : "Create Account"}
+            {isLogin
+              ? "Need an account? Sign up"
+              : "Already have an account? Login"}
           </button>
-        </form>
-        <button
-          onClick={() => setIsLogin(!isLogin)}
-          className="mt-4 text-sm text-gray-400 hover:text-white"
-        >
-          {isLogin
-            ? "Need an account? Sign up"
-            : "Already have an account? Login"}
-        </button>
+
+          {/* Added benefits text */}
+          <div className="mt-6 pt-6 border-t border-gray-800">
+            <p className="text-xs text-gray-400">
+              {isLogin
+                ? "Login to access your personalized stock analysis dashboard, portfolio, and watchlist."
+                : ""}
+            </p>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
