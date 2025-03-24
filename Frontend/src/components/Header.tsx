@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "./logo.jpg";
-import SearchOverlay from "./search";
+import { Home } from "lucide-react";
 import AuthModal from "./AuthModal";
 import ProfileIcon from "./ProfileIcon";
 
@@ -54,7 +54,13 @@ const Header = () => {
           </div>
           <div className="flex-grow"></div>
           <div className="flex items-center gap-4 pr-4">
-            <SearchOverlay />
+            <Link 
+              to="/"
+              className="p-2 hover:bg-gray-100 hover:bg-opacity-10 rounded-full transition-colors"
+              aria-label="Go to homepage"
+            >
+              <Home className="w-6 h-6" />
+            </Link>
             <ProfileIcon />
           </div>
         </div>
