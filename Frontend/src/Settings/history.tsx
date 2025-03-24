@@ -165,7 +165,6 @@ const History = ({ activeTab }: HistoryProps) => {
                   <tr className="border-b border-gray-700">
                     <th className="text-left py-4 px-2">Ticker</th>
                     <th className="text-left py-4 px-2">Date</th>
-                    <th className="text-right py-4 px-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -179,14 +178,6 @@ const History = ({ activeTab }: HistoryProps) => {
                       </td>
                       <td className="py-4 px-2 text-gray-400">
                         {item.date}
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <button 
-                          className="text-emerald-400 hover:text-emerald-300"
-                          onClick={() => goToAnalysis(item.ticker)}
-                        >
-                          View
-                        </button>
                       </td>
                     </tr>
                   ))}
