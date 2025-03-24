@@ -10,12 +10,14 @@ import { WatchlistProvider } from "./context/WatchlistContext";
 import ProtectedWatchlist from "./ProtectedWatchlist";
 import ProtectedPortfolio from "./ProtectedPortfolio";
 import ProtectedSettings from "./ProtectedSettings";
+import AnalysisHistoryTracker from "./components/AnalysisHistoryTracker";
 
 function App() {
   return (
     <PredictionProvider>
       <WatchlistProvider>
         <Router>
+          <AnalysisHistoryTracker />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/home" element={<HomePage />} />
