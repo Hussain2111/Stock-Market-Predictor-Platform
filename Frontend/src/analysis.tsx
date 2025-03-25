@@ -1071,6 +1071,16 @@ const AnalysisDashboard = () => {
 
   // Add this useEffect to fetch sentiment adjusted price
   const fetchSentimentAdjustedPrice = async () => {
+    // If we already have the sentiment adjusted price for this ticker, don't re-fetch it
+    if (
+      predictionData.sentiment_adjusted_price &&
+      predictionData.ticker === tickerState &&
+      !isLoadingSentiment
+    ) {
+      console.log("Using cached sentiment adjusted price");
+      return;
+    }
+
     try {
       // Change this line to use the specific sentiment loading state
       setIsLoadingSentiment(true);
@@ -1082,35 +1092,47 @@ const AnalysisDashboard = () => {
       if (data.success) {
         console.log("Sentiment adjusted price received:", data);
 
-        // Update the prediction data with sentiment adjusted price
+        // Update the prediction data with sentiment adjusted price and cache the ticker
         setPredictionData((prevData) => ({
           ...prevData,
           sentiment_adjusted_price: data.adjusted_price,
+          ticker: tickerState, // Store the ticker we fetched this for
+          last_updated: Date.now(), // Add timestamp for cache invalidation
         }));
       } else {
         console.error("API returned error:", data.error || "Unknown error");
 
-        // Even on error, set a fallback adjusted price based on the LSTM price
+        // Create a fallback price based on the current prediction data (1% above LSTM price)
         const fallbackPrice = predictionData.next_day_price
           ? predictionData.next_day_price * 1.01
+          : stockPrice
+          ? stockPrice * 1.01
           : 0;
 
         setPredictionData((prevData) => ({
           ...prevData,
           sentiment_adjusted_price: fallbackPrice,
+          ticker: tickerState, // Store the ticker we fetched this for
+          is_fallback_sentiment: true,
+          last_updated: Date.now(), // Add timestamp for cache invalidation
         }));
       }
     } catch (error) {
       console.error("Error fetching sentiment adjusted price:", error);
 
-      // Set a fallback price even after exception
+      // Set a fallback price even after exception - use current stock price if available
       const fallbackPrice = predictionData.next_day_price
         ? predictionData.next_day_price * 1.01
+        : stockPrice
+        ? stockPrice * 1.01
         : 0;
 
       setPredictionData((prevData) => ({
         ...prevData,
         sentiment_adjusted_price: fallbackPrice,
+        ticker: tickerState, // Store the ticker we fetched this for
+        is_fallback_sentiment: true,
+        last_updated: Date.now(), // Add timestamp for cache invalidation
       }));
     } finally {
       // Change this line to use the specific sentiment loading state
@@ -1119,10 +1141,33 @@ const AnalysisDashboard = () => {
   };
 
   useEffect(() => {
-    if (tickerState && predictionData.next_day_price) {
+    // Only fetch sentiment adjusted price if:
+    // 1. We have a ticker
+    // 2. We have prediction data with next_day_price
+    // 3. The cached ticker doesn't match the current ticker, or we don't have a cached sentiment price
+    if (
+      tickerState &&
+      predictionData.next_day_price &&
+      (predictionData.ticker !== tickerState ||
+        !predictionData.sentiment_adjusted_price)
+    ) {
       fetchSentimentAdjustedPrice();
     }
   }, [tickerState, predictionData.next_day_price]);
+
+  // Add a useEffect to handle cache invalidation - refresh data after 30 minutes
+  useEffect(() => {
+    const CACHE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    if (
+      predictionData.last_updated &&
+      predictionData.ticker === tickerState &&
+      Date.now() - predictionData.last_updated > CACHE_TIMEOUT
+    ) {
+      console.log("Cache expired, refreshing sentiment adjusted price");
+      fetchSentimentAdjustedPrice();
+    }
+  }, []);
 
   // Add a memory leak prevention for cleanup
   useEffect(() => {
@@ -1372,6 +1417,8 @@ const AnalysisDashboard = () => {
                           }`,
                       subtext: isLoadingSentiment
                         ? "Analyzing market sentiment..."
+                        : predictionData.is_fallback_sentiment
+                        ? "Using estimated sentiment value"
                         : predictionData.sentiment_adjusted_price &&
                           predictionData.next_day_price
                         ? `${(

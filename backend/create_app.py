@@ -5,12 +5,13 @@ from app.chatbot_service import ChatbotService
 def create_app():
     app = Flask(__name__)
     
-    # Update CORS configuration to be more specific
+    # Update CORS configuration to allow credentials
     CORS(app, resources={
         r"/*": {
             "origins": ["http://localhost:5173", "http://localhost:3000"],
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type"]
+            "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
         }
     })
     

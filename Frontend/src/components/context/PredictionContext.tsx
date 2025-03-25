@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface PredictionData {
+export interface PredictionData {
   next_day_price?: number;
   confidence_score?: number;
   price_change_text?: string;
@@ -10,6 +10,9 @@ interface PredictionData {
   average_deviation: number;
   price_change_percent: number;
   rmse: number;
+  ticker?: string;
+  is_fallback_sentiment?: boolean;
+  last_updated?: number;
 }
 
 interface PredictionContextType {
@@ -21,6 +24,7 @@ interface PredictionContextType {
   setCurrentTicker: (ticker: string | null) => void;
   predictionData: PredictionData;
   setPredictionData: (data: PredictionData) => void;
+  clearPredictionCache: () => void;
 }
 
 const defaultPredictionData: PredictionData = {
@@ -79,6 +83,13 @@ export function PredictionProvider({
     }
   }, [currentTicker]);
 
+  // Optional: Add this function to explicitly clear cache when needed
+  const clearPredictionCache = () => {
+    setPredictionData({});
+    setPredictionImage(null);
+    setPriceHistoryImage(null);
+  };
+
   return (
     <PredictionContext.Provider
       value={{
@@ -90,6 +101,7 @@ export function PredictionProvider({
         setCurrentTicker,
         predictionData,
         setPredictionData,
+        clearPredictionCache,
       }}
     >
       {children}
