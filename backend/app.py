@@ -958,6 +958,39 @@ def get_portfolio(user_id=None):
         if not user_id:
             return jsonify({"success": False, "error": "User ID required"}), 400
 
+        # Find all unique tickers for the user
+        unique_tickers = investments_collection.distinct("ticker", {"user_id": user_id})
+        
+        # Update prices for all stocks of this user
+        for ticker in unique_tickers:
+            try:
+                # Use existing method to get stock data
+                stock_data_response = request.get(
+                    f'http://localhost:5001/api/stock?symbol={ticker}'
+                )
+                
+                if stock_data_response.status_code == 200:
+                    stock_data = stock_data_response.json()
+                    current_price = stock_data.get('currentPrice', None)
+                    
+                    if current_price is not None:
+                        # Update all documents with this ticker for the user
+                        investments_collection.update_many(
+                            {
+                                "user_id": user_id, 
+                                "ticker": ticker
+                            },
+                            {
+                                "$set": {
+                                    "currentPrice": current_price,
+                                }
+                            }
+                        )
+            except Exception as ticker_error:
+                print(f"Error updating price for {ticker}: {ticker_error}")
+                # Continue with other tickers even if one fails
+
+
         # Aggregation pipeline to group stocks by ticker, count the quantity, and calculate the total value
         pipeline = [
             {
