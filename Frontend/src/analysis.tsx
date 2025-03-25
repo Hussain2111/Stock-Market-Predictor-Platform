@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Activity,
   AlertTriangle,
-  Home
+  Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrediction } from "@/components/context/PredictionContext";
@@ -56,11 +56,11 @@ interface NewsItem {
 // HomeButton Component
 const HomeButton = () => {
   const navigate = useNavigate();
-  
+
   return (
     <div>
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         className="p-2 hover:bg-gray-100 hover:bg-opacity-10 rounded-full transition-colors"
         aria-label="Go to homepage"
       >
@@ -658,22 +658,6 @@ const AnalysisDashboard = () => {
       totalMentions: 0,
       averageSentiment: 0,
     },
-    {
-      period: "Last Week",
-      positive: 0,
-      negative: 0,
-      neutral: 0,
-      totalMentions: 0,
-      averageSentiment: 0,
-    },
-    {
-      period: "Last Month",
-      positive: 0,
-      negative: 0,
-      neutral: 0,
-      totalMentions: 0,
-      averageSentiment: 0,
-    },
   ]);
 
   const [newsData, setNewsData] = useState<NewsItem[]>([]);
@@ -914,7 +898,9 @@ const AnalysisDashboard = () => {
 
         // After successful analysis, add to history
         if (tickerState) {
-          console.log(`Analysis completed for ${tickerState}, adding to history`);
+          console.log(
+            `Analysis completed for ${tickerState}, adding to history`
+          );
           addToAnalysisHistory(tickerState);
         }
       } catch (error) {
@@ -988,7 +974,7 @@ const AnalysisDashboard = () => {
           console.log("Sentiment data received:", data);
 
           // Format the data for our chart
-          const formattedData = [data.current, ...data.historical];
+          const formattedData = [data.current];
 
           setSentimentData(formattedData);
         } else {

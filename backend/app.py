@@ -401,9 +401,9 @@ def get_sentiment():
         else:
             # Fallback if JSON parsing fails
             sentiment_data = {
-                "positive": 50,
-                "negative": 30,
-                "neutral": 20
+                "positive": 0,
+                "negative": 0,
+                "neutral": 0
             }
         
         # Calculate average sentiment
@@ -419,24 +419,6 @@ def get_sentiment():
                 "totalMentions": article_count,
                 "averageSentiment": average_sentiment
             },
-            "historical": [
-                {
-                    "period": "Last Week",
-                    "positive": max(0, min(100, sentiment_data.get("positive", 50) + round(random.uniform(-7, 7)))),
-                    "negative": max(0, min(100, sentiment_data.get("negative", 30) + round(random.uniform(-5, 5)))),
-                    "neutral": max(0, min(100, sentiment_data.get("neutral", 20) + round(random.uniform(-3, 3)))),
-                    "totalMentions": article_count - round(random.uniform(0, article_count * 0.3)),
-                    "averageSentiment": max(0, min(1, average_sentiment + random.uniform(-0.1, 0.1)))
-                },
-                {
-                    "period": "Last Month",
-                    "positive": max(0, min(100, sentiment_data.get("positive", 50) + round(random.uniform(-10, 10)))),
-                    "negative": max(0, min(100, sentiment_data.get("negative", 30) + round(random.uniform(-8, 8)))),
-                    "neutral": max(0, min(100, sentiment_data.get("neutral", 20) + round(random.uniform(-5, 5)))),
-                    "totalMentions": article_count * round(random.uniform(3, 5)),
-                    "averageSentiment": max(0, min(1, average_sentiment + random.uniform(-0.15, 0.15)))
-                }
-            ],
             "success": True
         }
         
