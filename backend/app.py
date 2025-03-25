@@ -373,16 +373,16 @@ def get_sentiment():
                   Make the percentages for positive, negative, and neutral add up to 100%.
                   Format your response in a clean JSON structure like this:
                   {{
-                    "positive": 65,
-                    "negative": 25, 
-                    "neutral": 10
+                    "positive": Your positive sentiment value,
+                    "negative": Your negative sentiment value, 
+                    "neutral": Your neutral sentiment value
                   }}
                   Only output the JSON."""
         
         prompt_complete = prompt + news_data
         
         # Call Ollama model for sentiment analysis
-        MODEL = "deepseek-r1:7b"
+        MODEL = "llama2"
         response = ollama.chat(
             model=MODEL,
             messages=[{'role': 'user', 'content': prompt_complete}]
