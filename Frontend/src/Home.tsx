@@ -377,29 +377,6 @@ const [showDemoModal, setShowDemoModal] = useState(false);
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 border-b border-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }}
-                className="p-6 rounded-xl bg-white/5"
-              >
-                <div className="text-4xl font-bold text-emerald-400 mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-400">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
