@@ -1,4 +1,6 @@
 from flask import Flask, jsonify, request
+from newsdataapi import NewsDataApiClient
+import ollama
 from pymongo import MongoClient
 import yfinance as yf
 import os
@@ -13,6 +15,8 @@ import numpy as np
 from textblob import TextBlob
 import logging
 import json
+import re
+import traceback
 # Fix JWT imports - use PyJWT instead of plain jwt
 try:
     import jwt as pyjwt
@@ -326,10 +330,6 @@ def get_sentiment():
         # Get the stock info
         stock = yf.Ticker(ticker)
         
-        # Import the necessary libraries for sentiment analysis
-        from newsdataapi import NewsDataApiClient
-        import ollama
-        
         # Get news data from two sources
         api = NewsDataApiClient(apikey='pub_7612951604fff11aae1d24db4468942511332')
         news_data = ""
@@ -375,26 +375,24 @@ def get_sentiment():
                   {{
                     "positive": Your positive sentiment value,
                     "negative": Your negative sentiment value, 
-                    "neutral": Your neutral sentiment value
+                    "neutral": Your neutral sentiment value,
                   }}
                   Only output the JSON."""
-        
-        prompt_complete = prompt + news_data
         
         # Call Ollama model for sentiment analysis
         MODEL = "llama2"
         response = ollama.chat(
             model=MODEL,
-            messages=[{'role': 'user', 'content': prompt_complete}]
+            messages=[{'role': 'user', 'content': prompt}]
         )
         
         sentiment_result = response['message']['content']
         
-        # Parse the JSON response
-        import re
+        # Debugging: Print raw response
+        print("Raw Ollama Response:", sentiment_result)
         
         # Extract the JSON part from the response
-        json_match = re.search(r'\{.*\}', sentiment_result, re.DOTALL)
+        json_match = re.search(r'\{\s*"positive"\s*:\s*\d+\s*,\s*"negative"\s*:\s*\d+\s*,\s*"neutral"\s*:\s*\d+\s*\}', sentiment_result)
         if json_match:
             sentiment_json = json_match.group(0)
             sentiment_data = json.loads(sentiment_json)
@@ -425,7 +423,6 @@ def get_sentiment():
         return jsonify(sentiment_response)
         
     except Exception as e:
-        import traceback
         traceback_str = traceback.format_exc()
         print(f"Error getting sentiment: {str(e)}\n{traceback_str}")
         return jsonify({
