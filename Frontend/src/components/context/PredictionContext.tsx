@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface PredictionData {
-  next_day_price: number;
+  next_day_price?: number;
+  confidence_score?: number;
+  price_change_text?: string;
+  risk_level?: string;
+  risk_description?: string;
+  sentiment_adjusted_price?: number;
   average_deviation: number;
-  confidence_score: number;
-  risk_level: string;
-  risk_description: string;
   price_change_percent: number;
-  price_change_text: string;
   rmse: number;
 }
 

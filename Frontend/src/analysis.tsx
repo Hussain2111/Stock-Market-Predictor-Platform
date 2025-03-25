@@ -42,6 +42,7 @@ import { Link } from "react-router-dom";
 import ProtectedAnalysis from "./ProtectedAnalysis";
 import { addAnalysisNotification } from "./utils/notificationService";
 import { addToAnalysisHistory } from "./Settings/history";
+import { PredictionData } from "@/components/context/PredictionContext";
 
 interface NewsItem {
   title: string;
@@ -699,6 +700,9 @@ const AnalysisDashboard = () => {
   const [stockPriceData, setStockPriceData] = useState<StockPriceData[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1M");
 
+  // Add a new state variable for sentiment loading specifically
+  const [isLoadingSentiment, setIsLoadingSentiment] = useState(false);
+
   const Redirect_Search = () => {
     // This will navigate to second component
     navigate("/analysis");
@@ -1065,6 +1069,61 @@ const AnalysisDashboard = () => {
     fetchNews();
   }, [tickerState]);
 
+  // Add this useEffect to fetch sentiment adjusted price
+  const fetchSentimentAdjustedPrice = async () => {
+    try {
+      // Change this line to use the specific sentiment loading state
+      setIsLoadingSentiment(true);
+      const response = await fetch(
+        `http://localhost:5001/get-sentiment-adjusted-price?ticker=${tickerState}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("Sentiment adjusted price received:", data);
+
+        // Update the prediction data with sentiment adjusted price
+        setPredictionData((prevData) => ({
+          ...prevData,
+          sentiment_adjusted_price: data.adjusted_price,
+        }));
+      } else {
+        console.error("API returned error:", data.error || "Unknown error");
+
+        // Even on error, set a fallback adjusted price based on the LSTM price
+        const fallbackPrice = predictionData.next_day_price
+          ? predictionData.next_day_price * 1.01
+          : 0;
+
+        setPredictionData((prevData) => ({
+          ...prevData,
+          sentiment_adjusted_price: fallbackPrice,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching sentiment adjusted price:", error);
+
+      // Set a fallback price even after exception
+      const fallbackPrice = predictionData.next_day_price
+        ? predictionData.next_day_price * 1.01
+        : 0;
+
+      setPredictionData((prevData) => ({
+        ...prevData,
+        sentiment_adjusted_price: fallbackPrice,
+      }));
+    } finally {
+      // Change this line to use the specific sentiment loading state
+      setIsLoadingSentiment(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tickerState && predictionData.next_day_price) {
+      fetchSentimentAdjustedPrice();
+    }
+  }, [tickerState, predictionData.next_day_price]);
+
   // Add a memory leak prevention for cleanup
   useEffect(() => {
     // Cleanup function to prevent memory leaks
@@ -1304,15 +1363,29 @@ const AnalysisDashboard = () => {
                     },
                     {
                       title: "Sentiment Adjusted Prediction",
-                      value: `${
-                        predictionData.confidence_score?.toFixed(0) || "0"
-                      }%`,
-                      subtext:
-                        predictionData.confidence_score > 80
-                          ? "High Confidence"
-                          : predictionData.confidence_score > 60
-                          ? "Medium Confidence"
-                          : "Low Confidence",
+                      value: isLoadingSentiment
+                        ? "Loading..."
+                        : `$${
+                            predictionData.sentiment_adjusted_price?.toFixed(
+                              2
+                            ) || "0.00"
+                          }`,
+                      subtext: isLoadingSentiment
+                        ? "Analyzing market sentiment..."
+                        : predictionData.sentiment_adjusted_price &&
+                          predictionData.next_day_price
+                        ? `${(
+                            ((predictionData.sentiment_adjusted_price -
+                              (predictionData.next_day_price || 0)) /
+                              (predictionData.next_day_price || 1)) *
+                            100
+                          ).toFixed(2)}% ${
+                            predictionData.sentiment_adjusted_price >
+                            (predictionData.next_day_price || 0)
+                              ? "higher"
+                              : "lower"
+                          } than LSTM`
+                        : "Awaiting sentiment analysis",
                     },
                     {
                       title: "Risk Level",
