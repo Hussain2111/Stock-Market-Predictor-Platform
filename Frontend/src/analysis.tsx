@@ -1295,7 +1295,7 @@ const AnalysisDashboard = () => {
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     {
-                      title: "Price Target",
+                      title: "LSTM Prediction",
                       value: `$${
                         predictionData.next_day_price?.toFixed(2) || "0.00"
                       }`,
@@ -1303,7 +1303,7 @@ const AnalysisDashboard = () => {
                         predictionData.price_change_text || "0.00% Change",
                     },
                     {
-                      title: "Confidence",
+                      title: "Sentiment Adjusted Prediction",
                       value: `${
                         predictionData.confidence_score?.toFixed(0) || "0"
                       }%`,
