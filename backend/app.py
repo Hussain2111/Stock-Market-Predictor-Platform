@@ -382,9 +382,9 @@ def get_sentiment():
                   Make the percentages for positive, negative, and neutral add up to 100%.
                   Format your response in a clean JSON structure like this:
                   {{
-                    "positive": Your positive sentiment value,
-                    "negative": Your negative sentiment value, 
-                    "neutral": Your neutral sentiment value,
+                    "positive": Your positive sentiment value (without the %),
+                    "negative": Your negative sentiment value (without the %), 
+                    "neutral": Your neutral sentiment value (without the %),
                   }}
                   Only output the JSON."""
         
