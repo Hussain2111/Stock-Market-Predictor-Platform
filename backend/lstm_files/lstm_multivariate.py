@@ -38,7 +38,7 @@ FEATURES = 6
 TIMESTEPS = 14
 
 start = '2015-01-01'
-end = '2025-01-01'
+end = '2025-03-31'
 
 # Get the current directory for absolute paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -324,7 +324,7 @@ try:
     
     # Prepare data for plotting
     test = close_predictions.iloc[train_size:, 0:1]
-    test['Predicted Close'] = predictions
+    test['Predicted_Close'] = predictions
     
     # Generate prediction plot
     print("Generating prediction plot...")
@@ -333,7 +333,7 @@ try:
     plt.xlabel('Date', fontsize=12)
     plt.ylabel('Close Price', fontsize=14)
     plt.plot(df['Close'], linewidth=2, color='blue')
-    plt.plot(test["Predicted Close"], linewidth=2, color='red')
+    plt.plot(test["Predicted_Close"], linewidth=2, color='red')
     plt.legend(['Actual Close', 'Predicted Close'], fontsize=12)
     
     # Set the graph style for better visibility
@@ -343,6 +343,10 @@ try:
     prediction_plot_path = os.path.join(current_dir, f'{STOCK}_prediction_plot.png')
     plt.savefig(prediction_plot_path, bbox_inches='tight', dpi=300)
     plt.close()
+    
+    # Saving the test dataset to a file
+    test_data_path = os.path.join(current_dir, f'{STOCK}_prediction_data.csv')
+    test.to_csv(test_data_path, index=True)
     
     print(f"Plots saved as:")
     print(f"- Model 1 Loss: {model1_loss_path}")

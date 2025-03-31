@@ -204,48 +204,46 @@ def get_prediction():
                 'error': 'No ticker has been set yet',
                 'success': False
             }), 400
-            
-        # Use the ticker-specific prediction plot filename
-        image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_prediction_plot.png')
-        print(f"Looking for prediction plot at: {image_path}")
         
+        # Paths for prediction image and data
+        base_path = os.path.join(os.path.dirname(__file__), 'lstm_files')
+        image_path = os.path.join(base_path, f'{ticker}_prediction_plot.png')
+        json_path = os.path.join(base_path, f'{ticker}_prediction_data.json')
+        test_data_path = os.path.join(base_path, f'{ticker}_prediction_data.csv')  # Ensure test data is saved
+
+        # Load prediction image
         if not os.path.exists(image_path):
-            print(f"Prediction plot not found at: {image_path}")
-            return jsonify({
-                'error': 'Prediction plot not yet generated',
-                'success': False
-            }), 404
-            
+            return jsonify({'error': 'Prediction plot not yet generated', 'success': False}), 404
+        
         with open(image_path, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-            
-        # Get current price
+
+        # Load stock current price
         stock = yf.Ticker(ticker)
         current_price = stock.info.get('regularMarketPrice', 0)
-        
-        # Load prediction data from JSON file if it exists
+
+        # Load prediction data from JSON
         prediction_data = {}
-        json_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_prediction_data.json')
         if os.path.exists(json_path):
-            try:
-                with open(json_path, 'r') as json_file:
-                    prediction_data = json.load(json_file)
-                print(f"Loaded prediction data from {json_path}")
-            except Exception as e:
-                print(f"Error loading prediction data: {str(e)}")
-            
+            with open(json_path, 'r') as json_file:
+                prediction_data = json.load(json_file)
+
+        # Load the test dataset if available
+        test_data = []
+        if os.path.exists(test_data_path):
+            df_test = pd.read_csv(test_data_path)
+            test_data = df_test.to_dict(orient='records')  # Convert to JSON-friendly format
+
         return jsonify({
             'image': encoded_image,
             'current_price': round(current_price, 2) if current_price else 0,
             'prediction_data': prediction_data,
+            'test_data': test_data,  # Include test dataset for visual inspection
             'success': True
         })
+    
     except Exception as e:
-        print(f"Error serving prediction plot: {str(e)}")
-        return jsonify({
-            'error': str(e),
-            'success': False
-        }), 500
+        return jsonify({'error': str(e), 'success': False}), 500
 
 @app.route('/chat', methods=['POST'])
 def chat():

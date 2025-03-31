@@ -1,3 +1,4 @@
+import Papa from "papaparse";
 import React, { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import {
@@ -34,6 +35,7 @@ import {
   Legend,
   Area,
   ComposedChart,
+  LineChart as RechartsLineChart,
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -604,6 +606,60 @@ const StockPriceChart = ({
   );
 };
 
+// Define TypeScript types for data
+interface StockData {
+  Date: string; // Assuming dates are in string format (YYYY-MM-DD)
+  Close: number; // Actual closing price
+  Predicted_Close: number; // AI-predicted closing price
+}
+
+interface ChartProps {
+  data: StockData[];
+}
+
+const StockPredictionChart: React.FC<ChartProps> = ({ data }) => {
+  console.log("StockPredictionChart received data:", data);
+  const minValue = Math.min(
+    ...data.map((item) => Math.min(item.Close, item.Predicted_Close))
+  );
+  const maxValue = Math.max(
+    ...data.map((item) => Math.max(item.Close, item.Predicted_Close))
+  );
+  const padding = (maxValue - minValue) * 0.1; // 10% padding
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <RechartsLineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.5} />
+        <XAxis dataKey="Date" />
+        <YAxis domain={[minValue - padding, maxValue + padding]} />
+        <Tooltip />
+        <Legend verticalAlign="top" height={36} />
+        <Line
+          type="monotone"
+          stroke="#2563EB"
+          dot={false}
+          strokeWidth={2}
+          connectNulls={true}
+          animationDuration={750}
+          dataKey="Close"
+          name="Actual Close Price"
+        />
+        <Line
+          type="monotone"
+          dataKey="Predicted_Close"
+          dot={false}
+          strokeWidth={2}
+          connectNulls={true}
+          animationDuration={750}
+          stroke="#10B800"
+          name="Predicted Close Price"
+        />
+      </RechartsLineChart>
+    </ResponsiveContainer>
+  );
+};
+
 const AnalysisDashboard = () => {
   // First, extract all hooks and context values
   const {
@@ -702,6 +758,8 @@ const AnalysisDashboard = () => {
 
   // Add a new state variable for sentiment loading specifically
   const [isLoadingSentiment, setIsLoadingSentiment] = useState(false);
+
+  const [testData, setTestData] = useState<StockData[]>([]);
 
   const Redirect_Search = () => {
     // This will navigate to second component
@@ -886,6 +944,7 @@ const AnalysisDashboard = () => {
         }
 
         setPredictionImage(predictionData.image);
+        setTestData(predictionData.test_data);
         setCurrentTicker(ticker); // Store the current ticker in context
 
         // Save prediction data if available
@@ -931,6 +990,7 @@ const AnalysisDashboard = () => {
     predictionImage,
     currentTicker,
     setPredictionImage,
+    setTestData,
     setCurrentTicker,
     ticker,
   ]);
@@ -1337,12 +1397,8 @@ const AnalysisDashboard = () => {
                             Retry
                           </button>
                         </div>
-                      ) : predictionImage ? (
-                        <img
-                          src={`data:image/png;base64,${predictionImage}`}
-                          alt="Price Prediction"
-                          className="w-full h-full object-contain"
-                        />
+                      ) : testData.length > 0 ? (
+                        <StockPredictionChart data={testData} />
                       ) : (
                         <div className="flex items-center justify-center h-full text-gray-400">
                           No prediction data available
