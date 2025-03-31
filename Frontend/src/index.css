@@ -53,13 +53,41 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
+  color: #ffffff;
 }
-button:hover {
-  border-color: #646cff;
+
+/* Standard buttons with border */
+button.border, 
+button[class*="border"] {
+  border: 1px solid #ffffff;
+  background-color: transparent;
+  color: #ffffff;
 }
+
+button.border:hover, 
+button[class*="border"]:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Green/primary buttons */
+button[class*="bg-emerald"], 
+button.primary {
+  background-color: #10B981;
+  color: #ffffff;
+  border: 1px solid #10B981;
+}
+
+button[class*="bg-emerald"]:hover, 
+button.primary:hover {
+  background-color: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -74,7 +102,7 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: transparent;
   }
 }
 
