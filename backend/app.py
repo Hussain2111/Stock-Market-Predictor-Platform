@@ -338,7 +338,7 @@ def get_sentiment():
         stock = yf.Ticker(ticker)
         
         # Get news data from two sources
-        api = NewsDataApiClient(apikey='pub_7612951604fff11aae1d24db4468942511332')
+        api = NewsDataApiClient(apikey='pub_736718e9399326ef93bc5d214d31ad00dec04')
         news_data = ""
         
         # Get the news response from newsdata api
