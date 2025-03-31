@@ -4,7 +4,7 @@ import yfinance as yf
 
 MODEL = "deepseek-r1:7b"
 
-api = NewsDataApiClient(apikey='pub_7612951604fff11aae1d24db4468942511332')
+api = NewsDataApiClient(apikey='pub_736718e9399326ef93bc5d214d31ad00dec04')
 STOCK = "Starbucks"
 ticker = yf.Ticker('SBUX')
 
