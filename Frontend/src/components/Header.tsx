@@ -14,49 +14,51 @@ const Header = () => {
   return (
     <>
       <header className="border-b border-gray-800 bg-black/20 backdrop-blur-sm">
-        <div className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center">
-          <div className="flex items-center">
-            <Link to="/" className="mr-10">
-              <img src={logo} alt="Logo" className="h-16 w-auto" />
+        <div className="w-full flex items-center justify-between">
+          {/* Left side: Logo and Navigation */}
+          <div className="flex items-center gap-4 pl-1">
+            <Link to="/" className="flex-shrink-0">
+              <img src={logo} alt="Logo" className="h-12 w-auto" />
             </Link>
             <nav className="hidden md:flex gap-6">
               <Link
                 to="/analysis"
-                className="text-white hover:text-emerald-500 transition-colors"
+                className="text-white hover:text-emerald-500 transition-colors text-base font-medium"
               >
                 Analysis
               </Link>
               <Link
                 to="/portfolio"
-                className="text-white hover:text-emerald-500 transition-colors"
+                className="text-white hover:text-emerald-500 transition-colors text-base font-medium"
               >
                 Portfolio
               </Link>
               <Link
                 to="/watchlist"
-                className="text-white hover:text-emerald-500 transition-colors"
+                className="text-white hover:text-emerald-500 transition-colors text-base font-medium"
               >
                 Watchlist
               </Link>
               <Link
                 to="/trade"
-                className="text-white hover:text-emerald-500 transition-colors"
+                className="text-white hover:text-emerald-500 transition-colors text-base font-medium"
               >
                 Trade
               </Link>
               <Link
                 to="/settings"
-                className="text-white hover:text-emerald-500 transition-colors"
+                className="text-white hover:text-emerald-500 transition-colors text-base font-medium"
               >
                 Settings
               </Link>
             </nav>
           </div>
-          <div className="flex-grow"></div>
-          <div className="flex items-center gap-4 pr-4">
-            <Link 
+
+          {/* Right side icons */}
+          <div className="flex items-center gap-5 pr-10">
+            <Link
               to="/"
-              className="p-2 hover:bg-gray-100 hover:bg-opacity-10 rounded-full transition-colors"
+              className="text-white hover:text-emerald-500 transition-colors"
               aria-label="Go to homepage"
             >
               <Home className="w-6 h-6" />
