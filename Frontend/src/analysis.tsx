@@ -1323,8 +1323,12 @@ const AnalysisDashboard = () => {
                 <div className="flex-1 p-6">
                   <Tabs defaultValue="history" className="h-full">
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="history">Price History</TabsTrigger>
-                      <TabsTrigger value="prediction">Prediction</TabsTrigger>
+                      <TabsTrigger value="history" className="text-black">
+                        Price History
+                      </TabsTrigger>
+                      <TabsTrigger value="prediction" className="text-black">
+                        Prediction
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent
                       value="history"
