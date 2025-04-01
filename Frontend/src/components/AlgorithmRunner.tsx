@@ -1,4 +1,4 @@
-// AlgorithmRunner.tsx
+// Algorithm imports for the strategies
 import React, { useState, useEffect } from "react";
 import { AlgorithmResult, AlgorithmRunnerProps } from "./interfaces.tsx";
 import { runBollingerBandsStrategy } from "./BollingerBandsStrategy.tsx";
@@ -117,7 +117,7 @@ const AlgorithmRunner: React.FC<AlgorithmRunnerProps> = ({
     }, 100);
   };
 
-  // Handle parameter change
+  // Handling parameter change
   const handleParameterChange = (paramName: string, value: number) => {
     setParameters({
       ...parameters,

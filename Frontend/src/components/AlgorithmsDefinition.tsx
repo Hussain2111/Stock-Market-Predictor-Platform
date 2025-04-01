@@ -1,6 +1,6 @@
 import { AlgorithmOption } from "./interfaces.tsx";
 
-// Algorithm definitions
+// Algorithm definitions. Sets the initial state and upper/lower bounds
 export const algorithms: AlgorithmOption[] = [
   {
     id: "sma-crossover",

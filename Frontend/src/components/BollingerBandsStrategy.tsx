@@ -86,12 +86,12 @@ export const runBollingerBandsStrategy = (
     });
   }
 
-  // Calculate final P&L
+  // Calculating final P&L
   const finalValue = capital;
   const profitLoss = finalValue - initialCapital;
   const profitLossPercent = (profitLoss / initialCapital) * 100;
 
-  // Calculate Sharpe ratio (simplified)
+  // Calculating Sharpe ratio
   let dailyReturns = [];
   for (let i = 1; i < portfolioValues.length; i++) {
     dailyReturns.push(
@@ -106,7 +106,8 @@ export const runBollingerBandsStrategy = (
       dailyReturns.length
   );
   const sharpeRatio =
-    stdDevReturn === 0 ? 0 : (avgReturn / stdDevReturn) * Math.sqrt(252); // Annualized
+    // Annualised
+    stdDevReturn === 0 ? 0 : (avgReturn / stdDevReturn) * Math.sqrt(252);
 
   return {
     trades,

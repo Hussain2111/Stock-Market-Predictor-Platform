@@ -106,7 +106,7 @@ export const calculateBollingerBands = (
       continue;
     }
 
-    // Calculate standard deviation for the window
+    // Calculate standard deviation for the specified window
     let sum = 0;
     for (let j = 0; j < period; j++) {
       sum += Math.pow(data[i - j] - sma[i], 2);

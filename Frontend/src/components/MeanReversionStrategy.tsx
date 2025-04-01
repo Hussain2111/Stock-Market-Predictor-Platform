@@ -18,7 +18,7 @@ export const runMeanReversionStrategy = (
   let highestCapital = initialCapital;
   let maxDrawdown = 0;
 
-  // Track portfolio value at each point
+  // Track the portfolio value at each point
   const portfolioValues: number[] = [];
 
   for (let i = lookbackPeriod; i < priceData.length; i++) {
@@ -28,7 +28,8 @@ export const runMeanReversionStrategy = (
     // Calculate mean and standard deviation of the lookback window
     let sum = 0;
     for (let j = 0; j < lookbackPeriod; j++) {
-      sum += closePrices[i - j - 1]; // Don't include current price
+      // Exclude the current price
+      sum += closePrices[i - j - 1];
     }
     const mean = sum / lookbackPeriod;
 
@@ -38,7 +39,7 @@ export const runMeanReversionStrategy = (
     }
     const stdDev = Math.sqrt(sumSquareDiff / lookbackPeriod);
 
-    // Calculate z-score (how many standard deviations away from mean)
+    // Calculate z-score i.e., how many standard deviations away from mean
     const zScore = (price - mean) / stdDev;
 
     // Buy signal: Price is significantly below mean
@@ -85,7 +86,7 @@ export const runMeanReversionStrategy = (
     }
   }
 
-  // If still holding stocks at the end, sell them
+  // If still holding stocks in the end, sell them
   const lastPrice = priceData[priceData.length - 1].Close;
   const lastDate = priceData[priceData.length - 1].Date;
   if (inPosition) {
@@ -99,12 +100,12 @@ export const runMeanReversionStrategy = (
     });
   }
 
-  // Calculate final P&L
+  // Calculating final P&L
   const finalValue = capital;
   const profitLoss = finalValue - initialCapital;
   const profitLossPercent = (profitLoss / initialCapital) * 100;
 
-  // Calculate Sharpe ratio (simplified)
+  // Calculating Sharpe ratio
   let dailyReturns = [];
   for (let i = 1; i < portfolioValues.length; i++) {
     dailyReturns.push(
@@ -119,7 +120,8 @@ export const runMeanReversionStrategy = (
       dailyReturns.length
   );
   const sharpeRatio =
-    stdDevReturn === 0 ? 0 : (avgReturn / stdDevReturn) * Math.sqrt(252); // Annualized
+    // Annualised
+    stdDevReturn === 0 ? 0 : (avgReturn / stdDevReturn) * Math.sqrt(252);
 
   return {
     trades,
