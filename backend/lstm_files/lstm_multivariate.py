@@ -97,7 +97,7 @@ try:
                     shutil.copy(os.path.join(current_dir, default_path), file_path)
                 else:
                     # Create a simple placeholder with default values
-                    # If files don't exist, let's create a simple version for now
+                    # If files don't exist, create a simple version for now
                     print(f"Creating placeholder for missing file: {file_path}")
                     placeholder_df = pd.DataFrame({
                         'Date': pd.date_range(start=start, end=end, freq='D'),
@@ -141,7 +141,7 @@ try:
     df = pd.read_csv(test_data_path)
     
     # Add the supplementary data
-    # Make sure all dataframes have the same length
+    # Making sure all dataframes have the same length
     df_len = len(df)
     
     # Trim or extend supplementary data to match df length
@@ -223,8 +223,8 @@ try:
     model.summary()
     
     # Determine if we're running as a subprocess from Flask or directly
-    # If we're called from the Flask app, there will be more than 2 command line arguments
-    # or we can check if we're running in a subprocess by looking at environment variables
+    # If called from the Flask app, there will be more than 2 command line arguments
+    # or check if running in a subprocess by looking at environment variables
     is_subprocess = False
 
     # Check if the parent process ID is not the same as the init process (1)
@@ -241,7 +241,7 @@ try:
                 if 'python' in parent_cmd and any(x in parent_cmd for x in ['flask', 'app.py']):
                     is_subprocess = True
         except (FileNotFoundError, PermissionError):
-            # If we can't read the parent process info, assume it might be a subprocess
+            # If can't read the parent process info, assume it might be a subprocess
             pass
     
     # METHOD FOR ADDING THE PROGRESS BAR
@@ -399,7 +399,7 @@ try:
     price_change_percent = (price_change / df['Close'].iloc[-1]) * 100
     price_change_text = f"{'+' if price_change >= 0 else ''}{price_change_percent:.2f}% {('Upside' if price_change >= 0 else 'Downside')}"
     
-    # Save prediction info to JSON file for frontend to use
+    # Save prediction info to JSON file for frontend use
     prediction_data = {
         "next_day_price": float(next_day_price),
         "average_deviation": float(average_var),

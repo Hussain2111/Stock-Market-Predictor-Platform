@@ -33,7 +33,7 @@ response = api.latest_api(q='{stock} stock'.format(stock = STOCK))
 # get list of news
 news = yf.Search("{stock}".format(stock = STOCK), news_count=20).news
 
-# Extract individual descriptions
+# Extract individual news descriptions
 for article in response["results"]:
         article_description = article.get('description')
         if isinstance(article_description, str):
