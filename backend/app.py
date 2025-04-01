@@ -36,7 +36,7 @@ import re
 
 app = create_app()
 
-# Configure CORS
+# Configure CORS for browsers
 CORS(app, resources={
     r"/*": {
         "origins": ["http://localhost:5173", "http://localhost:3000"],
@@ -46,10 +46,10 @@ CORS(app, resources={
     }
 })
 
-# Initialize LSTM routes
+# Initialise LSTM routes
 init_lstm_routes(app)
 
-# Initialize chatbot service
+# Initialise chatbot service
 chatbot_service = ChatbotService()
 
 # MongoDB connection - using the same DB as the login server
@@ -57,7 +57,8 @@ client = MongoClient("mongodb+srv://shayaanpk:QBlvNkoTYFQbXsq1@clusterlogin.mioe
 db = client["trading_app"]
 investments_collection = db["investments"]
 sales_collection = db["sold_stocks"]
-users_collection = db["users"] # For auth token verification
+# For auth token verification
+users_collection = db["users"]
 
 # JWT Secret key for verifying tokens
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback_secret_key_for_development')
@@ -100,7 +101,7 @@ def token_required(f):
                     'success': False
                 }), 401
                 
-            # Add user_id to kwargs
+            # Add user_id to keyword args
             kwargs['user_id'] = user_id
             
         except pyjwt.exceptions.ExpiredSignatureError:
@@ -165,7 +166,7 @@ def get_price_history():
                 'success': False
             }), 400
             
-        # Use the model loss plot as the price history visualization
+        # Use the model loss plot as the price history visualisation
         image_path = os.path.join(os.path.dirname(__file__), 'lstm_files', f'{ticker}_model1_loss.png')
         print(f"Looking for image at: {image_path}")
         
@@ -228,7 +229,7 @@ def get_prediction():
             with open(json_path, 'r') as json_file:
                 prediction_data = json.load(json_file)
 
-        # Load the test dataset if available
+        # Load the test dataset for prediction visualisation
         test_data = []
         if os.path.exists(test_data_path):
             df_test = pd.read_csv(test_data_path)
@@ -238,7 +239,7 @@ def get_prediction():
             'image': encoded_image,
             'current_price': round(current_price, 2) if current_price else 0,
             'prediction_data': prediction_data,
-            'test_data': test_data,  # Include test dataset for visual inspection
+            'test_data': test_data,
             'success': True
         })
     
@@ -344,7 +345,7 @@ def get_sentiment():
         # Get the news response from newsdata api
         response = api.latest_api(q=f'{ticker} stock')
         
-        # Extract individual descriptions from newsdata
+        # Extract individual news descriptions from newsdata
         article_count = 0
         for article in response.get("results", []):
             article_description = article.get('description')
@@ -395,7 +396,7 @@ def get_sentiment():
         
         sentiment_result = response['message']['content']
         
-        # Debugging: Print raw response
+        # For Debugging: Print raw response
         print("Raw Ollama Response:", sentiment_result)
         
         # Extract the JSON part from the response
@@ -415,6 +416,7 @@ def get_sentiment():
         average_sentiment = sentiment_data.get("positive", 0) / 100.0
         
         # Create a response with current and historical sentiment
+        # If it fails, rely on placeholders to not get errors
         sentiment_response = {
             "current": {
                 "period": "Current",
@@ -521,7 +523,7 @@ def get_stock_data():
         if not stock_symbol:
             return jsonify({"error": "Stock symbol is required"}), 400
             
-        # Default period is 1 year if not specified
+        # Default period - 1 year (if not specified)
         period = request.args.get('period', '1y')
         
         # Get data from yfinance
@@ -535,7 +537,7 @@ def get_stock_data():
         # Get current price (use regularMarketPrice as currentPrice might not be available)
         current_price = stock.info.get('regularMarketPrice', 0)
         
-        # Prepare the response data
+        # Preparing the response data
         stock_data = {
             "symbol": stock_symbol,
             "name": stock.info.get('shortName', stock_symbol),
@@ -561,21 +563,10 @@ def search_stocks():
         if not query or len(query) < 2:
             return jsonify([])
             
-        # This is a simplified approach - in production, you'd want a more robust search
-        # For demo purposes, just return a few matching stocks
+        # For matching the stock from yfinance, search functionality
         matches = []
-        if 'apple' in query.lower() or 'aapl' in query.lower():
-            matches.append({"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ"})
-        if 'tesla' in query.lower() or 'tsla' in query.lower():
-            matches.append({"symbol": "TSLA", "name": "Tesla, Inc.", "exchange": "NASDAQ"})
-        if 'google' in query.lower() or 'goog' in query.lower():
-            matches.append({"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ"})
-        if 'amazon' in query.lower() or 'amzn' in query.lower():
-            matches.append({"symbol": "AMZN", "name": "Amazon.com, Inc.", "exchange": "NASDAQ"})
-        if 'microsoft' in query.lower() or 'msft' in query.lower():
-            matches.append({"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ"})
             
-        # If no matches in our simple list, try to get a ticker directly with this name
+        # Get a ticker directly with this name
         if not matches and len(query) >= 2:
             try:
                 ticker = yf.Ticker(query.upper())
@@ -667,13 +658,14 @@ def fetch_stock_news():
         for item in raw_news:
             try:
                 # Extract content from the nested structure
-                content = item.get('content', item)  # Handle both direct and nested content
+                content = item.get('content', item) 
                 
                 # Extract title and summary
                 title = content.get('title', '').strip()
                 summary = content.get('summary', '').strip()
                 
-                if not title:  # Skip items without a title
+                # Skip items without a title
+                if not title:  
                     continue
 
                 # Get publisher info
@@ -771,7 +763,7 @@ def get_multiple_stocks():
         # Split symbols and create a list
         symbols = [sym.strip() for sym in symbols_str.split(',')]
         
-        # Initialize result array
+        # Initialise result array
         result = []
         
         # Fetch data for each symbol
@@ -827,7 +819,7 @@ def buy_stock(user_id=None):
         request_user_id = data.get('user_id')
         ticker = data.get('ticker')
         currentPrice = data.get('currentPrice')
-        quantity = data.get('quantity', 1)  # Default to 1 if quantity is not provided
+        quantity = data.get('quantity', 1)
         
         # Verify the user_id in the request matches the authenticated user
         if user_id != request_user_id:
@@ -842,8 +834,10 @@ def buy_stock(user_id=None):
         
         # Update existing stocks with the same ticker to the new price
         investments_collection.update_many(
-            {"user_id": user_id, "ticker": ticker},  # Find all stocks with the same user_id and ticker
-            {"$set": {"currentPrice": currentPrice}}  # Update the currentPrice field
+            # Find all stocks with the same user_id and ticker
+            {"user_id": user_id, "ticker": ticker},  
+            # Update the currentPrice field
+            {"$set": {"currentPrice": currentPrice}}  
         )
         
         # Insert multiple entries based on quantity
@@ -876,7 +870,7 @@ def sell_stock(user_id=None):
         request_user_id = data.get("user_id")
         ticker = data.get("ticker")
         sell_price = float(data.get("currentPrice"))
-        quantity = data.get("quantity", 1)  # Default to 1 if quantity is not provided
+        quantity = data.get("quantity", 1)
 
         # Verify the user_id in the request matches the authenticated user
         if user_id != request_user_id:
@@ -913,7 +907,8 @@ def sell_stock(user_id=None):
         
         for stock in stocks_to_sell:
             price_bought = stock["priceBought"]
-            profit = sell_price - price_bought  # Profit per share
+            # Profit per share
+            profit = sell_price - price_bought  
             total_profit += profit
 
             # Add sale record to sales_collection
@@ -989,16 +984,20 @@ def get_portfolio(user_id=None):
                 # Continue with other tickers even if one fails
 
 
-        # Aggregation pipeline to group stocks by ticker, count the quantity, and calculate the total value
+        # Aggregation pipeline to group stocks by ticker, count the quantity, 
+        # and calculate the total value
         pipeline = [
             {
                 "$match": {"user_id": user_id}  # Filter by user_id
             },
             {
                 "$group": {
-                    "_id": "$ticker",  # Group by ticker symbol
-                    "quantity": {"$sum": 1},  # Count the number of documents per ticker (equivalent to quantity)
-                    "currentPrice": {"$sum": {"$multiply": ["$currentPrice", 1]}}  # Calculate total value per ticker (currentPrice * quantity)
+                    # Group by ticker symbol
+                    "_id": "$ticker",  
+                    # Count the number of documents per ticker (equivalent to quantity)
+                    "quantity": {"$sum": 1},  
+                    # Calculate total value per ticker (currentPrice * quantity)
+                    "currentPrice": {"$sum": {"$multiply": ["$currentPrice", 1]}}  
                 }
             },
             {
@@ -1064,7 +1063,7 @@ def profit_or_loss():
         # Fetch all currently owned stocks
         stocks = list(investments_collection.find({"user_id": user_id}))
 
-        # Fetch realized profits from sold stocks
+        # Fetch realised profits from sold stocks
         realized_profits = list(sales_collection.find({"user_id": user_id}))
         total_realized_profit = sum(sale["profit"] for sale in realized_profits)
 
@@ -1096,10 +1095,10 @@ def profit_or_loss():
                 "profit_loss_percentage": round(profit_loss_percentage, 2)
             })
 
-        # Calculate unrealized profit/loss
+        # Calculate unrealised profit/loss
         overall_unrealized_profit = total_current_value - total_cost
 
-        # Total profit = realized profit + unrealized profit
+        # Total profit = realised profit + unrealised profit
         overall_profit_loss = overall_unrealized_profit + total_realized_profit
         overall_profit_loss_percentage = (
             (overall_profit_loss / (total_cost if total_cost > 0 else 1)) * 100
@@ -1215,7 +1214,7 @@ def add_to_watchlist(user_id=None):
         if not ticker:
             return jsonify({'success': False, 'message': 'Ticker is required'}), 400
         
-        # Standardize ticker (uppercase to avoid duplicates)
+        # Standardise ticker (uppercase to avoid duplicates)
         ticker = ticker.upper()
         
         try:
@@ -1268,7 +1267,7 @@ def remove_from_watchlist(user_id=None):
         if not ticker:
             return jsonify({'success': False, 'message': 'Ticker is required'}), 400
         
-        # Standardize ticker (uppercase for consistency)
+        # Standardise ticker (uppercase for consistency)
         ticker = ticker.upper()
         
         try:
@@ -1335,7 +1334,7 @@ def delete_user():
                 'message': 'User not found'
             }), 404
         
-        # Verify password - assuming passwords are stored with bcrypt
+        # Verify password - passwords are stored with bcrypt
         if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             # Delete user's watchlist
             watchlist_collection = client.db.watchlists
@@ -1349,10 +1348,7 @@ def delete_user():
             history_collection = client.db.analysis_history
             history_collection.delete_many({'userId': user_id})
             
-            # Delete any other user data
-            # ...
-            
-            # Finally delete the user
+            # Delete the user
             user_collection.delete_one({'_id': ObjectId(user_id)})
             
             return jsonify({
@@ -1399,7 +1395,8 @@ def get_sentiment_adjusted_price():
         output = result.stdout
         print(f"Raw script output: {output}")  # Debug print
         
-        # First try to find the exact pattern
+        # First try to find the exact pattern - done this way because chatbot
+        # responses might differ
         match = re.search(r'Next Day Adjusted Price:\s*(\d+\.?\d*)', output)
         
         # If the exact pattern doesn't match, try more generic patterns
