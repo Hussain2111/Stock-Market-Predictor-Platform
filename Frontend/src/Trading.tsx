@@ -183,7 +183,7 @@ const Trading = () => {
     }
   };
 
-  // Process the transaction after quantity is provided
+  // Process the transaction (buy/sell) after quantity is provided
   const processTransaction = async () => {
     if (!stockData) {
       alert("Stock data is unavailable.");
@@ -444,7 +444,7 @@ const Trading = () => {
               >
                 Sell
               </button>
-              {/* New button to toggle algorithm section */}
+              {/* Button to toggle algorithm section */}
               <button
                 onClick={() => setShowAlgorithms(!showAlgorithms)}
                 className="ml-auto bg-blue-500 px-8 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors"
@@ -452,7 +452,7 @@ const Trading = () => {
                 {showAlgorithms ? "Hide Algorithms" : "Show Algorithms"}
               </button>
             </div>
-            {/* Algorithm Runner Component */}
+            {/* Algorithm Runner Component - IMPORTED */}
             {showAlgorithms && stockData && (
               <AlgorithmRunner
                 stockData={stockData}

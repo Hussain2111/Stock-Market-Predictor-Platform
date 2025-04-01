@@ -380,14 +380,14 @@ const Chatbot = ({ currentTicker }: { currentTicker: string }) => {
   );
 };
 
-// Add this interface for the stock data
+// Interface for the stock data
 interface StockPriceData {
   date: string;
   price: number;
   volume: number;
 }
 
-// Add this new component for the stock price chart
+// Chart component for the stock price chart
 const StockPriceChart = ({
   data,
   timeframe,
@@ -574,7 +574,7 @@ const StockPriceChart = ({
               />
             )}
 
-            {/* Volume Bars with improved styling */}
+            {/* Volume Bars styling */}
             {showVolume && (
               <Bar
                 dataKey="volume"
@@ -606,17 +606,18 @@ const StockPriceChart = ({
   );
 };
 
-// Define TypeScript types for data
+// Type for prediction chart
 interface StockData {
-  Date: string; // Assuming dates are in string format (YYYY-MM-DD)
-  Close: number; // Actual closing price
-  Predicted_Close: number; // AI-predicted closing price
+  Date: string;
+  Close: number;
+  Predicted_Close: number;
 }
 
 interface ChartProps {
   data: StockData[];
 }
 
+// Chart component for the stock prediction chart
 const StockPredictionChart: React.FC<ChartProps> = ({ data }) => {
   console.log("StockPredictionChart received data:", data);
   const minValue = Math.min(
@@ -661,7 +662,7 @@ const StockPredictionChart: React.FC<ChartProps> = ({ data }) => {
 };
 
 const AnalysisDashboard = () => {
-  // First, extract all hooks and context values
+  // Extract all hooks and context values
   const {
     predictionImage,
     setPredictionImage,
@@ -674,7 +675,7 @@ const AnalysisDashboard = () => {
   } = usePrediction();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
-  // Then define your state variables
+  // Define state variables
   const [ticker, setTicker] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const urlTicker = params.get("ticker");
@@ -686,7 +687,7 @@ const AnalysisDashboard = () => {
 
   const tickerState = ticker;
 
-  // Now your useEffect hooks can safely use all variables
+  // useEffect hooks for safely using all variables
   useEffect(() => {
     const currentParams = new URLSearchParams(window.location.search);
     if (currentParams.get("ticker") !== ticker) {
@@ -701,7 +702,7 @@ const AnalysisDashboard = () => {
     setCurrentTicker(ticker);
   }, [ticker, setCurrentTicker]);
 
-  // Rest of your state declarations
+  // State declarations
   const [stockName, setStockName] = useState("");
   const [stockPrice, setStockPrice] = useState<number | null>(null);
   const [priceChange, setPriceChange] = useState<number>(0);
@@ -752,17 +753,17 @@ const AnalysisDashboard = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
-  // Add new state for stock price data
+  // State for stock price data
   const [stockPriceData, setStockPriceData] = useState<StockPriceData[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1M");
 
-  // Add a new state variable for sentiment loading specifically
+  // State variable for sentiment loading specifically
   const [isLoadingSentiment, setIsLoadingSentiment] = useState(false);
 
   const [testData, setTestData] = useState<StockData[]>([]);
 
   const Redirect_Search = () => {
-    // This will navigate to second component
+    // Navigate to second component
     navigate("/analysis");
   };
   const priceAlertThresholds = {
@@ -873,14 +874,14 @@ const AnalysisDashboard = () => {
             setPriceChange(change);
             setPriceChangePercent(changePercent);
           } else {
-            // If we can't get price history, set to 0
+            // If can't get price history, set to 0
             setPriceChange(0);
             setPriceChangePercent(0);
           }
         }
 
         // Get current price immediately
-        // First set the global ticker to ensure we get the right price
+        // Set the global ticker to ensure we get the right price
         await fetch(`http://localhost:5001/stock-info?ticker=${tickerState}`);
         const priceResponse = await fetch(`http://localhost:5001/stock-price`);
         const priceData = await priceResponse.json();
@@ -901,7 +902,7 @@ const AnalysisDashboard = () => {
 
   useEffect(() => {
     const fetchPriceHistory = async (retryCount = 0) => {
-      // If we already have prediction data for this ticker, don't reload it
+      // If already have prediction data for this ticker, don't reload it
       if (predictionImage && currentTicker === ticker) {
         console.log("Using cached prediction data for ticker:", ticker);
         setIsLoadingGraph(false);
@@ -913,7 +914,7 @@ const AnalysisDashboard = () => {
       try {
         console.log(`Starting analysis for ticker: ${tickerState}`);
 
-        // Make the request to run LSTM
+        // Making the request to run LSTM
         const analysisResponse = await fetch("http://localhost:5001/run-lstm", {
           method: "POST",
           headers: {
@@ -945,7 +946,8 @@ const AnalysisDashboard = () => {
 
         setPredictionImage(predictionData.image);
         setTestData(predictionData.test_data);
-        setCurrentTicker(ticker); // Store the current ticker in context
+        // Store the current ticker in context
+        setCurrentTicker(ticker);
 
         // Save prediction data if available
         if (predictionData.prediction_data) {
@@ -1099,7 +1101,8 @@ const AnalysisDashboard = () => {
       if (!tickerState) return;
 
       setIsLoadingNews(true);
-      setError(null); // Clear any previous errors
+      // Clear any previous errors
+      setError(null);
 
       try {
         const response = await fetch(
@@ -1129,9 +1132,9 @@ const AnalysisDashboard = () => {
     fetchNews();
   }, [tickerState]);
 
-  // Add this useEffect to fetch sentiment adjusted price
+  // useEffect to fetch sentiment adjusted price
   const fetchSentimentAdjustedPrice = async () => {
-    // If we already have the sentiment adjusted price for this ticker, don't re-fetch it
+    // If already have the sentiment adjusted price for this ticker, don't re-fetch it
     if (
       predictionData.sentiment_adjusted_price &&
       predictionData.ticker === tickerState &&
@@ -1195,7 +1198,7 @@ const AnalysisDashboard = () => {
         last_updated: Date.now(), // Add timestamp for cache invalidation
       }));
     } finally {
-      // Change this line to use the specific sentiment loading state
+      // NOTE: Change this line to use the specific sentiment loading state
       setIsLoadingSentiment(false);
     }
   };
@@ -1215,7 +1218,7 @@ const AnalysisDashboard = () => {
     }
   }, [tickerState, predictionData.next_day_price]);
 
-  // Add a useEffect to handle cache invalidation - refresh data after 30 minutes
+  // useEffect to handle cache invalidation - refresh data after 30 minutes
   useEffect(() => {
     const CACHE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -1243,7 +1246,7 @@ const AnalysisDashboard = () => {
     volume: Math.floor(Math.random() * 1000000),
   }));
 
-  // Function to handle bookmark toggle
+  // Handle bookmark toggle
   const handleBookmarkToggle = () => {
     if (isInWatchlist(tickerState)) {
       removeFromWatchlist(tickerState);
@@ -1252,7 +1255,7 @@ const AnalysisDashboard = () => {
     }
   };
 
-  // Add this useEffect to update the document title with the current ticker
+  // useEffect to update the document title with the current ticker
   useEffect(() => {
     document.title = `${tickerState} - Stock Analysis`;
   }, [tickerState]);

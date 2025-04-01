@@ -76,7 +76,8 @@ const Watchlist = () => {
             const currentPrice = parseFloat(stockData.regularMarketPrice || 0);
 
             // Use the actual change values from Yahoo Finance API instead of calculating them
-            // These values are more reliable than our calculations and already account for daily changes
+            // These values are more reliable than local calculations and already
+            // account for daily changes
             const priceChange = parseFloat(stockData.regularMarketChange || 0);
             const percentChange = parseFloat(
               stockData.regularMarketChangePercent || 0
@@ -126,7 +127,7 @@ const Watchlist = () => {
       }
     };
 
-    // Function to fetch a single stock's data
+    // Fetch a single stock's data
     const fetchIndividualStock = async (ticker: string): Promise<StockData> => {
       try {
         // Get basic stock info
