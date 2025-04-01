@@ -40,8 +40,8 @@ def get_stock_data(symbol: str):
 
 @app.get("/predict/{symbol}")
 def predict_stock(symbol: str):
-    # Here you'll integrate your ML model
-    # For now, returning dummy data
+    # Integrate ML model
+    # For now, return dummy data
     return {
         "symbol": symbol,
         "prediction": {

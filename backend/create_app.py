@@ -18,7 +18,7 @@ def create_app():
     # Store global ticker in app config
     app.config['GLOBAL_TICKER'] = None
     
-    # Initialize chatbot service
+    # Initialise chatbot service
     app.chatbot_service = ChatbotService()
     
     return app 

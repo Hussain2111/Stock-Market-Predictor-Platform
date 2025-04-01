@@ -25,7 +25,7 @@ if (!fs.existsSync(appPyPath)) {
   process.exit(1);
 }
 
-// Function to start a service process with colored output
+// Start a service process with colored output
 function startService(command, args, cwd, name, color) {
   console.log(`\x1b[${color}m[${name}] Starting...\x1b[0m`);
 
@@ -58,7 +58,7 @@ function startService(command, args, cwd, name, color) {
       `\x1b[${color}m[${name}] Process exited with code ${code}\x1b[0m`
     );
 
-    // You may want to restart the process if it crashes
+    // Restart the process if it crashes
     if (code !== 0) {
       console.log(`\x1b[${color}m[${name}] Restarting in 5 seconds...\x1b[0m`);
       setTimeout(() => {
@@ -90,8 +90,6 @@ const frontendProcess = startService(
 ); // Yellow
 
 // Start login server
-// Note: We need to use 'node' for CommonJS or 'node --experimental-modules' for ES modules
-// Based on your login_server.js, it's using ES Module syntax (import instead of require)
 const loginProcess = startService(
   "node",
   ["--experimental-modules", "login_server.js"],
