@@ -33,12 +33,16 @@ if len(sys.argv) < 2:
 STOCK = sys.argv[1]
 print(f"Starting multivariate prediction for ticker: {STOCK}")
 
+# Getting today's date for the analysis
+today = datetime.datetime.now()
+date = "{year}-{month}-{day}".format(year=today.year, month=today.month, day=today.day)
+
 # Choose the number of features used and the time steps for learning
 FEATURES = 6
 TIMESTEPS = 14
 
 start = '2015-01-01'
-end = '2025-03-31'
+end = date
 
 # Get the current directory for absolute paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
