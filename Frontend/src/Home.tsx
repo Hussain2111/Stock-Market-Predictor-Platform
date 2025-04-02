@@ -279,7 +279,7 @@ export default function HomePage() {
               </button>
               <iframe
                 className="w-full aspect-video"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0"
+                src=""
                 title="Demo Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
